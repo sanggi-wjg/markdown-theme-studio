@@ -141,9 +141,12 @@ html[data-mts-theme] body pre code {
   border-radius: 0;
   font-size: 1em;
 }
-/* frontmatter 헤더는 코드 박스처럼 보이지 않게 기본 렌더를 유지한다 */
+/* frontmatter 헤더는 코드 박스처럼 보이지 않게 기본 렌더를 유지한다
+   (플랫폼 기본: background transparent / margin 0 / padding 0) */
 html[data-mts-theme] body pre.frontmatter-header {
   background: transparent;
+  border: none;
+  margin: 0;
   padding: 0;
 }
 
