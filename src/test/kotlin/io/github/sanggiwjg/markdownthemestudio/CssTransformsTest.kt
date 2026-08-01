@@ -104,7 +104,7 @@ class CssTransformsTest {
 
         val transformed = importantify(source)
         assertFalse(transformed.contains("!important !important"), "이중 승격 발생")
-        assertContains(transformed, "font-size: var(--mts-fs) !important;")
+        assertContains(transformed, "--default-font-size: calc(var(--mts-fs) + var(--mts-fs-offset, 0px)) !important;")
         // 괄호 균형(치환이 구조를 깨지 않았는지)
         assertTrue(transformed.count { it == '{' } == transformed.count { it == '}' })
         assertTrue(transformed.count { it == '(' } == transformed.count { it == ')' })

@@ -10,11 +10,15 @@
   var APPEARANCE_KEY = 'mts-appearance'; // 'auto' | 'light' | 'dark'
   var DEFAULT_THEME = 'gh';
   var THEMES = [
+    { id: 'off', label: 'Default' }, // 속성 제거 = 플러그인 비활성(기본 preview)
     { id: 'gh', label: 'GitHub' },
     { id: 'nt', label: 'Soft' },
     { id: 'dc', label: 'Docs' },
     { id: 'rd', label: 'Reader' }
   ];
+  var FS_KEY = 'mts-fs-offset';
+  var FS_MIN = -3;
+  var FS_MAX = 3;
   var ICONS = {
     auto: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
@@ -36,6 +40,8 @@
   };
   var root = document.documentElement;
   var appearanceMode = savedAppearance();
+  var currentTheme = null; // applyTheme가 설정 — off는 속성이 없어 DOM에서 못 읽는다
+  var fsOffset = savedFsOffset();
 
   function savedTheme() {
     try {
@@ -56,8 +62,39 @@
   }
 
   function applyTheme(id) {
-    root.setAttribute('data-mts-theme', id);
+    currentTheme = id;
+    if (id === 'off') {
+      root.removeAttribute('data-mts-theme');
+    } else {
+      root.setAttribute('data-mts-theme', id);
+    }
     try { localStorage.setItem(THEME_KEY, id); } catch (e) { /* persistence unavailable */ }
+    refreshWidget();
+  }
+
+  function savedFsOffset() {
+    try {
+      var v = parseInt(localStorage.getItem(FS_KEY), 10);
+      return v >= FS_MIN && v <= FS_MAX ? v : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function applyFsOffset() {
+    if (fsOffset === 0) {
+      root.style.removeProperty('--mts-fs-offset');
+    } else {
+      root.style.setProperty('--mts-fs-offset', fsOffset + 'px');
+    }
+  }
+
+  function nudgeFontSize(delta) {
+    var next = fsOffset + delta;
+    if (next < FS_MIN || next > FS_MAX) return;
+    fsOffset = next;
+    try { localStorage.setItem(FS_KEY, String(fsOffset)); } catch (e) { /* ignore */ }
+    applyFsOffset();
     refreshWidget();
   }
 
@@ -81,15 +118,24 @@
   function refreshWidget() {
     var host = document.getElementById('mts-switcher');
     if (!host) return;
-    var current = root.getAttribute('data-mts-theme');
     var buttons = host.querySelectorAll('button[data-mts-id]');
     for (var i = 0; i < buttons.length; i++) {
-      buttons[i].classList.toggle('mts-on', buttons[i].getAttribute('data-mts-id') === current);
+      buttons[i].classList.toggle('mts-on', buttons[i].getAttribute('data-mts-id') === currentTheme);
     }
     var appearanceButton = host.querySelector('.mts-appearance');
     if (appearanceButton) {
       appearanceButton.innerHTML = ICONS[appearanceMode];
       appearanceButton.setAttribute('title', TITLES[appearanceMode]);
+    }
+    var minus = host.querySelector('.mts-fs-minus');
+    var plus = host.querySelector('.mts-fs-plus');
+    if (minus && plus) {
+      var off = currentTheme === 'off';
+      minus.disabled = off || fsOffset <= FS_MIN;
+      plus.disabled = off || fsOffset >= FS_MAX;
+      var now = ' (now ' + (fsOffset > 0 ? '+' : '') + fsOffset + 'px)';
+      minus.setAttribute('title', off ? 'Font size — pick a theme first' : 'Decrease font size' + now);
+      plus.setAttribute('title', off ? 'Font size — pick a theme first' : 'Increase font size' + now);
     }
   }
 
@@ -127,6 +173,19 @@
     var sep = document.createElement('span');
     sep.className = 'mts-sep';
     host.appendChild(sep);
+    function fsButton(cls, text, delta) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mts-fs ' + cls;
+      b.textContent = text;
+      b.addEventListener('click', function () { nudgeFontSize(delta); });
+      return b;
+    }
+    host.appendChild(fsButton('mts-fs-minus', 'A-', -1));
+    host.appendChild(fsButton('mts-fs-plus', 'A+', 1));
+    var sep2 = document.createElement('span');
+    sep2.className = 'mts-sep';
+    host.appendChild(sep2);
     var appearanceButton = document.createElement('button');
     appearanceButton.type = 'button';
     appearanceButton.className = 'mts-appearance';
@@ -156,6 +215,7 @@
   }
 
   applyAppearance();
+  applyFsOffset();
   applyTheme(savedTheme());
 
   window.addEventListener('scroll', refreshCorner, { passive: true });

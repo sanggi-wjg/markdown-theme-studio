@@ -13,9 +13,10 @@
 html[data-mts-theme] body {
   font-family: var(--mts-sans);
   /* 기본 스타일이 font-size에 !important(var(--default-font-size))를 쓰므로
-     변수 자체를 재정의해 우회한다. 직접 선언은 폴백. */
-  --default-font-size: var(--mts-fs);
-  font-size: var(--mts-fs);
+     변수 자체를 재정의해 우회한다. 직접 선언은 폴백.
+     --mts-fs-offset은 위젯 A-/A+가 <html> 인라인 스타일로 주입한다 */
+  --default-font-size: calc(var(--mts-fs) + var(--mts-fs-offset, 0px));
+  font-size: calc(var(--mts-fs) + var(--mts-fs-offset, 0px));
   line-height: var(--mts-lh);
   background: var(--mts-bg);
   color: var(--mts-fg);
@@ -569,6 +570,16 @@ html.mts-dark #mts-switcher button:hover { background: rgba(255, 255, 255, 0.1);
   align-items: center;
 }
 #mts-switcher button.mts-appearance svg { display: block; }
+#mts-switcher button.mts-fs {
+  font-weight: 600;
+  padding: 3px 7px;
+}
+#mts-switcher button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+#mts-switcher button:disabled:hover { background: transparent; }
+html.mts-dark #mts-switcher button:disabled:hover { background: transparent; }
 html.mts-dark #mts-switcher button.mts-on {
   background: #e2e5ea;
   color: #1e2026;
@@ -577,8 +588,10 @@ html.mts-dark #mts-switcher button.mts-on {
 /* 좁은 패널: 활성 테마 버튼만 남기고 접는다. 호버하면 전체 펼침 */
 @media (max-width: 560px) {
   #mts-switcher button[data-mts-id]:not(.mts-on) { display: none; }
+  #mts-switcher button.mts-fs { display: none; }
   #mts-switcher .mts-sep { display: none; }
   #mts-switcher:hover button[data-mts-id]:not(.mts-on) { display: inline-block; }
+  #mts-switcher:hover button.mts-fs { display: inline-block; }
   #mts-switcher:hover .mts-sep { display: block; }
 }
 
