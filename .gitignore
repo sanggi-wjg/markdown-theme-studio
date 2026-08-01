@@ -5,3 +5,7 @@ build/
 .idea/
 *.iml
 .DS_Store
+# 리뷰 하네스 부산물
+tools/.venv/
+tools/audit-full.json
+tools/*.png
