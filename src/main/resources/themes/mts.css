@@ -1,0 +1,542 @@
+/* ==========================================================================
+   Markdown Theme Studio — preview themes
+   Scoping contract (set by mts.js):
+     html[data-mts-theme="gh|nt|dc|rd"]  active theme
+     html.mts-dark                       dark appearance (follows IDE LaF)
+   No attribute → plugin inactive, default preview styles apply untouched.
+   Code fence token colors come from the IDE lexer as inline styles, so code
+   blocks only restyle the container (background/padding/font), never tokens.
+   ========================================================================== */
+
+/* ---------- shared structure (any active theme) ---------- */
+
+html[data-mts-theme] body {
+  font-family: var(--mts-sans);
+  /* 기본 스타일이 font-size에 !important(var(--default-font-size))를 쓰므로
+     변수 자체를 재정의해 우회한다. 직접 선언은 폴백. */
+  --default-font-size: var(--mts-fs);
+  font-size: var(--mts-fs);
+  line-height: var(--mts-lh);
+  background: var(--mts-bg);
+  color: var(--mts-fg);
+  max-width: calc(var(--mts-measure) + 2 * var(--mts-pad-x));
+  margin: 0 auto;
+  padding: 40px var(--mts-pad-x) 72px;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-mts-theme] {
+  background: var(--mts-bg);
+
+  --mts-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic",
+    "Noto Sans KR", "Noto Sans CJK KR", "Apple Color Emoji", "Segoe UI Emoji",
+    sans-serif;
+  --mts-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", "Apple SD Gothic Neo", "Malgun Gothic",
+    monospace;
+  --mts-pad-x: 32px;
+}
+
+html[data-mts-theme] body h1,
+html[data-mts-theme] body h2,
+html[data-mts-theme] body h3,
+html[data-mts-theme] body h4,
+html[data-mts-theme] body h5,
+html[data-mts-theme] body h6 {
+  color: var(--mts-fg);
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  border: none;
+  padding-bottom: 0;
+}
+html[data-mts-theme] body h1 { font-size: 2em;    margin: 0.2em 0 0.7em; letter-spacing: -0.015em; }
+html[data-mts-theme] body h2 { font-size: 1.5em;  margin: 1.9em 0 0.8em; }
+html[data-mts-theme] body h3 { font-size: 1.2em;  margin: 1.7em 0 0.6em; }
+html[data-mts-theme] body h4 { font-size: 1.05em; margin: 1.5em 0 0.5em; }
+html[data-mts-theme] body h5 { font-size: 1em;    margin: 1.4em 0 0.5em; }
+html[data-mts-theme] body h6 { font-size: 0.92em; margin: 1.4em 0 0.5em; color: var(--mts-muted); }
+
+/* 기본 colors.css가 p, ul, table, tr 등에 요소 셀렉터로 색을 직접 지정해
+   body 상속을 이기므로, 전부 상속으로 되돌린다 (테마 색이 이겨야 함) */
+html[data-mts-theme] body p,
+html[data-mts-theme] body ul,
+html[data-mts-theme] body ol,
+html[data-mts-theme] body dl,
+html[data-mts-theme] body li,
+html[data-mts-theme] body dd,
+html[data-mts-theme] body dt,
+html[data-mts-theme] body table,
+html[data-mts-theme] body tr,
+html[data-mts-theme] body td,
+html[data-mts-theme] body blockquote,
+html[data-mts-theme] body strong,
+html[data-mts-theme] body b,
+html[data-mts-theme] body em,
+html[data-mts-theme] body i,
+html[data-mts-theme] body del,
+html[data-mts-theme] body ins,
+html[data-mts-theme] body u,
+html[data-mts-theme] body small {
+  color: inherit;
+}
+html[data-mts-theme] body tr { border: none; }
+
+/* 커스텀 CSS가 표 행/인용구에 밝은 배경을 깔면 다크 모드가 깨지므로
+   배경을 투명으로 고정한다 — 테마별 지브라/헤더 채움은 뒤에서 다시 지정됨 */
+html[data-mts-theme] body table,
+html[data-mts-theme] body thead,
+html[data-mts-theme] body tbody,
+html[data-mts-theme] body tr,
+html[data-mts-theme] body th,
+html[data-mts-theme] body td,
+html[data-mts-theme] body blockquote {
+  background: transparent;
+}
+
+html[data-mts-theme] body p { margin: 0 0 1em; }
+html[data-mts-theme] body ul,
+html[data-mts-theme] body ol { margin: 0 0 1em; padding-left: 1.55em; }
+html[data-mts-theme] body li { margin: 0.4em 0; }
+html[data-mts-theme] body li > ul,
+html[data-mts-theme] body li > ol { margin: 0.4em 0 0; }
+
+html[data-mts-theme] body a { color: var(--mts-link); text-decoration: none; }
+html[data-mts-theme] body a:hover { text-decoration: underline; }
+html[data-mts-theme] body del { opacity: 0.62; }
+html[data-mts-theme] body hr {
+  height: 1px;
+  background: var(--mts-border);
+  border: none;
+  margin: 2.2em 0;
+}
+html[data-mts-theme] body img { max-width: 100%; }
+
+html[data-mts-theme] body code {
+  font-family: var(--mts-mono);
+  font-size: 0.86em;
+  background: var(--mts-icode-bg);
+  color: var(--mts-icode-fg);
+  padding: 0.14em 0.38em;
+  border-radius: 4px;
+}
+
+html[data-mts-theme] body pre {
+  background: var(--mts-code-bg);
+  color: var(--mts-fg);
+  border: 1px solid var(--mts-code-border);
+  border-radius: var(--mts-code-radius);
+  padding: 15px 18px;
+  overflow-x: auto;
+  margin: 0 0 1.15em;
+  line-height: 1.6;
+  font-family: var(--mts-mono);
+  font-size: 0.845em;
+}
+html[data-mts-theme] body pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 1em;
+}
+
+/* commandRunner 확장의 실행 아이콘(초록 삼각형)이 테마 레이아웃과 겹쳐
+   깨져 보이므로 숨긴다 — 같은 기능이 에디터 거터에 있어 손실 없음 */
+html[data-mts-theme] body .run-icon,
+html[data-mts-theme] body .code-block {
+  display: none;
+}
+
+html[data-mts-theme] body blockquote {
+  margin: 0 0 1.15em;
+}
+html[data-mts-theme] body blockquote > :last-child { margin-bottom: 0; }
+
+html[data-mts-theme] body table {
+  border-collapse: collapse;
+  font-size: 0.88em;
+  line-height: 1.55;
+  margin: 0 0 1.25em;
+  display: block;
+  overflow-x: auto;
+}
+html[data-mts-theme] body th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--mts-fg);
+}
+
+/* 스크롤바: 테마 전경색을 섞은 얇고 둥근 썸 (color-mix 미지원 시 회색 폴백) */
+html[data-mts-theme] ::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+html[data-mts-theme] ::-webkit-scrollbar-track {
+  background: transparent;
+  box-shadow: none;
+}
+html[data-mts-theme] ::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.35);
+  background-color: color-mix(in srgb, var(--mts-fg) 22%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+html[data-mts-theme] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(128, 128, 128, 0.55);
+  background-color: color-mix(in srgb, var(--mts-fg) 40%, transparent);
+}
+html[data-mts-theme] ::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------- Ⓐ GitHub ---------- */
+
+html[data-mts-theme="gh"] {
+  --mts-bg: #ffffff;
+  --mts-fg: #1f2328;
+  --mts-muted: #59636e;
+  --mts-link: #0969da;
+  --mts-border: #d1d9e0;
+  --mts-icode-bg: rgba(129, 139, 152, 0.16);
+  --mts-icode-fg: #1f2328;
+  --mts-code-bg: #f6f8fa;
+  --mts-code-border: transparent;
+  --mts-code-radius: 6px;
+  --mts-th-bg: #f6f8fa;
+  --mts-zebra: #f6f8fa;
+  --mts-fs: 16px;
+  --mts-lh: 1.6;
+  --mts-measure: 860px;
+}
+html.mts-dark[data-mts-theme="gh"] {
+  --mts-bg: #0d1117;
+  --mts-fg: #e6edf3;
+  --mts-muted: #9198a1;
+  --mts-link: #4493f8;
+  --mts-border: #3d444d;
+  --mts-icode-bg: rgba(110, 118, 129, 0.4);
+  --mts-icode-fg: #e6edf3;
+  --mts-code-bg: #161b22;
+  --mts-th-bg: #161b22;
+  --mts-zebra: #151b23;
+}
+html[data-mts-theme="gh"] body h1,
+html[data-mts-theme="gh"] body h2,
+html[data-mts-theme="gh"] body h3,
+html[data-mts-theme="gh"] body h4,
+html[data-mts-theme="gh"] body h5,
+html[data-mts-theme="gh"] body h6 {
+  font-weight: 600;
+}
+html[data-mts-theme="gh"] body h1,
+html[data-mts-theme="gh"] body h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--mts-border);
+}
+html[data-mts-theme="gh"] body hr {
+  height: 4px;
+  border-radius: 2px;
+}
+html[data-mts-theme="gh"] body blockquote {
+  border-left: 4px solid var(--mts-border);
+  padding: 0 1em;
+  color: var(--mts-muted);
+}
+html[data-mts-theme="gh"] body th,
+html[data-mts-theme="gh"] body td {
+  border: 1px solid var(--mts-border);
+  padding: 6px 13px;
+}
+html[data-mts-theme="gh"] body th { background: var(--mts-th-bg); }
+html[data-mts-theme="gh"] body tbody tr:nth-child(even) { background: var(--mts-zebra); }
+
+/* ---------- Ⓑ Soft (Notion풍) ---------- */
+
+html[data-mts-theme="nt"] {
+  --mts-bg: #faf6ef;
+  --mts-fg: #3b372e;
+  --mts-muted: #6f6a5b;
+  --mts-link: #3b372e;
+  --mts-border: #e6e0d3;
+  --mts-icode-bg: #f3ede0;
+  --mts-icode-fg: #a8443a;
+  --mts-code-bg: #f4efe4;
+  --mts-code-border: transparent;
+  --mts-code-radius: 8px;
+  --mts-fs: 16.5px;
+  --mts-lh: 1.8;
+  --mts-measure: 760px;
+}
+html.mts-dark[data-mts-theme="nt"] {
+  --mts-bg: #1b1c20;
+  --mts-fg: #d6d4ce;
+  --mts-muted: #8f8d86;
+  --mts-link: #d6d4ce;
+  --mts-border: #33343a;
+  --mts-icode-bg: #2c2d33;
+  --mts-icode-fg: #e38c7f;
+  --mts-code-bg: #25262b;
+}
+html[data-mts-theme="nt"] body h1 { font-size: 2.5em; margin-bottom: 0.8em; }
+html[data-mts-theme="nt"] body h2 { margin-top: 2.2em; }
+html[data-mts-theme="nt"] body img { border-radius: 8px; }
+html[data-mts-theme="nt"] body ::selection { background: rgba(194, 85, 74, 0.18); }
+html[data-mts-theme="nt"] body a {
+  text-decoration: underline;
+  text-decoration-color: var(--mts-muted);
+  text-underline-offset: 3px;
+}
+html[data-mts-theme="nt"] body blockquote {
+  border-left: 3px solid var(--mts-fg);
+  padding: 0.15em 0 0.15em 1em;
+  font-size: 1.05em;
+}
+html[data-mts-theme="nt"] body th,
+html[data-mts-theme="nt"] body td {
+  border: none;
+  border-bottom: 1px solid var(--mts-border);
+  padding: 8px 14px;
+}
+html[data-mts-theme="nt"] body th {
+  color: var(--mts-muted);
+  font-size: 0.92em;
+  border-bottom-width: 2px;
+}
+
+/* ---------- Ⓒ Docs (VitePress풍) ----------
+   시안과 달리 코드 블록을 "항상 다크"로 고정하지 않는다: 토큰 색은 IDE 에디터
+   스킴에서 인라인으로 오므로, 라이트 IDE에서 다크 배경을 깔면 대비가 깨진다. */
+
+html[data-mts-theme="dc"] {
+  --mts-bg: #ffffff;
+  --mts-fg: #3c3c43;
+  --mts-muted: #67676c;
+  --mts-link: #3451b2;
+  --mts-border: #e2e2e3;
+  --mts-icode-bg: rgba(52, 81, 178, 0.08);
+  --mts-icode-fg: #3451b2;
+  --mts-code-bg: #eff1f6;
+  --mts-code-border: transparent;
+  --mts-code-radius: 8px;
+  --mts-th-bg: rgba(52, 81, 178, 0.09);
+  --mts-zebra: #f6f6f7;
+  --mts-quote-bg: rgba(52, 81, 178, 0.06);
+  --mts-quote-border: #3451b2;
+  --mts-fs: 15.5px;
+  --mts-lh: 1.7;
+  --mts-measure: 820px;
+}
+html.mts-dark[data-mts-theme="dc"] {
+  --mts-bg: #1b1b1f;
+  --mts-fg: #d0d0d4;
+  --mts-muted: #98989f;
+  --mts-link: #a8b1ff;
+  --mts-border: #33333a;
+  --mts-icode-bg: rgba(101, 117, 133, 0.28);
+  --mts-icode-fg: #a8b1ff;
+  --mts-code-bg: #202127;
+  --mts-th-bg: rgba(168, 177, 255, 0.08);
+  --mts-zebra: #202127;
+  --mts-quote-bg: rgba(168, 177, 255, 0.08);
+  --mts-quote-border: #a8b1ff;
+}
+html[data-mts-theme="dc"] body h2 {
+  margin-top: 2.2em;
+  padding-top: 1.1em;
+  border-top: 1px solid var(--mts-border);
+}
+html[data-mts-theme="dc"] body h2::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--mts-quote-border);
+  margin-right: 10px;
+}
+html[data-mts-theme="dc"] body th { color: var(--mts-link); }
+html[data-mts-theme="dc"] body pre {
+  border-left: 3px solid var(--mts-quote-border);
+  border-radius: 0 8px 8px 0;
+}
+html[data-mts-theme="dc"] body a { font-weight: 500; }
+html[data-mts-theme="dc"] body blockquote {
+  background: var(--mts-quote-bg);
+  border-left: 4px solid var(--mts-quote-border);
+  border-radius: 8px;
+  padding: 13px 17px;
+}
+html[data-mts-theme="dc"] body table {
+  border: 1px solid var(--mts-border);
+  border-radius: 8px;
+}
+html[data-mts-theme="dc"] body th,
+html[data-mts-theme="dc"] body td {
+  border: none;
+  border-bottom: 1px solid var(--mts-border);
+  border-right: 1px solid var(--mts-border);
+  padding: 7px 14px;
+}
+html[data-mts-theme="dc"] body th { background: var(--mts-th-bg); }
+html[data-mts-theme="dc"] body th:last-child,
+html[data-mts-theme="dc"] body td:last-child { border-right: none; }
+html[data-mts-theme="dc"] body tbody tr:last-child td { border-bottom: none; }
+html[data-mts-theme="dc"] body tbody tr:nth-child(even) { background: var(--mts-zebra); }
+
+/* ---------- Ⓓ Reader (장문 최적화) ---------- */
+
+html[data-mts-theme="rd"] {
+  --mts-bg: #f6f5f1;
+  --mts-fg: #1a1c20;
+  --mts-muted: #63666e;
+  --mts-link: #1a1c20;
+  --mts-border: #dbd9d2;
+  --mts-icode-bg: #eae8e2;
+  --mts-icode-fg: #1a1c20;
+  --mts-code-bg: #edebe5;
+  --mts-code-border: transparent;
+  --mts-code-radius: 6px;
+  --mts-serif: Georgia, "Times New Roman", "Apple Myungjo", "Nanum Myeongjo",
+    "Noto Serif KR", serif;
+  --mts-fs: 18px;
+  --mts-lh: 1.85;
+  --mts-measure: 640px;
+}
+html.mts-dark[data-mts-theme="rd"] {
+  --mts-bg: #121417;
+  --mts-fg: #c9cdd3;
+  --mts-muted: #7e848d;
+  --mts-link: #c9cdd3;
+  --mts-border: #2c3036;
+  --mts-icode-bg: #23262b;
+  --mts-icode-fg: #c9cdd3;
+  --mts-code-bg: #1c1f24;
+}
+html[data-mts-theme="rd"] body h1,
+html[data-mts-theme="rd"] body h2,
+html[data-mts-theme="rd"] body h3,
+html[data-mts-theme="rd"] body h4 {
+  font-family: var(--mts-serif);
+  letter-spacing: 0;
+}
+html[data-mts-theme="rd"] body h1 {
+  font-size: 2em;
+  margin-bottom: 1.2em;
+  text-align: center;
+}
+html[data-mts-theme="rd"] body h2 { font-size: 1.45em; margin-top: 2.4em; }
+html[data-mts-theme="rd"] body h3 { margin-top: 2em; }
+html[data-mts-theme="rd"] body p {
+  text-align: justify;
+  overflow-wrap: break-word;
+}
+html[data-mts-theme="rd"] body hr {
+  width: 140px;
+  margin: 2.8em auto;
+}
+html[data-mts-theme="rd"] body a {
+  text-decoration: underline;
+  text-decoration-color: var(--mts-muted);
+  text-underline-offset: 3px;
+}
+html[data-mts-theme="rd"] body blockquote {
+  border-left: 2px solid var(--mts-border);
+  padding: 0 0 0 1.1em;
+  color: var(--mts-muted);
+  font-size: 0.96em;
+  font-family: var(--mts-serif);
+}
+html[data-mts-theme="rd"] body table { font-size: 0.8em; }
+html[data-mts-theme="rd"] body th,
+html[data-mts-theme="rd"] body td {
+  border: 1px solid var(--mts-border);
+  padding: 6px 11px;
+}
+html[data-mts-theme="rd"] body pre { font-size: 0.92em; }
+
+/* ---------- theme switcher widget ----------
+   <html> 직속 자식이라 본문 incremental 업데이트에서 살아남는다. */
+
+#mts-switcher {
+  position: fixed;
+  top: 10px;
+  right: 14px;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0.3;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+#mts-switcher:hover { opacity: 1; }
+/* 스크롤을 내리면 숨기고, 최상단으로 돌아오면 다시 보인다 (mts.js에서 토글) */
+#mts-switcher.mts-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+html.mts-dark #mts-switcher {
+  background: rgba(30, 32, 38, 0.85);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+#mts-switcher button {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #3c3f45;
+}
+html.mts-dark #mts-switcher button { color: #c6cad1; }
+#mts-switcher button:hover { background: rgba(0, 0, 0, 0.07); }
+html.mts-dark #mts-switcher button:hover { background: rgba(255, 255, 255, 0.1); }
+#mts-switcher button.mts-on {
+  background: #3c3f45;
+  color: #ffffff;
+}
+#mts-switcher .mts-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 3px;
+  background: currentColor;
+  opacity: 0.18;
+}
+#mts-switcher button.mts-appearance {
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+}
+#mts-switcher button.mts-appearance svg { display: block; }
+html.mts-dark #mts-switcher button.mts-on {
+  background: #e2e5ea;
+  color: #1e2026;
+}
+
+/* 좁은 패널: 활성 테마 버튼만 남기고 접는다. 호버하면 전체 펼침 */
+@media (max-width: 560px) {
+  #mts-switcher button[data-mts-id]:not(.mts-on) { display: none; }
+  #mts-switcher .mts-sep { display: none; }
+  #mts-switcher:hover button[data-mts-id]:not(.mts-on) { display: inline-block; }
+  #mts-switcher:hover .mts-sep { display: block; }
+}
+
+@media print {
+  #mts-switcher { display: none; }
+}

@@ -1,0 +1,11 @@
+<!-- id/name/vendor/description/version은 build.gradle.kts pluginConfiguration이
+     patchPluginXml로 주입한다 — 이중 정의로 인한 drift 방지 -->
+<idea-plugin>
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.intellij.plugins.markdown</depends>
+
+    <extensions defaultExtensionNs="org.intellij.markdown">
+        <browserPreviewExtensionProvider
+            implementation="io.github.sanggiwjg.markdownthemestudio.ThemeStudioPreviewExtension$Provider"/>
+    </extensions>
+</idea-plugin>
