@@ -491,8 +491,10 @@ html[data-mts-theme="rd"] body pre { font-size: 0.92em; }
 /* 보이는 점은 14px, 호버 판정 영역은 28x28px 투명 히트존 */
 #mts-handle {
   position: fixed;
-  top: 8px;
-  right: 10px;
+  /* 스위처 원점(top 10/right 14)에 정렬 — 히트존이 스위처 영역을 벗어나면
+     peek 발동 후 mouseleave가 안 잡혀 스위처가 고착될 수 있다 */
+  top: 10px;
+  right: 14px;
   z-index: 2147483000;
   width: 28px;
   height: 28px;
