@@ -16,17 +16,17 @@
     { id: 'rd', label: 'Reader' }
   ];
   var ICONS = {
-    auto: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    auto: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
       '<path d="M8 1.8 A6.2 6.2 0 0 1 8 14.2 Z" fill="currentColor"/></svg>',
-    light: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    light: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="3.4" fill="currentColor"/>' +
       '<g stroke="currentColor" stroke-width="1.4" stroke-linecap="round">' +
       '<line x1="8" y1="0.9" x2="8" y2="2.7"/><line x1="8" y1="13.3" x2="8" y2="15.1"/>' +
       '<line x1="0.9" y1="8" x2="2.7" y2="8"/><line x1="13.3" y1="8" x2="15.1" y2="8"/>' +
       '<line x1="3" y1="3" x2="4.3" y2="4.3"/><line x1="11.7" y1="11.7" x2="13" y2="13"/>' +
       '<line x1="3" y1="13" x2="4.3" y2="11.7"/><line x1="11.7" y1="4.3" x2="13" y2="3"/></g></svg>',
-    dark: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    dark: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<path d="M13.8 9.6 A6.3 6.3 0 1 1 6.4 2.2 A5.1 5.1 0 0 0 13.8 9.6 Z" fill="currentColor"/></svg>'
   };
   var TITLES = {
