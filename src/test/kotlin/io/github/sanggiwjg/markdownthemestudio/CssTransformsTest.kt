@@ -21,14 +21,61 @@ class CssTransformsTest {
     }
 
     @Test
+    fun `문자열 내부 세미콜론은 치환하지 않는다`() {
+        assertEquals(
+            """a::before { content: "a;b" !important; }""",
+            importantify("""a::before { content: "a;b"; }"""),
+        )
+        assertEquals(
+            "a::before { content: 'x;y' !important; }",
+            importantify("a::before { content: 'x;y'; }"),
+        )
+    }
+
+    @Test
+    fun `문자열 내부의 주석·이스케이프 표기는 보존된다`() {
+        assertEquals(
+            """a { content: "/* x */" !important; }""",
+            importantify("""a { content: "/* x */"; }"""),
+        )
+        assertEquals(
+            """a { content: "quote\";semi" !important; }""",
+            importantify("""a { content: "quote\";semi"; }"""),
+        )
+    }
+
+    @Test
+    fun `url 내부 세미콜론은 치환하지 않는다`() {
+        assertEquals(
+            "a { background: url(data:image/png;base64,AA==) !important; }",
+            importantify("a { background: url(data:image/png;base64,AA==); }"),
+        )
+        assertEquals(
+            """a { background: URL("data:image/svg+xml;utf8,<svg/>") !important; }""",
+            importantify("""a { background: URL("data:image/svg+xml;utf8,<svg/>"); }"""),
+        )
+    }
+
+    @Test
+    fun `이미 important인 선언은 이중 승격하지 않는다`() {
+        assertEquals(
+            "a { color: red !important; }",
+            importantify("a { color: red !important; }"),
+        )
+        assertEquals(
+            "a { color: red !IMPORTANT; }",
+            importantify("a { color: red !IMPORTANT; }"),
+        )
+    }
+
+    @Test
     fun `번들 mts_css가 작성 계약을 지킨다`() {
         val source = requireNotNull(javaClass.getResourceAsStream("/themes/mts.css"))
             .use { it.readBytes().decodeToString() }
         val stripped = source.replace(Regex("/\\*.*?\\*/", RegexOption.DOT_MATCHES_ALL), "")
 
-        // 계약: 수동 !important 금지, url()·문자열 내부 세미콜론 금지
-        assertFalse(stripped.contains("!important"), "mts.css에 수동 !important가 있으면 이중 승격됨")
-        assertFalse(stripped.contains("url("), "url()은 내부 세미콜론 파손 위험 — 계약 위반")
+        // 관례: 전 선언이 서빙 시 일괄 승격되므로 수동 !important는 두지 않는다 (파손은 아님)
+        assertFalse(stripped.contains("!important"), "mts.css에 수동 !important — 일괄 승격 관례 위반")
 
         val transformed = importantify(source)
         assertFalse(transformed.contains("!important !important"), "이중 승격 발생")

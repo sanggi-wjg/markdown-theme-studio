@@ -29,7 +29,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 ## 플랫폼 제약 — 어기면 조용히, 주로 다크 모드에서만 깨진다
 
 - **사용자 Custom CSS와의 경쟁이 상수다.** 프로젝트 `.idea/markdown.xml`의 커스텀 CSS(InlineStylesExtension)는 우리 시트 *뒤에* 로드되고 흔히 전 선언 `!important`다(Typora 이식 스니펫이 실제 사용자 프로젝트들에 존재). `importantify()`가 이를 이기는 유일한 수단이므로 **테마가 관여하는 모든 시각 속성은 명시 선언**해야 한다. 새 요소를 다룰 때: 텍스트 색은 `color: inherit` 리셋 블록에, 배경은 `background: transparent` 리셋 블록에 등록. 비워두면 라이트에선 멀쩡해 보이고 다크에서만 깨진다
-- **mts.css 작성 계약**: `importantify()`는 주석 제거 후 `;`를 치환하는 정규식이다. 문자열/`url(data:...;...)` 내부 세미콜론, 수동 `!important` 표기를 넣으면 파손된다
+- **mts.css 작성 계약**: `importantify()`는 주석·문자열·`url()`을 인지하는 단일 패스 변환이라 문자열/`url(data:...;...)` 내부 세미콜론과 수동 `!important`(이중 승격 안 함)에 안전하다. 다만 mts.css는 관례상 수동 `!important` 없이 작성한다(테스트가 강제)
 - 기본 스타일이 body `font-size`에 `!important`를 쓰므로 크기는 `--default-font-size` **변수를 재정의**해 우회한다
 - 코드 펜스 토큰 색은 IDE 렉서가 **인라인 스타일**로 넣는다 — 컨테이너(배경·패딩·폰트)만 스타일링하고 토큰 색은 건드리지 않는다. 코드 배경은 반드시 외관(라이트/다크)을 따라야 토큰과 대비가 유지된다
 - IDE LaF 변경 시 패널·확장 인스턴스가 파기 후 재생성된다. JS 상태는 살아남지 않는다는 전제로 작성 (프리루드가 매번 새로 주입되는 이유)
