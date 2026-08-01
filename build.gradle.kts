@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "0.1.0"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -67,13 +67,14 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
-            <h3>0.1.0</h3>
+            <h3>1.0.0</h3>
             <ul>
                 <li>Initial release</li>
-                <li>Four preview themes: GitHub, Soft, Docs, Reader</li>
+                <li>Four preview themes: GitHub, Soft, Docs, Reader — plus Default to keep the stock preview styling</li>
                 <li>Floating theme switcher in the preview panel (collapses to a dot while scrolling)</li>
+                <li>Font size adjustment (A- / A+)</li>
                 <li>Light/dark follows the IDE theme, with a manual override (auto/light/dark)</li>
-                <li>Theme and appearance choices are remembered</li>
+                <li>Theme, appearance and font size choices are remembered</li>
             </ul>
         """.trimIndent()
 
