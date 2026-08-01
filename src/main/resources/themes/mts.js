@@ -16,17 +16,17 @@
     { id: 'rd', label: 'Reader' }
   ];
   var ICONS = {
-    auto: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    auto: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
       '<path d="M8 1.8 A6.2 6.2 0 0 1 8 14.2 Z" fill="currentColor"/></svg>',
-    light: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    light: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="3.4" fill="currentColor"/>' +
       '<g stroke="currentColor" stroke-width="1.4" stroke-linecap="round">' +
       '<line x1="8" y1="0.9" x2="8" y2="2.7"/><line x1="8" y1="13.3" x2="8" y2="15.1"/>' +
       '<line x1="0.9" y1="8" x2="2.7" y2="8"/><line x1="13.3" y1="8" x2="15.1" y2="8"/>' +
       '<line x1="3" y1="3" x2="4.3" y2="4.3"/><line x1="11.7" y1="11.7" x2="13" y2="13"/>' +
       '<line x1="3" y1="13" x2="4.3" y2="11.7"/><line x1="11.7" y1="4.3" x2="13" y2="3"/></g></svg>',
-    dark: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
+    dark: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<path d="M13.8 9.6 A6.3 6.3 0 1 1 6.4 2.2 A5.1 5.1 0 0 0 13.8 9.6 Z" fill="currentColor"/></svg>'
   };
   var TITLES = {
@@ -93,11 +93,22 @@
     }
   }
 
-  function updateScrollVisibility() {
+  // 스크롤 중에는 스위처 대신 미니 핸들(점)을 남기고,
+  // 핸들에 호버/클릭하면 스위처가 복귀한다(peeking). 스위처에서 벗어나면 다시 핸들로.
+  var peeking = false;
+
+  function isScrolled() {
+    return (window.scrollY || document.documentElement.scrollTop || 0) > 24;
+  }
+
+  function refreshCorner() {
     var host = document.getElementById('mts-switcher');
-    if (!host) return;
-    var y = window.scrollY || document.documentElement.scrollTop || 0;
-    host.classList.toggle('mts-hidden', y > 24);
+    var handle = document.getElementById('mts-handle');
+    if (!host || !handle) return;
+    var scrolled = isScrolled();
+    if (!scrolled) peeking = false;
+    host.classList.toggle('mts-hidden', scrolled && !peeking);
+    handle.classList.toggle('mts-visible', scrolled && !peeking);
   }
 
   function ensureWidget() {
@@ -121,15 +132,33 @@
     appearanceButton.className = 'mts-appearance';
     appearanceButton.addEventListener('click', cycleAppearance);
     host.appendChild(appearanceButton);
+    host.addEventListener('mouseleave', function () {
+      if (isScrolled()) {
+        peeking = false;
+        refreshCorner();
+      }
+    });
     root.appendChild(host);
+
+    var handle = document.createElement('div');
+    handle.id = 'mts-handle';
+    handle.setAttribute('title', '테마 전환');
+    function peek() {
+      peeking = true;
+      refreshCorner();
+    }
+    handle.addEventListener('mouseenter', peek);
+    handle.addEventListener('click', peek);
+    root.appendChild(handle);
+
     refreshWidget();
-    updateScrollVisibility();
+    refreshCorner();
   }
 
   applyAppearance();
   applyTheme(savedTheme());
 
-  window.addEventListener('scroll', updateScrollVisibility, { passive: true });
+  window.addEventListener('scroll', refreshCorner, { passive: true });
 
   // 위젯은 <html> 직속이라 본문 incremental 패치에 제거되지 않는다 — 1회 부착으로 충분
   if (document.readyState === 'loading') {
