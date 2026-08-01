@@ -12,7 +12,7 @@ tools: Bash, Read, Grep, Glob, WebFetch, WebSearch
 - 파일 내용 확인:
   - `gh api repos/JetBrains/intellij-community/contents/<경로>?ref=<브랜치>` 또는
   - `https://raw.githubusercontent.com/JetBrains/intellij-community/<브랜치>/<경로>` WebFetch
-- 클래스 위치를 모르면 GitHub 코드 검색: `gh api search/code -f q='<심볼> repo:JetBrains/intellij-community'` — 단 기본 브랜치만 검색되므로 버전별 존재 여부는 브랜치별 raw 확인으로 마무리한다
+- 클래스 위치를 모르면 GitHub 코드 검색: `gh search code '<심볼>' --repo JetBrains/intellij-community` (`gh api search/code`를 쓰려면 반드시 `-X GET`을 명시할 것 — `-f`만 쓰면 POST로 전환돼 404가 나며, 이를 "심볼 없음"으로 오독하기 쉽다) — 단 기본 브랜치만 검색되므로 버전별 존재 여부는 브랜치별 raw 확인으로 마무리한다
 - 확장점 선언은 해당 플러그인의 plugin.xml에서 확인한다 (markdown은 `plugins/markdown/core/resources/META-INF/` 아래)
 - 지원 범위 밖 브랜치는 조사하지 않는다. 이 프로젝트 기준: 251(최소·컴파일 기준) ~ 261
 

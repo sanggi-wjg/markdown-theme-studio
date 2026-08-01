@@ -26,4 +26,4 @@ description: 스타일 변경의 before/after 스크린샷 비교 — 수정 전
 - **외관은 light/dark로 고정해서 찍는다.** auto는 IDE LaF에 의존해 before/after 시점에 다를 수 있다
 - 같은 문서, 같은 스크롤 위치에서 찍는다. 특정 요소가 대상이면 `mts_shot.py eval 'document.querySelector(...).scrollIntoView()'`로 위치를 맞춘 뒤 촬영
 - 위젯(스위처/핸들)이 대상이면 상태를 명시적으로 만든다: 최상단(`window.scrollTo(0,0)`) = 스위처 노출, 스크롤 후 = 핸들 노출
-- before를 못 찍고 지나쳤으면 `git stash`로 수정을 잠깐 걷어내고 찍은 뒤 복원한다 — before 없는 비교 페이지는 만들지 않는다
+- before를 못 찍고 지나쳤으면: 스크린샷은 워킹트리가 아니라 **샌드박스에 배포된 빌드**를 찍는다는 점에 주의. 수정본을 아직 배포하지 않았다면 지금 찍는 것이 곧 before다. 이미 배포했다면 `git stash` → `prepareSandbox` + 샌드박스 재시작 → before 촬영 → `git stash pop` → 재배포·재시작 후 after 촬영. before 없는 비교 페이지는 만들지 않는다
