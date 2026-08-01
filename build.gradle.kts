@@ -62,8 +62,9 @@ intellijPlatform {
             Replaces the default Markdown preview styling with four polished themes
             (GitHub, Soft, Docs, Reader) tuned for typography, code blocks, tables and
             CJK text. Switch themes from a floating picker at the top-right corner of
-            the preview panel; your choice is remembered. Light and dark variants
-            follow the IDE theme automatically.
+            the preview panel, adjust the font size (A-/A+), or pick Default to keep
+            the stock preview styling; your choices are remembered. Light and dark
+            variants follow the IDE theme automatically.
         """.trimIndent()
 
         changeNotes = """
