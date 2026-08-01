@@ -84,16 +84,17 @@ intellijPlatform {
 
         ideaVersion {
             sinceBuild = "251"
-            untilBuild = "261.*"
+            untilBuild = "262.*"
         }
     }
 
     pluginVerification {
         ides {
             recommended()
-            // recommended()가 최신 메이저를 아직 안 주는 경우 대비 — 사용자 실기기(2026.1) 명시.
-            // 253부터 IC 단독 배포가 없어 통합 IntelliJ IDEA 타입을 쓴다
+            // recommended()가 최신 메이저를 아직 안 주는 경우 대비 — 사용자 실기기(2026.1)와
+            // 최신 GA(2026.2) 명시. 253부터 IC 단독 배포가 없어 통합 IntelliJ IDEA 타입을 쓴다
             create(IntelliJPlatformType.IntellijIdea, "2026.1.1")
+            create(IntelliJPlatformType.IntellijIdea, "2026.2")
         }
     }
 }
