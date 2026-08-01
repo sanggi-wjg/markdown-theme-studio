@@ -125,7 +125,7 @@ html[data-mts-theme] body code {
 html[data-mts-theme] body pre {
   background: var(--mts-code-bg);
   color: var(--mts-fg);
-  border: 1px solid var(--mts-code-border);
+  border: none;
   border-radius: var(--mts-code-radius);
   padding: 15px 18px;
   overflow-x: auto;
@@ -140,6 +140,11 @@ html[data-mts-theme] body pre code {
   padding: 0;
   border-radius: 0;
   font-size: 1em;
+}
+/* frontmatter 헤더는 코드 박스처럼 보이지 않게 기본 렌더를 유지한다 */
+html[data-mts-theme] body pre.frontmatter-header {
+  background: transparent;
+  padding: 0;
 }
 
 /* commandRunner 확장의 실행 아이콘(초록 삼각형)이 테마 레이아웃과 겹쳐
@@ -203,7 +208,6 @@ html[data-mts-theme="gh"] {
   --mts-icode-bg: rgba(129, 139, 152, 0.16);
   --mts-icode-fg: #1f2328;
   --mts-code-bg: #f6f8fa;
-  --mts-code-border: transparent;
   --mts-code-radius: 6px;
   --mts-th-bg: #f6f8fa;
   --mts-zebra: #f6f8fa;
@@ -264,7 +268,6 @@ html[data-mts-theme="nt"] {
   --mts-icode-bg: #f3ede0;
   --mts-icode-fg: #a8443a;
   --mts-code-bg: #f4efe4;
-  --mts-code-border: transparent;
   --mts-code-radius: 8px;
   --mts-fs: 16.5px;
   --mts-lh: 1.8;
@@ -284,6 +287,7 @@ html[data-mts-theme="nt"] body h1 { font-size: 2.5em; margin-bottom: 0.8em; }
 html[data-mts-theme="nt"] body h2 { margin-top: 2.2em; }
 html[data-mts-theme="nt"] body img { border-radius: 8px; }
 html[data-mts-theme="nt"] body ::selection { background: rgba(194, 85, 74, 0.18); }
+html.mts-dark[data-mts-theme="nt"] body ::selection { background: rgba(227, 140, 127, 0.28); }
 html[data-mts-theme="nt"] body a {
   text-decoration: underline;
   text-decoration-color: var(--mts-muted);
@@ -319,7 +323,6 @@ html[data-mts-theme="dc"] {
   --mts-icode-bg: rgba(52, 81, 178, 0.08);
   --mts-icode-fg: #3451b2;
   --mts-code-bg: #eff1f6;
-  --mts-code-border: transparent;
   --mts-code-radius: 8px;
   --mts-th-bg: rgba(52, 81, 178, 0.09);
   --mts-zebra: #f6f6f7;
@@ -357,7 +360,6 @@ html[data-mts-theme="dc"] body h2::before {
   background: var(--mts-quote-border);
   margin-right: 10px;
 }
-html[data-mts-theme="dc"] body th { color: var(--mts-link); }
 html[data-mts-theme="dc"] body pre {
   border-left: 3px solid var(--mts-quote-border);
   border-radius: 0 8px 8px 0;
@@ -369,10 +371,18 @@ html[data-mts-theme="dc"] body blockquote {
   border-radius: 8px;
   padding: 13px 17px;
 }
+/* border-collapse: collapse에서는 radius가 무시되므로 separate로 전환.
+   셀 경계는 bottom/right 단방향이라 separate에서도 겹선이 생기지 않는다 */
 html[data-mts-theme="dc"] body table {
   border: 1px solid var(--mts-border);
   border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
 }
+html[data-mts-theme="dc"] body thead th:first-child { border-top-left-radius: 7px; }
+html[data-mts-theme="dc"] body thead th:last-child { border-top-right-radius: 7px; }
+html[data-mts-theme="dc"] body tbody tr:last-child td:first-child { border-bottom-left-radius: 7px; }
+html[data-mts-theme="dc"] body tbody tr:last-child td:last-child { border-bottom-right-radius: 7px; }
 html[data-mts-theme="dc"] body th,
 html[data-mts-theme="dc"] body td {
   border: none;
@@ -380,7 +390,10 @@ html[data-mts-theme="dc"] body td {
   border-right: 1px solid var(--mts-border);
   padding: 7px 14px;
 }
-html[data-mts-theme="dc"] body th { background: var(--mts-th-bg); }
+html[data-mts-theme="dc"] body th {
+  background: var(--mts-th-bg);
+  color: var(--mts-link);
+}
 html[data-mts-theme="dc"] body th:last-child,
 html[data-mts-theme="dc"] body td:last-child { border-right: none; }
 html[data-mts-theme="dc"] body tbody tr:last-child td { border-bottom: none; }
@@ -397,7 +410,6 @@ html[data-mts-theme="rd"] {
   --mts-icode-bg: #eae8e2;
   --mts-icode-fg: #1a1c20;
   --mts-code-bg: #edebe5;
-  --mts-code-border: transparent;
   --mts-code-radius: 6px;
   --mts-serif: Georgia, "Times New Roman", "Apple Myungjo", "Nanum Myeongjo",
     "Noto Serif KR", serif;
