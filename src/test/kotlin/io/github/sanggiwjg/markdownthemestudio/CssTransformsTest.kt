@@ -66,6 +66,31 @@ class CssTransformsTest {
             "a { color: red !IMPORTANT; }",
             importantify("a { color: red !IMPORTANT; }"),
         )
+        // CSS 스펙상 유효한 공백 분리형과 important 뒤 주석
+        assertEquals(
+            "a { color: red ! important; }",
+            importantify("a { color: red ! important; }"),
+        )
+        assertEquals(
+            "a { color: red !important ; }",
+            importantify("a { color: red !important /* x */; }"),
+        )
+    }
+
+    @Test
+    fun `닫히지 않은 주석은 EOF까지 제거된다`() {
+        assertEquals(
+            "a { color: red !important; } ",
+            importantify("a { color: red; } /* trailing"),
+        )
+    }
+
+    @Test
+    fun `비인용 url 내부의 이스케이프된 괄호를 존중한다`() {
+        assertEquals(
+            """a { background: url(a\);b.png) !important; }""",
+            importantify("""a { background: url(a\);b.png); }"""),
+        )
     }
 
     @Test

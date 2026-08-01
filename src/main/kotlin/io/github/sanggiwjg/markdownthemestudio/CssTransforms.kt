@@ -48,7 +48,17 @@ internal fun importantify(css: String): String {
             out.append(css, i, i + 4)
             i += 4
             while (i < css.length && css[i] != ')') {
-                if (css[i] == '\'' || css[i] == '"') copyQuoted() else { out.append(css[i]); i++ }
+                when {
+                    css[i] == '\\' && i + 1 < css.length -> {
+                        out.append(css[i]).append(css[i + 1])
+                        i += 2
+                    }
+                    css[i] == '\'' || css[i] == '"' -> copyQuoted()
+                    else -> {
+                        out.append(css[i])
+                        i++
+                    }
+                }
             }
             continue // 닫는 ')'는 일반 문자로 처리
         }
@@ -69,9 +79,12 @@ private fun endsWithImportant(out: StringBuilder): Boolean {
     var end = out.length
     while (end > 0 && out[end - 1].isWhitespace()) end--
     val start = end - IMPORTANT.length
-    if (start < 1 || out[start - 1] != '!') return false
+    if (start < 1) return false
     for (k in IMPORTANT.indices) {
         if (out[start + k].lowercaseChar() != IMPORTANT[k]) return false
     }
-    return true
+    // CSS는 '!'와 important 사이 공백을 허용한다 (`! important`)
+    var j = start - 1
+    while (j >= 0 && out[j].isWhitespace()) j--
+    return j >= 0 && out[j] == '!'
 }
