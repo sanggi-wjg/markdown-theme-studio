@@ -15,7 +15,7 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 ## 1. 배포
 
 1. `./gradlew prepareSandbox`
-2. CSS/JS는 preview **패널 생성 시점**에 서빙된다. 파일이 바뀌었으면 샌드박스 재시작이 확실한 반영 수단이다: 기존 runIde를 띄운 백그라운드 태스크를 종료(잔존 IDE 프로세스는 `pkill -f idea-sandbox`) → `./gradlew runIde`를 백그라운드로 재실행
+2. CSS/JS는 preview **패널 생성 시점**에 서빙된다. 파일이 바뀌었으면 샌드박스 재시작이 확실한 반영 수단이다: 기존 runIde를 띄운 백그라운드 태스크를 종료(잔존 IDE 프로세스는 `pkill -f 'idea.plugin.in.sandbox.mode=true'` — 경로 기반 패턴은 실제 프로세스 커맨드라인과 안 맞고, `idea`류 광역 패턴은 사용자의 실제 IntelliJ를 죽일 수 있다) → `./gradlew runIde`를 백그라운드로 재실행
 3. CDP 타겟 확인: `tools/.venv/bin/python tools/mts_shot.py list`
    - 포트는 9223 (build.gradle.kts의 runIde jvmArgs `-Dide.browser.jcef.debug.port=9223`로 설정)
    - preview 타겟이 안 보이면 샌드박스에서 md 파일이 열려 preview 패널이 떠 있는지부터 확인
