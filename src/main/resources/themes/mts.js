@@ -30,9 +30,9 @@
       '<path d="M13.8 9.6 A6.3 6.3 0 1 1 6.4 2.2 A5.1 5.1 0 0 0 13.8 9.6 Z" fill="currentColor"/></svg>'
   };
   var TITLES = {
-    auto: '외관: 자동 (IDE 테마 따름) — 클릭해서 전환',
-    light: '외관: 라이트 고정 — 클릭해서 전환',
-    dark: '외관: 다크 고정 — 클릭해서 전환'
+    auto: 'Appearance: Auto (follows IDE theme) — click to switch',
+    light: 'Appearance: Light — click to switch',
+    dark: 'Appearance: Dark — click to switch'
   };
   var root = document.documentElement;
   var appearanceMode = savedAppearance();
@@ -120,7 +120,7 @@
       btn.type = 'button';
       btn.textContent = t.label;
       btn.setAttribute('data-mts-id', t.id);
-      btn.setAttribute('title', t.label + ' 테마로 전환');
+      btn.setAttribute('title', 'Switch to ' + t.label + ' theme');
       btn.addEventListener('click', function () { applyTheme(t.id); });
       host.appendChild(btn);
     });
@@ -142,7 +142,7 @@
 
     var handle = document.createElement('div');
     handle.id = 'mts-handle';
-    handle.setAttribute('title', '테마 전환');
+    handle.setAttribute('title', 'Markdown theme');
     function peek() {
       peeking = true;
       refreshCorner();

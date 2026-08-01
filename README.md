@@ -59,3 +59,7 @@ Markdown preview 우측 상단의 스위처에서 테마를 클릭해 전환합�
 - `themes/mts.js` — 스위처 위젯과 테마/외관 상태 관리
 
 자세한 아키텍처와 플랫폼 제약은 [CLAUDE.md](CLAUDE.md)를 참고하세요.
+
+## 라이선스
+
+[MIT](LICENSE)
