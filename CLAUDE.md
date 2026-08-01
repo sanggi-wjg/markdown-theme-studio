@@ -44,3 +44,5 @@ preview 렌더링 문제는 CDP로 직접 본다. `tools/`에 하네스가 있�
 - `tools/mts_review2.py features|narrow <px>|clearemu|css off|on` — 번들 기능 회귀·좁은 패널·커스텀 CSS 유무 시뮬레이션
 
 샌드박스가 여는 마지막 프로젝트에 Typora 커스텀 CSS가 있으면 최악 조건 테스트가 된다(의도적으로 유용). 클린 환경은 `css off`로 시뮬레이션.
+
+절차 전체는 `/verify-preview` 스킬, 수정 전후 비교 컷은 `/visual-diff` 스킬로 진행한다. 플랫폼 API의 버전 안정성 조사는 `platform-api-scout` 에이전트, 코드 리뷰는 `mts-reviewer` 에이전트에 위임한다.
