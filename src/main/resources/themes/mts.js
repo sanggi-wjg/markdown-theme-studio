@@ -93,11 +93,22 @@
     }
   }
 
-  function updateScrollVisibility() {
+  // 스크롤 중에는 스위처 대신 미니 핸들(점)을 남기고,
+  // 핸들에 호버/클릭하면 스위처가 복귀한다(peeking). 스위처에서 벗어나면 다시 핸들로.
+  var peeking = false;
+
+  function isScrolled() {
+    return (window.scrollY || document.documentElement.scrollTop || 0) > 24;
+  }
+
+  function refreshCorner() {
     var host = document.getElementById('mts-switcher');
-    if (!host) return;
-    var y = window.scrollY || document.documentElement.scrollTop || 0;
-    host.classList.toggle('mts-hidden', y > 24);
+    var handle = document.getElementById('mts-handle');
+    if (!host || !handle) return;
+    var scrolled = isScrolled();
+    if (!scrolled) peeking = false;
+    host.classList.toggle('mts-hidden', scrolled && !peeking);
+    handle.classList.toggle('mts-visible', scrolled && !peeking);
   }
 
   function ensureWidget() {
@@ -121,15 +132,33 @@
     appearanceButton.className = 'mts-appearance';
     appearanceButton.addEventListener('click', cycleAppearance);
     host.appendChild(appearanceButton);
+    host.addEventListener('mouseleave', function () {
+      if (isScrolled()) {
+        peeking = false;
+        refreshCorner();
+      }
+    });
     root.appendChild(host);
+
+    var handle = document.createElement('div');
+    handle.id = 'mts-handle';
+    handle.setAttribute('title', '테마 전환');
+    function peek() {
+      peeking = true;
+      refreshCorner();
+    }
+    handle.addEventListener('mouseenter', peek);
+    handle.addEventListener('click', peek);
+    root.appendChild(handle);
+
     refreshWidget();
-    updateScrollVisibility();
+    refreshCorner();
   }
 
   applyAppearance();
   applyTheme(savedTheme());
 
-  window.addEventListener('scroll', updateScrollVisibility, { passive: true });
+  window.addEventListener('scroll', refreshCorner, { passive: true });
 
   // 위젯은 <html> 직속이라 본문 incremental 패치에 제거되지 않는다 — 1회 부착으로 충분
   if (document.readyState === 'loading') {
