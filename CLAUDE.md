@@ -16,6 +16,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 ## 명령어
 
 - `./gradlew buildPlugin` — `build/distributions/*.zip` 생성 (Install Plugin from Disk용)
+- `tools/build-zip.sh` — 배포용: test + buildPlugin + 패키징 검증(버전·idea-version·아이콘·리소스 포함 여부). 배포 zip은 이걸로 만든다
 - `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223)이 jvmArgs로 켜져 있음
 - `./gradlew prepareSandbox` — 샌드박스에 재배포. 단 CSS/JS는 패널 생성 시점에 서빙되므로 확실한 반영은 샌드박스 재시작
 - `./gradlew verifyPlugin` — 지원 IDE 범위 바이너리 호환성 검사

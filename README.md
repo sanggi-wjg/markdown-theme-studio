@@ -51,6 +51,7 @@ Markdown preview 우측 상단의 스위처에서 테마를 클릭해 전환합�
 ./gradlew buildPlugin   # 배포 zip 생성
 ./gradlew test          # 단위 테스트
 ./gradlew verifyPlugin  # 지원 IDE 범위 바이너리 호환성 검사
+tools/build-zip.sh      # 배포 zip 빌드 + 패키징 검증 (테스트 포함)
 ```
 
 구조는 소스 3파일이 전부입니다.
