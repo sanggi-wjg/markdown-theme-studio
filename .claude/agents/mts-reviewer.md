@@ -10,10 +10,11 @@ tools: Bash, Read, Grep, Glob
 
 ## 프로젝트 불변 계약 — 위반은 HIGH
 
-1. **importantify**: mts.css의 모든 선언은 서빙 시 `!important`로 승격된다. 따라서
-   mts.css에는 문자열/`url()` 내부 세미콜론과 수동 `!important` 표기가 금지된다
-   (CssTransformsTest가 강제). 동순위 경쟁은 파일 내 순서가 승부처이므로 공용
-   규칙은 테마별 규칙보다 앞에 있어야 한다.
+1. **importantify**: mts.css의 모든 선언은 서빙 시 `!important`로 승격된다. 변환은
+   주석·문자열·`url()`을 인지하므로 그 내부 세미콜론은 안전하다. 수동 `!important`는
+   파손되지는 않으나(이중 승격 안 함) 관례상 금지다(CssTransformsTest가 강제).
+   동순위 경쟁은 파일 내 순서가 승부처이므로 공용 규칙은 테마별 규칙보다 앞에
+   있어야 한다.
 2. **Custom CSS 경쟁**: 사용자 프로젝트의 커스텀 CSS(흔히 전 선언 `!important`)가
    우리 시트 *뒤에* 로드된다. 테마가 다루는 요소는 텍스트 색을 `color: inherit`
    리셋 블록에, 배경을 `background: transparent` 리셋 블록에 등록해야 한다.
