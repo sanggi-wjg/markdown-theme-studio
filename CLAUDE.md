@@ -10,7 +10,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 
 - `main` 직접 커밋 금지. 모든 작업은 **main 기준으로 브랜치 생성 → PR**로 진행한다
 - 브랜치명: `feat/<주제>`, `fix/<주제>`, `chore/<주제>` (예: `feat/i18n-english`)
-- PR 생성은 `gh pr create`, 머지 대상은 `main`
+- PR 생성은 `gh pr create`, 머지 대상은 `main`. CI(GitHub Actions: test+buildPlugin) 통과 확인 후 머지
 - 작업 시작 전 `git pull origin main`으로 최신화 후 분기
 
 ## 명령어
