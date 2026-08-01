@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.2.21"
     id("org.jetbrains.intellij.platform") version "2.18.1"
@@ -64,19 +66,35 @@ intellijPlatform {
             follow the IDE theme automatically.
         """.trimIndent()
 
+        changeNotes = """
+            <h3>0.1.0</h3>
+            <ul>
+                <li>Initial release</li>
+                <li>Four preview themes: GitHub, Soft, Docs, Reader</li>
+                <li>Floating theme switcher in the preview panel (collapses to a dot while scrolling)</li>
+                <li>Light/dark follows the IDE theme, with a manual override (auto/light/dark)</li>
+                <li>Theme and appearance choices are remembered</li>
+            </ul>
+        """.trimIndent()
+
         vendor {
             name = "sanggi-wjg"
+            url = "https://github.com/sanggi-wjg/markdown-theme-studio"
         }
 
         ideaVersion {
             sinceBuild = "251"
-            untilBuild = "261.*"
+            untilBuild = "262.*"
         }
     }
 
     pluginVerification {
         ides {
             recommended()
+            // recommended()가 최신 메이저를 아직 안 주는 경우 대비 — 사용자 실기기(2026.1)와
+            // 최신 GA(2026.2) 명시. 253부터 IC 단독 배포가 없어 통합 IntelliJ IDEA 타입을 쓴다
+            create(IntelliJPlatformType.IntellijIdea, "2026.1.1")
+            create(IntelliJPlatformType.IntellijIdea, "2026.2")
         }
     }
 }
