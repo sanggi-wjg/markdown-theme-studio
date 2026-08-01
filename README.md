@@ -16,6 +16,15 @@ JetBrains IDE의 기본 Markdown preview 가독성을 개선하는 플러그인�
 | **Docs** | 인디고 포인트의 기술 문서 스타일 |
 | **Reader** | serif 헤딩, 좁은 본문 폭의 긴 글 읽기용 테마 |
 
+### 미리보기
+
+| | 라이트 | 다크 |
+|---|---|---|
+| **GitHub** | ![GitHub 라이트](docs/screenshots/gh-light.png) | ![GitHub 다크](docs/screenshots/gh-dark.png) |
+| **Soft** | ![Soft 라이트](docs/screenshots/nt-light.png) | ![Soft 다크](docs/screenshots/nt-dark.png) |
+| **Docs** | ![Docs 라이트](docs/screenshots/dc-light.png) | ![Docs 다크](docs/screenshots/dc-dark.png) |
+| **Reader** | ![Reader 라이트](docs/screenshots/rd-light.png) | ![Reader 다크](docs/screenshots/rd-dark.png) |
+
 ## 설치
 
 지원 범위: **2025.1 ~ 2026.x** (IntelliJ 등 번들 Markdown 플러그인이 있는 JetBrains IDE)
