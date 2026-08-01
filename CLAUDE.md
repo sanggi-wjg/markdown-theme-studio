@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독성 테마 4종(GitHub/Soft/Docs/Reader)과 preview 우측 상단 테마 스위처를 제공하는 플러그인. 파싱·싱크스크롤 등 렌더링 파이프라인은 건드리지 않고 스타일만 재정의한다. 지원 범위 2025.1~2026.x, 컴파일은 항상 최소 버전(IC 2025.1) 기준.
 
+## Git 전략
+
+- `main` 직접 커밋 금지. 모든 작업은 **main 기준으로 브랜치 생성 → PR**로 진행한다
+- 브랜치명: `feat/<주제>`, `fix/<주제>`, `chore/<주제>` (예: `feat/i18n-english`)
+- PR 생성은 `gh pr create`, 머지 대상은 `main`
+- 작업 시작 전 `git pull origin main`으로 최신화 후 분기
+
 ## 명령어
 
 - `./gradlew buildPlugin` — `build/distributions/*.zip` 생성 (Install Plugin from Disk용)
