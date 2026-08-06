@@ -106,6 +106,9 @@
   function applyAppearance() {
     var dark = appearanceMode === 'dark' || (appearanceMode === 'auto' && systemDark());
     root.classList.toggle('mts-dark', dark);
+    // 코드펜스 스코프(mts.css의 mts-laf-dark): 토큰 색의 출처인 실제 LaF를
+    // 따르며 외관 강제의 영향을 받지 않는다
+    root.classList.toggle('mts-laf-dark', systemDark());
   }
 
   function cycleAppearance() {

@@ -26,6 +26,14 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 - 요소 동물원을 주입해 4테마×2외관 8조합의 WCAG 대비·레이아웃·테마 정체성을 검사하고 `tools/audit-full.json`에 기록한다
 - 판정 기준(mts_audit.py 실제 임계값): **전 요소** 대비 3.0 미만 FAIL, 4.5 미만 WARN — 둘 다 위반 목록에 출력된다(예외 임계값: `del` 1.8, `small` 3.0). FAIL은 무조건 수정, WARN도 원인 확인 없이 통과 처리하지 않는다. 가로 오버플로는 무조건 수정 대상
 
+## 2.5 코드펜스 토큰 감사 — 코드블록 배경/글자색을 건드렸을 때 필수
+
+- 전제: `fixtures/code-syntax.md`가 preview에 열려 있어야 한다. 샌드박스 기동 시 인자로 열 수 있다:
+  `./gradlew runIde --args="$PWD $PWD/fixtures/code-syntax.md"` (프로젝트 창이 여럿이면 스크립트가 마커로 픽스처 창을 찾는다)
+- `tools/.venv/bin/python tools/mts_tokens.py` — 기본 preview 베이스라인 + 4테마×2외관 9콤보에서 렉서 인라인 토큰의 WCAG 대비를 측정, `tools/tokens-full.json`에 기록
+- 판정: **REGRESSION**(기본 preview에선 통과인데 우리 테마에서 FAIL) = 무조건 수정. **BASELINE-LIMIT**(기본에서도 FAIL) = IDE 스킴 한계로 기록만. 토큰 색은 실행 중 LaF의 에디터 스킴을 따르므로 라이트 LaF 1차 → 코드펜스 스코프(`mts-laf-dark`)를 건드렸으면 다크 LaF로 전환해 2차
+- LaF 전환은 샌드박스 종료 후 `config/options/laf.xml`(themeId Experimental{Light,Dark})과 `config/options/colors.scheme.xml`(name Light/Dark)을 함께 바꾼다 — **스킴을 같이 안 바꾸면 LaF만 바뀐 혼합 상태로 측정이 오염된다** (실제로 겪음)
+
 ## 3. 회귀 — 해당되는 것만
 
 - 번들 기능(copy 버튼 생존, 실행 아이콘 숨김, 링크·data URI 이미지 로드): `tools/.venv/bin/python tools/mts_review2.py features`

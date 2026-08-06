@@ -9,4 +9,5 @@ build/
 tools/.venv/
 tools/__pycache__/
 tools/audit-full.json
+tools/tokens-full.json
 tools/*.png
