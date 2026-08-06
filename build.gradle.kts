@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -70,6 +70,13 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>1.1.0</h3>
+            <ul>
+                <li>Code blocks now follow the IDE color scheme even when the appearance is manually overridden — syntax tokens stay readable in every combination</li>
+                <li>Brighter light-mode code backgrounds tuned for syntax token contrast (Soft, Docs, Reader)</li>
+                <li>Stable table column widths for CJK text — columns no longer collapse into vertical strips; long identifiers and URLs wrap instead of hogging width</li>
+                <li>Content width adjustment (W- / W+) in the switcher, remembered like font size</li>
+            </ul>
             <h3>1.0.0</h3>
             <ul>
                 <li>Initial release</li>
