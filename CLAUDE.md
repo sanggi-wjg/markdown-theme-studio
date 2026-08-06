@@ -12,6 +12,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - 브랜치명: `feat/<주제>`, `fix/<주제>`, `chore/<주제>` (예: `feat/i18n-english`)
 - PR 생성은 `gh pr create`, 머지 대상은 `main`. CI(GitHub Actions: test+buildPlugin) 통과 확인 후 머지
 - 작업 시작 전 `git pull origin main`으로 최신화 후 분기
+- **리뷰 게이트 — 리뷰까지가 작업 완료다**: 코드 변경(Kotlin/CSS/JS/Gradle/tools)이 끝나면 PR 생성 전에 `mts-reviewer` 에이전트 리뷰를 받는다. 지적사항 반영 → (지적이 있었으면) 재확인 통과가 완료 조건. 스타일/위젯 변경은 리뷰 요청에 `/verify-preview` 실행 결과를 함께 전달해 리뷰어가 수치를 재현·검증할 수 있게 한다. 문서·픽스처만 바뀐 PR은 리뷰 생략 가능
 
 ## 명령어
 

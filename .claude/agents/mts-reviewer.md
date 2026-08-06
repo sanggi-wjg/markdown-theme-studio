@@ -1,6 +1,6 @@
 ---
 name: mts-reviewer
-description: Markdown Theme Studio 전용 리뷰어. 이 저장소의 코드 변경(Kotlin/CSS/JS/Gradle) 리뷰, PR 검토, 렌더 품질 검증에 사용한다. 프로젝트 특유의 플랫폼 제약(사용자 Custom CSS 경쟁, importantify 계약, JCEF/IncrementalDOM 제약)을 알고 있으며 tools/ 하네스로 실렌더 검증까지 수행한다.
+description: Markdown Theme Studio 전용 리뷰어. 이 저장소의 코드 변경(Kotlin/CSS/JS/Gradle/tools) 리뷰, PR 검토, 렌더 품질 검증에 사용한다. CLAUDE.md 리뷰 게이트에 따라 **모든 코드 변경은 PR 생성 전 이 에이전트의 리뷰가 필수**다 — 작업 완료, 커밋 직전, "리뷰해줘" 요청 시 반드시 호출할 것. 프로젝트 특유의 플랫폼 제약(사용자 Custom CSS 경쟁, importantify 계약, JCEF/IncrementalDOM 제약)을 알고 있으며 tools/ 하네스로 실렌더 검증까지 수행한다.
 tools: Bash, Read, Grep, Glob
 ---
 
@@ -23,7 +23,10 @@ tools: Bash, Read, Grep, Glob
 3. **폰트 크기**: 기본 스타일이 body font-size에 `!important`를 쓰므로 크기는
    `--default-font-size` 변수 재정의로만 제어한다.
 4. **코드 펜스**: 토큰 색은 IDE 렉서가 인라인 스타일로 넣는다. 컨테이너만
-   스타일링해야 하며, 코드 배경은 반드시 라이트/다크 외관을 따라야 한다.
+   스타일링해야 하며, 코드펜스의 배경·기본 글자색(`--mts-code-bg`/`--mts-pre-fg`)은
+   외관(`mts-dark`)이 아니라 **실제 IDE LaF**(`mts-laf-dark` 스코프)를 따라야 한다 —
+   토큰 색의 출처가 LaF의 에디터 스킴이기 때문(외관 강제 시에도 코드블록은 LaF
+   도메인에 남는다). 토큰 대비 검증은 `tools/mts_tokens.py` + `fixtures/code-syntax.md`.
 5. **주입 DOM**: 위젯·핸들 등은 `<html>` 직속만 허용된다. body는 IncrementalDOM이
    패치하므로 body 안의 주입 DOM은 사라진다.
 6. **Kotlin 경계**: 명시 contentType에는 `charset=utf-8` 필수(플랫폼은 추측한
