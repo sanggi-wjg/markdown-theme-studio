@@ -171,10 +171,24 @@ html[data-mts-theme] body table {
   display: block;
   overflow-x: auto;
 }
+/* 한글은 글자 단위로 줄바꿈돼 min-content가 사실상 1글자다 — 폭이 부족하면
+   auto 레이아웃이 한글 열을 세로 띠로 압착한다. 단어 단위(keep-all)로 막고,
+   그래도 부족한 폭은 위 overflow-x 스크롤이 받는다 */
+html[data-mts-theme] body th,
+html[data-mts-theme] body td {
+  word-break: keep-all;
+}
 html[data-mts-theme] body th {
   text-align: left;
   font-weight: 600;
   color: var(--mts-fg);
+  white-space: nowrap;
+}
+/* 셀 안 긴 식별자·URL은 반대로 깨지지 않는 한 덩어리라 열 폭을 독식한다 —
+   필요할 때 임의 지점 줄바꿈을 허용해 다른 열(주로 한글 설명)에 폭을 돌려준다 */
+html[data-mts-theme] body td code,
+html[data-mts-theme] body td a {
+  overflow-wrap: anywhere;
 }
 
 /* 스크롤바: 테마 전경색을 섞은 얇고 둥근 썸 (color-mix 미지원 시 회색 폴백) */
