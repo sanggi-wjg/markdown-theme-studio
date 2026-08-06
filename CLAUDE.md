@@ -21,6 +21,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223)이 jvmArgs로 켜져 있음
 - `./gradlew prepareSandbox` — 샌드박스에 재배포. 단 CSS/JS는 패널 생성 시점에 서빙되므로 확실한 반영은 샌드박스 재시작
 - `./gradlew verifyPlugin` — 지원 IDE 범위 바이너리 호환성 검사
+- **릴리즈**: build.gradle.kts `version`·changeNotes 갱신 PR 머지 → `git tag vX.Y.Z && git push origin vX.Y.Z` — release.yml이 태그·버전 일치 확인 후 build-zip.sh + verifyPlugin을 통과하면 GitHub Release에 zip을 첨부한다. Marketplace 업로드는 수동(정책)
 
 ## 아키텍처 (소스 3파일)
 
