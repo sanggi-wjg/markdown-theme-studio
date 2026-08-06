@@ -17,6 +17,7 @@
 | `nebula.offheap.evictionPolicyClassName` | `String` | `LfuEvictionPolicy` | 재시작 필요 | 오프힙 계층의 축출 정책 구현 클래스. 사용자 정의 구현은 SPI로 등록한다 | 2.1부터 지원 |
 | `nebula.heap.promotionThresholdAccessCount` | `Int` | `3` | 즉시 반영 | 웜 키가 핫 계층으로 승격되기 위한 최소 접근 횟수. 낮출수록 승격이 공격적이다 | 성능 민감 |
 | `nebula.namespace.defaultTtlInheritanceMode` | `Enum` | `CASCADE` | 즉시 반영 | 부모 네임스페이스 TTL 상속 방식. CASCADE는 전파, ISOLATE는 차단이다 | |
+| `nebula.metrics.percentilesHistogram` | `Boolean` | `false` | restart required | Enables client-side percentile histograms for latency metrics so that dashboards can aggregate p50/p99 across nodes without server-side interpolation | English long-text regression case (keep-all must not affect Latin wrapping) |
 
 ## T3 — 긴 인라인 코드·URL 셀
 
@@ -26,13 +27,13 @@
 | 대시보드 | https://example.com/grafana/d/nebula-cache-overview/nebula-cache?orgId=1&refresh=30s&var-namespace=catalog |
 | 짧은 값 | 42 |
 
-## T4 — 숫자 위주 다열
+## T4 — 숫자 위주 다열 (+장문 헤더: th nowrap 스크롤 비용 케이스)
 
-| 네임스페이스 | 히트율 | p50(ms) | p99(ms) | 엔트리 수 | 승격/s |
+| 네임스페이스 | 히트율 | p50(ms) | p99(ms) | 엔트리 수 | 지난 24시간 평균 히트율 변화량(%) |
 |---|---|---|---|---|---|
-| catalog | 92.5% | 0.8 | 4.2 | 9,412 | 31 |
-| session | 88.1% | 0.6 | 3.1 | 104,882 | 122 |
-| pricing | 97.9% | 0.4 | 1.9 | 1,204 | 4 |
+| catalog | 92.5% | 0.8 | 4.2 | 9,412 | +0.3 |
+| session | 88.1% | 0.6 | 3.1 | 104,882 | -1.2 |
+| pricing | 97.9% | 0.4 | 1.9 | 1,204 | +0.1 |
 
 ## T5 — 초소형
 
