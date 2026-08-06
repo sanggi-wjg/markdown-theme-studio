@@ -84,10 +84,41 @@ html[data-mts-theme] body i,
 html[data-mts-theme] body del,
 html[data-mts-theme] body ins,
 html[data-mts-theme] body u,
+html[data-mts-theme] body sup,
+html[data-mts-theme] body sub,
 html[data-mts-theme] body small {
   color: inherit;
 }
 html[data-mts-theme] body tr { border: none; }
+
+/* mark/kbd는 UA·기본 preview 스타일에 의존하던 요소 — 커스텀 CSS 경쟁에서
+   무방비였고(리셋·명시 어디에도 없음), 특히 mark의 UA 노랑 배경은 다크에서
+   임의 커스텀 색과 조합되면 깨진다. 명시 선언으로 테마 도메인에 편입한다 */
+html[data-mts-theme] body mark {
+  background: #f2df66;
+  color: #24261f;
+  padding: 0.05em 0.2em;
+  border-radius: 3px;
+}
+html.mts-dark[data-mts-theme] body mark {
+  background: #b89f34;
+  color: #16170f;
+}
+html[data-mts-theme] body kbd {
+  font-family: var(--mts-mono);
+  font-size: 0.82em;
+  background: var(--mts-icode-bg);
+  color: var(--mts-fg);
+  border: 1px solid var(--mts-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+/* 작업 목록 체크박스: native 렌더는 다크에서 시인성이 낮다 — 테마 링크색으로 통일 */
+html[data-mts-theme] body input[type="checkbox"] {
+  accent-color: var(--mts-link);
+}
 
 /* 커스텀 CSS가 표 행/인용구에 밝은 배경을 깔면 다크 모드가 깨지므로
    배경을 투명으로 고정한다 — 테마별 지브라/헤더 채움은 뒤에서 다시 지정됨 */
