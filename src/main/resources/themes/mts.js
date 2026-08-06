@@ -19,6 +19,10 @@
   var FS_KEY = 'mts-fs-offset';
   var FS_MIN = -3;
   var FS_MAX = 3;
+  var W_KEY = 'mts-width-offset'; // 단계 수 저장(px 아님) — 스텝 크기 변경에 안전
+  var W_MIN = -3;
+  var W_MAX = 3;
+  var W_STEP = 80; // px per step — 테마별 measure(640~860px)에 공통 적용
   var ICONS = {
     auto: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
@@ -42,6 +46,7 @@
   var appearanceMode = savedAppearance();
   var currentTheme = null; // applyTheme가 설정 — off는 속성이 없어 DOM에서 못 읽는다
   var fsOffset = savedFsOffset();
+  var wOffset = savedWOffset();
 
   function savedTheme() {
     try {
@@ -98,6 +103,32 @@
     refreshWidget();
   }
 
+  function savedWOffset() {
+    try {
+      var v = parseInt(localStorage.getItem(W_KEY), 10);
+      return v >= W_MIN && v <= W_MAX ? v : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function applyWOffset() {
+    if (wOffset === 0) {
+      root.style.removeProperty('--mts-w-offset');
+    } else {
+      root.style.setProperty('--mts-w-offset', (wOffset * W_STEP) + 'px');
+    }
+  }
+
+  function nudgeWidth(delta) {
+    var next = wOffset + delta;
+    if (next < W_MIN || next > W_MAX) return;
+    wOffset = next;
+    try { localStorage.setItem(W_KEY, String(wOffset)); } catch (e) { /* ignore */ }
+    applyWOffset();
+    refreshWidget();
+  }
+
   function systemDark() {
     if (typeof window.__mtsDark === 'boolean') return window.__mtsDark;
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -129,13 +160,22 @@
     }
     var minus = host.querySelector('.mts-fs-minus');
     var plus = host.querySelector('.mts-fs-plus');
+    var off = currentTheme === 'off';
     if (minus && plus) {
-      var off = currentTheme === 'off';
       minus.disabled = off || fsOffset <= FS_MIN;
       plus.disabled = off || fsOffset >= FS_MAX;
       var now = ' (now ' + (fsOffset > 0 ? '+' : '') + fsOffset + 'px)';
       minus.setAttribute('title', off ? 'Font size — pick a theme first' : 'Decrease font size' + now);
       plus.setAttribute('title', off ? 'Font size — pick a theme first' : 'Increase font size' + now);
+    }
+    var wMinus = host.querySelector('.mts-w-minus');
+    var wPlus = host.querySelector('.mts-w-plus');
+    if (wMinus && wPlus) {
+      wMinus.disabled = off || wOffset <= W_MIN;
+      wPlus.disabled = off || wOffset >= W_MAX;
+      var wNow = ' (now ' + (wOffset > 0 ? '+' : '') + (wOffset * W_STEP) + 'px)';
+      wMinus.setAttribute('title', off ? 'Content width — pick a theme first' : 'Decrease content width' + wNow);
+      wPlus.setAttribute('title', off ? 'Content width — pick a theme first' : 'Increase content width' + wNow);
     }
   }
 
@@ -183,6 +223,16 @@
     }
     host.appendChild(fsButton('mts-fs-minus', 'A-', -1));
     host.appendChild(fsButton('mts-fs-plus', 'A+', 1));
+    function wButton(cls, text, delta) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'mts-fs ' + cls; // .mts-fs 재사용 — 컴팩트 스타일·좁은 패널 접힘·disabled 스타일 공유
+      b.textContent = text;
+      b.addEventListener('click', function () { nudgeWidth(delta); });
+      return b;
+    }
+    host.appendChild(wButton('mts-w-minus', 'W-', -1));
+    host.appendChild(wButton('mts-w-plus', 'W+', 1));
     var sep2 = document.createElement('span');
     sep2.className = 'mts-sep';
     host.appendChild(sep2);
@@ -216,6 +266,7 @@
 
   applyAppearance();
   applyFsOffset();
+  applyWOffset();
   applyTheme(savedTheme());
 
   window.addEventListener('scroll', refreshCorner, { passive: true });
