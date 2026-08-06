@@ -24,7 +24,8 @@ html[data-mts-theme] body {
   line-height: var(--mts-lh);
   background: var(--mts-bg);
   color: var(--mts-fg);
-  max-width: calc(var(--mts-measure) + 2 * var(--mts-pad-x));
+  /* --mts-w-offset은 위젯 W-/W+가 <html> 인라인 스타일로 주입한다 (±240px) */
+  max-width: calc(var(--mts-measure) + var(--mts-w-offset, 0px) + 2 * var(--mts-pad-x));
   margin: 0 auto;
   padding: 40px var(--mts-pad-x) 72px;
   -webkit-font-smoothing: antialiased;
