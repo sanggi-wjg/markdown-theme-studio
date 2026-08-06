@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "1.1.0"
+version = "1.1.1"
 
 repositories {
     mavenCentral()
@@ -70,6 +70,11 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>1.1.1</h3>
+            <ul>
+                <li>Highlighted text and keyboard keys (mark/kbd) now get themed styling — readable in dark mode and resistant to custom CSS overrides</li>
+                <li>Task list checkboxes follow the theme accent color for better dark-mode visibility</li>
+            </ul>
             <h3>1.1.0</h3>
             <ul>
                 <li>Code blocks now follow the IDE color scheme even when the appearance is manually overridden — syntax tokens stay readable in every combination</li>
