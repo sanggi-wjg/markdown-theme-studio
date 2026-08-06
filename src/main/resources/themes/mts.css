@@ -2,10 +2,14 @@
    Markdown Theme Studio — preview themes
    Scoping contract (set by mts.js):
      html[data-mts-theme="gh|nt|dc|rd"]  active theme
-     html.mts-dark                       dark appearance (follows IDE LaF)
+     html.mts-dark                       dark appearance (auto=LaF, 수동 강제 가능)
+     html.mts-laf-dark                   actual IDE LaF is dark — code fence
+                                         domain only, 외관 강제와 무관
    No attribute → plugin inactive, default preview styles apply untouched.
    Code fence token colors come from the IDE lexer as inline styles, so code
    blocks only restyle the container (background/padding/font), never tokens.
+   The fence container follows mts-laf-dark (not mts-dark) to stay in the same
+   light/dark domain as its tokens.
    ========================================================================== */
 
 /* ---------- shared structure (any active theme) ---------- */
@@ -123,9 +127,12 @@ html[data-mts-theme] body code {
   border-radius: 4px;
 }
 
+/* 코드펜스는 외관(mts-dark)이 아니라 LaF(mts-laf-dark)를 따른다 — 토큰 색이
+   IDE 렉서(=LaF의 에디터 스킴)에서 인라인으로 오므로, 외관을 강제해도 배경과
+   기본 글자색은 토큰과 같은 도메인에 있어야 대비가 유지된다 */
 html[data-mts-theme] body pre {
   background: var(--mts-code-bg);
-  color: var(--mts-fg);
+  color: var(--mts-pre-fg);
   border: none;
   border-radius: var(--mts-code-radius);
   padding: 15px 18px;
@@ -212,6 +219,7 @@ html[data-mts-theme="gh"] {
   --mts-icode-bg: rgba(129, 139, 152, 0.16);
   --mts-icode-fg: #1f2328;
   --mts-code-bg: #f6f8fa;
+  --mts-pre-fg: #1f2328;
   --mts-code-radius: 6px;
   --mts-th-bg: #f6f8fa;
   --mts-zebra: #f6f8fa;
@@ -227,9 +235,12 @@ html.mts-dark[data-mts-theme="gh"] {
   --mts-border: #3d444d;
   --mts-icode-bg: rgba(110, 118, 129, 0.4);
   --mts-icode-fg: #e6edf3;
-  --mts-code-bg: #161b22;
   --mts-th-bg: #161b22;
   --mts-zebra: #151b23;
+}
+html.mts-laf-dark[data-mts-theme="gh"] {
+  --mts-code-bg: #161b22;
+  --mts-pre-fg: #e6edf3;
 }
 html[data-mts-theme="gh"] body h1,
 html[data-mts-theme="gh"] body h2,
@@ -271,7 +282,10 @@ html[data-mts-theme="nt"] {
   --mts-border: #e6e0d3;
   --mts-icode-bg: #f3ede0;
   --mts-icode-fg: #a8443a;
-  --mts-code-bg: #f4efe4;
+  /* 라이트 코드 배경은 IDE Light 스킴 주석 회색(#8c8c8c) 대비가 기본 preview
+     (3.126) 이상이어야 한다 — tools/mts_tokens.py가 검증 */
+  --mts-code-bg: #faf7ee;
+  --mts-pre-fg: #3b372e;
   --mts-code-radius: 8px;
   --mts-fs: 16.5px;
   --mts-lh: 1.8;
@@ -285,8 +299,13 @@ html.mts-dark[data-mts-theme="nt"] {
   --mts-border: #33343a;
   --mts-icode-bg: #2c2d33;
   --mts-icode-fg: #e38c7f;
-  --mts-code-bg: #25262b;
 }
+html.mts-laf-dark[data-mts-theme="nt"] {
+  --mts-code-bg: #25262b;
+  --mts-pre-fg: #d6d4ce;
+}
+/* 밝아진 코드 배경이 페이지 배경(#faf6ef)과 비슷해져 경계는 보더로 구분한다 */
+html[data-mts-theme="nt"] body pre { border: 1px solid var(--mts-border); }
 html[data-mts-theme="nt"] body h1 { font-size: 2.5em; margin-bottom: 0.8em; }
 html[data-mts-theme="nt"] body h2 { margin-top: 2.2em; }
 html[data-mts-theme="nt"] body img { border-radius: 8px; }
@@ -326,7 +345,8 @@ html[data-mts-theme="dc"] {
   --mts-border: #e2e2e3;
   --mts-icode-bg: rgba(52, 81, 178, 0.08);
   --mts-icode-fg: #3451b2;
-  --mts-code-bg: #eff1f6;
+  --mts-code-bg: #f5f7fc;
+  --mts-pre-fg: #3c3c43;
   --mts-code-radius: 8px;
   --mts-th-bg: rgba(52, 81, 178, 0.09);
   --mts-zebra: #f6f6f7;
@@ -344,11 +364,14 @@ html.mts-dark[data-mts-theme="dc"] {
   --mts-border: #33333a;
   --mts-icode-bg: rgba(101, 117, 133, 0.28);
   --mts-icode-fg: #a8b1ff;
-  --mts-code-bg: #202127;
   --mts-th-bg: rgba(168, 177, 255, 0.08);
   --mts-zebra: #202127;
   --mts-quote-bg: rgba(168, 177, 255, 0.08);
   --mts-quote-border: #a8b1ff;
+}
+html.mts-laf-dark[data-mts-theme="dc"] {
+  --mts-code-bg: #202127;
+  --mts-pre-fg: #d0d0d4;
 }
 html[data-mts-theme="dc"] body h2 {
   margin-top: 2.2em;
@@ -413,7 +436,8 @@ html[data-mts-theme="rd"] {
   --mts-border: #dbd9d2;
   --mts-icode-bg: #eae8e2;
   --mts-icode-fg: #1a1c20;
-  --mts-code-bg: #edebe5;
+  --mts-code-bg: #f9f7f1;
+  --mts-pre-fg: #1a1c20;
   --mts-code-radius: 6px;
   --mts-serif: Georgia, "Times New Roman", "Apple Myungjo", "Nanum Myeongjo",
     "Noto Serif KR", serif;
@@ -429,7 +453,10 @@ html.mts-dark[data-mts-theme="rd"] {
   --mts-border: #2c3036;
   --mts-icode-bg: #23262b;
   --mts-icode-fg: #c9cdd3;
+}
+html.mts-laf-dark[data-mts-theme="rd"] {
   --mts-code-bg: #1c1f24;
+  --mts-pre-fg: #c9cdd3;
 }
 html[data-mts-theme="rd"] body h1,
 html[data-mts-theme="rd"] body h2,
@@ -471,7 +498,11 @@ html[data-mts-theme="rd"] body td {
   border: 1px solid var(--mts-border);
   padding: 6px 11px;
 }
-html[data-mts-theme="rd"] body pre { font-size: 0.92em; }
+/* 밝아진 코드 배경이 페이지 배경(#f6f5f1)보다 밝아져 경계는 보더로 구분한다 */
+html[data-mts-theme="rd"] body pre {
+  font-size: 0.92em;
+  border: 1px solid var(--mts-border);
+}
 
 /* ---------- theme switcher widget ----------
    <html> 직속 자식이라 본문 incremental 업데이트에서 살아남는다. */

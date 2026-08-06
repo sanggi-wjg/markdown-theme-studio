@@ -20,11 +20,17 @@ def targets():
         return json.loads(r.read())
 
 
+def preview_targets():
+    """열려 있는 모든 markdown preview 타겟 (프로젝트 창마다 하나씩 나올 수 있다)."""
+    return [t for t in targets()
+            if "markdown-preview-index" in t.get("url", "") and t.get("type") == "page"]
+
+
 def preview_target():
-    for t in targets():
-        if "markdown-preview-index" in t.get("url", "") and t.get("type") == "page":
-            return t
-    raise SystemExit("markdown preview 타겟 없음 — preview 패널이 열려 있어야 함")
+    found = preview_targets()
+    if not found:
+        raise SystemExit("markdown preview 타겟 없음 — preview 패널이 열려 있어야 함")
+    return found[0]
 
 
 class CDP:

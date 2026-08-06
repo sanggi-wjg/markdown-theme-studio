@@ -45,6 +45,8 @@ tasks.runIde {
         "-Djb.consents.confirmation.enabled=false",
         "-Djb.privacy.policy.text=<!--999.999-->",
         "-Deap.require.definitive.answers=false",
+        // 클린 샌드박스에서 --args로 프로젝트를 열 때 신뢰 다이얼로그가 모달로 막는 것을 스킵
+        "-Didea.trust.all.projects=true",
         // preview 렌더링을 CDP로 직접 검증하기 위한 JCEF 원격 디버깅
         "-Dide.browser.jcef.debug.port=9223",
     )
