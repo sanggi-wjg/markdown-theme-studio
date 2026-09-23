@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "1.1.1"
+version = "1.1.2"
 
 repositories {
     mavenCentral()
@@ -70,6 +70,15 @@ intellijPlatform {
         """.trimIndent()
 
         changeNotes = """
+            <h3>1.1.2</h3>
+            <ul>
+                <li>Emoji with a text fallback (⚠️ and similar) now render in color instead of monochrome on macOS</li>
+                <li>Docs theme: table borders fit the table instead of stretching across the page</li>
+                <li>Dark appearance: unchecked task-list boxes render dark instead of a light filled square</li>
+                <li>Reader theme: Korean headings use a Gothic fallback instead of Apple Myungjo, quotes use the body font, and justified text is gone</li>
+                <li>Tables: short code tokens (String, Boolean, …) no longer break mid-word in wide tables</li>
+                <li>Theme switcher stays readable at rest; code block scrollbars are thinner</li>
+            </ul>
             <h3>1.1.1</h3>
             <ul>
                 <li>Highlighted text and keyboard keys (mark/kbd) now get themed styling — readable in dark mode and resistant to custom CSS overrides</li>
