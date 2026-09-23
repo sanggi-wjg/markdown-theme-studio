@@ -34,10 +34,14 @@ html[data-mts-theme] body {
 html[data-mts-theme] {
   background: var(--mts-bg);
 
-  --mts-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Apple SD Gothic Neo", "Malgun Gothic",
-    "Noto Sans KR", "Noto Sans CJK KR", "Apple Color Emoji", "Segoe UI Emoji",
-    sans-serif;
+  /* system-ui(-apple-system/BlinkMacSystemFont)는 넣지 않는다 — macOS의 .SF NS가
+     ⚠ 같은 텍스트/이모지 겸용 문자(U+26A0+VS16)의 텍스트 글리프를 갖고 있어
+     JCEF가 VS16을 무시하고 흑백으로 그린다. Helvetica Neue엔 그 글리프가 없어
+     시스템 폴백이 Apple Color Emoji로 간다(Default preview와 동일).
+     이모지 폰트를 선두에 두면 공백·숫자까지 가로채므로 항상 뒤에 둔다 */
+  --mts-sans: "Helvetica Neue", "Segoe UI", Roboto, Arial,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR",
+    "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --mts-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, "SF Mono", Menlo,
     Consolas, "Liberation Mono", "Apple SD Gothic Neo", "Malgun Gothic",
     monospace;
@@ -118,6 +122,12 @@ html[data-mts-theme] body kbd {
 /* 작업 목록 체크박스: native 렌더는 다크에서 시인성이 낮다 — 테마 링크색으로 통일 */
 html[data-mts-theme] body input[type="checkbox"] {
   accent-color: var(--mts-link);
+}
+/* preview의 체크박스는 disabled라 accent-color가 먹지 않고 color-scheme을 따른다.
+   normal(라이트)이면 빈 칸이 어두운 배경 위에 밝은 회색 채움 사각형으로 그려져
+   완료 항목과 구분이 안 된다 — 다크 외관에선 네이티브 컨트롤도 다크로 */
+html.mts-dark[data-mts-theme] {
+  color-scheme: dark;
 }
 
 /* 커스텀 CSS가 표 행/인용구에 밝은 배경을 깔면 다크 모드가 깨지므로
@@ -209,6 +219,11 @@ html[data-mts-theme] body table {
   margin: 0 0 1.25em;
   display: block;
   overflow-x: auto;
+  /* display:block이면 블록 박스가 본문 전폭으로 늘어 셀보다 넓어진다 — 테두리를
+     table에 그리는 테마(Docs)에서 빈 박스가 오른쪽에 남는다. 내용 폭에 맞추되
+     넓은 표는 max-width에서 잘려 위 overflow-x 스크롤을 탄다 */
+  width: fit-content;
+  max-width: 100%;
 }
 /* 한글은 글자 단위로 줄바꿈돼 min-content가 사실상 1글자다 — 폭이 부족하면
    auto 레이아웃이 한글 열을 세로 띠로 압착한다. 단어 단위(keep-all)로 막고,
@@ -228,6 +243,15 @@ html[data-mts-theme] body th {
 html[data-mts-theme] body td code,
 html[data-mts-theme] body td a {
   overflow-wrap: anywhere;
+}
+/* anywhere는 min-content를 1글자로 만들어, 장문 열이 폭을 가져가면 String·Boolean
+   같은 짧은 토큰까지 Str/ing으로 쪼개진다. 코드가 든 셀에만 바닥 폭을 둬 짧은
+   토큰은 통째로 남기고, 긴 식별자만 그 폭 안에서 접히게 한다(칩 자체에 min-width를
+   주면 짧은 칩이 빈 공간까지 넓어져 셀에 둔다). 합이 넘치면 overflow-x 스크롤.
+   8em: 표 글자가 가장 작고(0.88×15.5px) 셀 패딩이 가장 큰 Docs에서도 9자 mono
+   토큰(LocalDate)까지 한 줄로 남는 값 — 4테마×896/427px 실측. 10자 이상은 접힘 */
+html[data-mts-theme] body td:has(code) {
+  min-width: 8em;
 }
 
 /* 스크롤바: 테마 전경색을 섞은 얇고 둥근 썸 (color-mix 미지원 시 회색 폴백) */
@@ -252,6 +276,15 @@ html[data-mts-theme] ::-webkit-scrollbar-thumb:hover {
 }
 html[data-mts-theme] ::-webkit-scrollbar-corner {
   background: transparent;
+}
+/* 코드블록 가로 스크롤바는 페이지 스크롤바(14px)보다 얇게 — 좁은 measure(Reader)
+   에선 긴 줄마다 붙어 두꺼우면 코드 박스 안에서 너무 두드러진다 */
+html[data-mts-theme] body pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+html[data-mts-theme] body pre::-webkit-scrollbar-thumb {
+  border-width: 1px;
 }
 
 /* ---------- Ⓐ GitHub ---------- */
@@ -485,8 +518,11 @@ html[data-mts-theme="rd"] {
   --mts-code-bg: #f9f7f1;
   --mts-pre-fg: #1a1c20;
   --mts-code-radius: 6px;
-  --mts-serif: Georgia, "Times New Roman", "Apple Myungjo", "Nanum Myeongjo",
-    "Noto Serif KR", serif;
+  /* 한글 세리프는 설치된 웹폰트급(Noto Serif KR·나눔명조)이 있을 때만 쓰고, 없으면
+     고딕으로 간다. generic serif의 macOS 한글 폴백은 AppleMyungjo(획이 얇고 자간이
+     넓은 구형 폰트)라 명시하지 않아도 그리로 떨어지므로 고딕을 먼저 둔다 */
+  --mts-serif: Georgia, "Times New Roman", "Noto Serif KR", "Nanum Myeongjo",
+    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", serif;
   --mts-fs: 18px;
   --mts-lh: 1.85;
   --mts-measure: 640px;
@@ -518,8 +554,9 @@ html[data-mts-theme="rd"] body h1 {
 }
 html[data-mts-theme="rd"] body h2 { font-size: 1.45em; margin-top: 2.4em; }
 html[data-mts-theme="rd"] body h3 { margin-top: 2em; }
+/* 양쪽정렬은 쓰지 않는다 — Chromium의 CJK justify는 어간뿐 아니라 자간까지 벌려,
+   인라인 코드·URL이 든 줄에서 한글이 띄엄띄엄 보인다(text-justify는 Blink 미지원) */
 html[data-mts-theme="rd"] body p {
-  text-align: justify;
   overflow-wrap: break-word;
 }
 html[data-mts-theme="rd"] body hr {
@@ -531,12 +568,13 @@ html[data-mts-theme="rd"] body a {
   text-decoration-color: var(--mts-muted);
   text-underline-offset: 3px;
 }
+/* 인용구는 본문 sans를 그대로 쓴다 — 본문 크기·muted 색의 세리프 한글은 폴백
+   품질에 좌우돼 가장 읽기 힘든 지점이었다. 세리프는 헤딩에만 */
 html[data-mts-theme="rd"] body blockquote {
   border-left: 2px solid var(--mts-border);
   padding: 0 0 0 1.1em;
   color: var(--mts-muted);
   font-size: 0.96em;
-  font-family: var(--mts-serif);
 }
 html[data-mts-theme="rd"] body table { font-size: 0.8em; }
 html[data-mts-theme="rd"] body th,
@@ -570,7 +608,9 @@ html[data-mts-theme="rd"] body pre {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  opacity: 0.3;
+  /* 휴지 상태에서도 라벨이 읽혀야 한다 — 0.3은 비활성 컨트롤처럼 보여 테마 전환
+     기능을 찾기 어려웠다. 본문보다는 뒤로 물러나는 선 */
+  opacity: 0.6;
   transition: opacity 0.18s ease, transform 0.18s ease;
 }
 #mts-switcher:hover { opacity: 1; }
