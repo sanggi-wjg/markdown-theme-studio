@@ -66,3 +66,47 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run lint
+
+  # 정적 렌더 하네스 — 캡처한 실제 preview 스냅샷(2026.2)에 IDE가 서빙하는 바이트를 꽂아 4테마×2외관
+  # × (클린/커스텀 CSS 최악 조건) × (900/427px)로 동물원·실제 본문·위젯(닫힘/열림) 대비, 레이아웃,
+  # 위젯 ARIA(axe), 언어 판정을 감사한다. Linux Chromium이라 macOS JCEF 폰트 의존 문제는 범위 밖 —
+  # 최종 판정은 CDP 하네스
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Export served resources
+        run: ./gradlew exportServedResources
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/static-harness/package-lock.json
+
+      - name: Static render audit
+        working-directory: tools/static-harness
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npm test
+
+      - name: Render summary
+        if: always()
+        run: '[ -f build/static-harness/summary.md ] && cat build/static-harness/summary.md >> "$GITHUB_STEP_SUMMARY" || true'
+
+      - name: Upload render results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: static-render
+          path: build/static-harness/

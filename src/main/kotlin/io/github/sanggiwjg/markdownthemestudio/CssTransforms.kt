@@ -88,3 +88,10 @@ private fun endsWithImportant(out: StringBuilder): Boolean {
     while (j >= 0 && out[j].isWhitespace()) j--
     return j >= 0 && out[j] == '!'
 }
+
+/** 서빙되는 mts.css 바이트 — 전 선언 !important 승격. CI 정적 렌더 하네스도 이 함수로 같은 바이트를 만든다 */
+internal fun servedStyle(raw: ByteArray): ByteArray = importantify(raw.decodeToString()).toByteArray()
+
+/** 서빙되는 mts.js 바이트 — IDE LaF 다크 여부 프리루드를 앞에 붙인다 */
+internal fun servedScript(raw: ByteArray, isDark: Boolean): ByteArray =
+    "window.__mtsDark = $isDark;\n".toByteArray() + raw

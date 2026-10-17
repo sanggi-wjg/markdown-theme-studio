@@ -1,0 +1,13 @@
+{
+  "name": "mts-static-harness",
+  "private": true,
+  "type": "module",
+  "description": "CI 정적 렌더 하네스 — 캡처한 preview 스냅샷에 서빙 바이트(mts.css/js)를 꽂아 headless Chromium에서 감사. 실행: (루트) ./gradlew exportServedResources && cd tools/static-harness && npm ci && npx playwright install chromium && npm test",
+  "scripts": {
+    "test": "node run.mjs"
+  },
+  "devDependencies": {
+    "axe-core": "4.13.0",
+    "playwright": "1.63.0"
+  }
+}

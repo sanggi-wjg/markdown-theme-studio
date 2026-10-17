@@ -13,3 +13,4 @@ tools/tokens-full.json
 tools/*.png
 # 린트 도구 의존성
 tools/lint/node_modules/
+tools/static-harness/node_modules/

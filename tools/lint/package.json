@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "npm run lint:css && npm run lint:js && npm run test:sync",
     "lint:css": "cd ../.. && tools/lint/node_modules/.bin/stylelint --config tools/lint/stylelint.config.mjs \"src/main/resources/themes/*.css\"",
-    "lint:js": "cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.mjs \"src/main/resources/themes/*.js\" \"tools/*.js\"",
+    "lint:js": "cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.mjs \"src/main/resources/themes/*.js\" \"tools/*.js\" \"tools/static-harness/*.js\"",
     "test:sync": "node --test sync.test.mjs"
   },
   "devDependencies": {

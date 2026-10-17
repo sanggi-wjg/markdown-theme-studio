@@ -1,0 +1,146 @@
+/* 정적 하네스 최악 조건 — 사용자 프로젝트 Custom CSS(.idea/markdown.xml)를 흉내 낸 적대적 스타일.
+   preview에서는 우리 시트 *뒤에* 로드된다(inline.css 자리). 테마가 명시 선언을 빠뜨린 속성은 이 값이
+   이긴다 — 특히 다크에서 밝은 배경·어두운 글자로 깨지는지 본다.
+   실제 사용자 프로젝트에서 관찰된 Typora GitHub 테마 이식 스니펫의 패턴을 일반화했다: 전 선언 !important,
+   라이트 전제 하드코딩 색, body 박스 모델·글자 크기, 제목·표·코드 크기, th 채움, 지브라 행(odd/even),
+   blockquote p, pre code.
+   원칙: mts.css의 `color: inherit` 리셋 블록과 `background: transparent` 리셋 블록에 있는 요소는 전부
+   여기서 겨냥한다 — 리셋에서 하나를 빼면 다크 외관 대비 검사(동물원·본문)에 잡힌다. 리셋 블록에 요소를
+   추가하면 여기에도 추가할 것 */
+
+body {
+  -webkit-text-size-adjust: 100% !important;
+  color: #333333 !important;
+  background-color: #ffffff !important;
+  font-family: "Open Sans", "Clear Sans", Helvetica, Arial, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  word-wrap: break-word !important;
+  padding: 20px 36px !important;
+  max-width: 920px !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
+}
+
+/* color: inherit 리셋 블록 전 요소 */
+p, ul, ol, dl, li, dd, dt, table, tr, td, blockquote,
+strong, b, em, i, del, ins, u, sup, sub, small {
+  color: #333333 !important;
+}
+p, li, dd, dt {
+  line-height: 1.7 !important;
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #111111 !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.6em !important;
+  margin-bottom: 0.6em !important;
+}
+h1 { font-size: 2em !important; border-bottom: 1px solid #eaecef !important; padding-bottom: 0.3em !important; }
+h2 { font-size: 1.5em !important; border-bottom: 1px solid #eaecef !important; padding-bottom: 0.25em !important; }
+h3 { font-size: 1.25em !important; }
+h4 { font-size: 1em !important; }
+h5 { font-size: 0.875em !important; }
+h6 { font-size: 0.85em !important; color: #6a737d !important; }
+
+a { color: #0366d6 !important; text-decoration: none !important; }
+strong { color: #111111 !important; font-weight: 600 !important; }
+em { color: #555555 !important; }
+mark { background: #ffff00 !important; color: #000000 !important; }
+kbd { background: #fafbfc !important; color: #444d56 !important; border: 1px solid #d1d5da !important; }
+
+code {
+  color: #e96900 !important;
+  background-color: #f8f8f8 !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 3px !important;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace !important;
+  font-size: 0.875em !important;
+  padding: 0.15em 0.4em !important;
+}
+pre {
+  color: #333333 !important;
+  background-color: #f8f8f8 !important;
+  border: 1px solid #e8e8e8 !important;
+  border-radius: 4px !important;
+  padding: 16px !important;
+  overflow: auto !important;
+  line-height: 1.6 !important;
+  margin: 16px 0 !important;
+}
+pre code {
+  color: #333333 !important;
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 0.9em !important;
+}
+
+blockquote {
+  color: #777777 !important;
+  background-color: #fafafa !important;
+  border-left: 4px solid #e0e0e0 !important;
+  margin: 16px 0 !important;
+  padding: 8px 20px !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+blockquote p { color: #777777 !important; margin: 4px 0 !important; }
+
+hr {
+  border: none !important;
+  border-top: 1px solid #eaecef !important;
+  margin: 24px 0 !important;
+  background-color: #e7e7e7 !important;
+}
+
+/* background: transparent 리셋 블록 전 요소(table·thead·tbody·tr·th·td·blockquote(위)) */
+table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  overflow: auto !important;
+  margin: 16px 0 !important;
+  font-size: 0.9375em !important;
+  background-color: #ffffff !important;
+}
+thead { background-color: #f6f8fa !important; }
+tbody { background-color: #ffffff !important; }
+tr { background-color: #ffffff !important; border-top: 1px solid #dfe2e5 !important; }
+thead tr { background-color: #f6f8fa !important; }
+th {
+  color: #333333 !important;
+  background-color: #f6f8fa !important;
+  font-weight: 600 !important;
+  border: 1px solid #dfe2e5 !important;
+  padding: 8px 16px !important;
+  text-align: left !important;
+}
+td {
+  color: #333333 !important;
+  background-color: #ffffff !important;
+  border: 1px solid #dfe2e5 !important;
+  padding: 8px 16px !important;
+}
+tbody tr:nth-child(even) { background-color: #f6f8fa !important; }
+tbody tr:nth-child(odd) { background-color: #ffffff !important; }
+
+img { max-width: 100% !important; border-style: none !important; box-sizing: content-box !important; }
+ul, ol { padding-left: 2em !important; margin: 8px 0 16px !important; }
+ul li, ol li { margin: 4px 0 !important; }
+input[type="checkbox"] { margin-right: 6px !important; accent-color: #4183c4 !important; }
+
+/* 위젯(html 직속, 테마 스코프 밖)도 커스텀 CSS와 경쟁한다 — 맨 button 규칙은 실제 스니펫에도 있다.
+   맨 div·span 색 규칙은 넣지 않는다: 2026.2 preview는 본문 글자를 span으로 감싸 테마의 color: inherit
+   리셋을 우회당하는데, span 색을 리셋하면 코드펜스 토큰 색(span 인라인 스타일)까지 지워져 막을 수 없는
+   경로다. 실제 Typora 계열 스니펫은 요소(p·li·blockquote 등)를 겨냥하지 맨 span·div는 건드리지 않는다 */
+button {
+  font-family: "Comic Sans MS", cursive !important;
+  color: #333333 !important;
+  background: #eeeeee !important;
+  border: 1px solid #999999 !important;
+}

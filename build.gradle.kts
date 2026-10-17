@@ -48,6 +48,18 @@ tasks.test {
 // 여러 worktree의 샌드박스를 동시에 띄울 수 있다 — -PcdpPort=9224 + 하네스는 MTS_CDP_PORT=9224
 val cdpPort = providers.gradleProperty("cdpPort").getOrElse("9223")
 
+// CI 정적 렌더 하네스(tools/static-harness)용 — IDE가 서빙하는 것과 같은 바이트(importantify된 CSS,
+// LaF 프리루드 붙은 JS)를 서빙 코드 그대로 내보낸다
+val exportServedResources by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Exports served mts.css/mts.js bytes for the static render harness"
+    classpath = sourceSets.test.get().runtimeClasspath
+    mainClass = "io.github.sanggiwjg.markdownthemestudio.ExportServedResourcesKt"
+    val out = layout.buildDirectory.dir("served")
+    args(out.get().asFile.path)
+    outputs.dir(out)
+}
+
 // runIde·runIdeLatest 공용 — 두 샌드박스가 같은 조건으로 뜨게 한다
 val sandboxJvmArgs = listOf(
     // 샌드박스 첫 실행 시 EUA/데이터 공유 다이얼로그가 크래시를 유발하므로 건너뛴다
