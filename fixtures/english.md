@@ -14,7 +14,7 @@ Nebula Cache is a **two-tier cache** built for *read-heavy* workloads. Hot keys 
 
 Long identifiers and URLs must wrap without pushing the page sideways: `NebulaCacheConfigurationPropertiesAutoConfigurationRegistrar` and https://example.com/grafana/d/nebula-cache-overview?orgId=1&refresh=30s&from=now-6h&to=now&var-namespace=catalog are both deliberately long.
 
-Typographic details: "curly quotes", em dashes — like this — en dashes (2019–2026), ellipses…, fractions ½, the ellipsis-heavy sentence that keeps going, superscript x<sup>2</sup>, and a hyphenated compound like state-of-the-art read-through-and-write-behind caching.
+Typographic details: “curly quotes” and ‘single quotes’, apostrophes (it’s the cache’s TTL), straight "ASCII quotes" for contrast, em dashes — like this — en dashes (2019–2026), ellipses…, fractions ½, the ellipsis-heavy sentence that keeps going, superscript x<sup>2</sup>, and a hyphenated compound like state-of-the-art read-through-and-write-behind caching.
 
 ### 1.1 Key features
 
@@ -39,7 +39,7 @@ Typographic details: "curly quotes", em dashes — like this — en dashes (2019
 | `nebula.ttl.default` | `PT10M` | Default TTL (ISO-8601 duration) |
 | `nebula.metrics.enabled` | `true` | Whether Micrometer metrics are exported |
 
-## 3. Usage
+## 3. Usage — Nebula’s “read-through” path
 
 ```kotlin
 val cache = NebulaCache.builder()

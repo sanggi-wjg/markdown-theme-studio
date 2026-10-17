@@ -114,7 +114,10 @@
   // 않아 기본 동작 그대로다. Default(off)에선 달지 않고(플러그인 완전 비활성), 우리가 단 lang만 관리한다
   var LANG_MARK = 'data-mts-lang';
   var LANG_ENOUGH = 1500; // 한글·한자·가나가 이만큼 모이면 판정에 충분하다
-  var LANG_SCAN_MAX = 60000; // 라틴 위주 긴 문서에서 판정 비용 상한(글자)
+  var LANG_ENOUGH_WORDS = 1000; // 어절·단어가 이만큼 모여도(영어 등 알파벳 위주 문서) 충분하다
+  var LANG_SCAN_MAX = 60000; // 글자가 드문(숫자·기호 위주) 긴 문서에서 판정 비용 상한(문자)
+  var HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/; // 음절·자모·호환 자모
+  var ALPHA = /[A-Za-zÀ-ÖØ-öø-ɏͰ-ӿ]/; // 라틴·확장 라틴·그리스·키릴
   // 코드·스타일은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>). 위젯·감사 주입 DOM도 제외.
   // 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는 형제 순회를 못 줄인다)
   // 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은 nodeName이 소문자)
@@ -129,16 +132,28 @@
         return NodeFilter.FILTER_SKIP;
       }
     });
-    // 한글(음절·자모·호환 자모)과, 비율 판단용으로 한글이 아닌 한자·가나
-    var hangul = 0, other = 0, scanned = 0, n;
-    while (scanned < LANG_SCAN_MAX && hangul + other < LANG_ENOUGH && (n = walker.nextNode())) {
+    // 글자 수: 한글과, 비율 판단용으로 한자·가나. 단어 수: 한글이 든 어절과 알파벳만 든 단어
+    var hangul = 0, han = 0, koWords = 0, alphaWords = 0, scanned = 0, n;
+    while (scanned < LANG_SCAN_MAX && hangul + han < LANG_ENOUGH && koWords + alphaWords < LANG_ENOUGH_WORDS &&
+           (n = walker.nextNode())) {
       var t = n.nodeValue;
       scanned += t.length;
       hangul += (t.match(/[가-힣ᄀ-ᇿ㄰-㆏]/g) || []).length;
-      other += (t.match(/[぀-ヿ㐀-䶿一-鿿]/g) || []).length;
+      han += (t.match(/[぀-ヿ㐀-䶿一-鿿]/g) || []).length;
+      var words = t.split(/\s+/);
+      for (var i = 0; i < words.length; i++) {
+        if (HANGUL.test(words[i])) koWords++;
+        else if (ALPHA.test(words[i])) alphaWords++;
+      }
     }
-    // 한글이 20자 미만이면(영어 등) 판정하지 않는다. 한자 병기가 많아도 한글이 절반 이상이면 한국어
-    return hangul >= 20 && hangul / (hangul + other) >= 0.5 ? 'ko' : null;
+    // 한글이 20자 미만이면 판정하지 않는다. 한자 병기가 많아도 한글이 절반 이상이면 한국어.
+    // 알파벳 문자와는 어절로 견준다 — 한국어 기술 문서는 영문 용어에 조사가 붙어("Bean을") 어절로 세면
+    // 한국어로 남고(글자로 세면 "Spring Boot의 AutoConfiguration은 …" 한 문장이 0.2 언저리까지 떨어진다),
+    // 영어 문서에 섞인 한글 한 줄(번역본 링크 등)은 단어 수에 묻힌다 — lang="ko"를 달면 스크린리더가
+    // 영어 본문을 한국어 발음으로 읽는다. 0.2: 어절 하나가 영어 단어 1.5개 남짓이라 내용상 1/4 남짓.
+    // 실측 어절 비율 — 한국어 fixtures 0.76~0.87, 영문 용어 위주 한국어 0.55~0.75, 반반 이중언어 0.32,
+    // 한글 한 줄 섞인 영어·프랑스어·러시아어 문서 0.02~0.05
+    return hangul >= 20 && hangul / (hangul + han) >= 0.5 && koWords / (koWords + alphaWords) >= 0.2 ? 'ko' : null;
   }
 
   // CSS는 우리 표식(data-mts-lang)을 키로 쓴다 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다.
@@ -166,7 +181,7 @@
   }
 
   // 본문은 로드 뒤 첫 IncrementalDOM 패치로 채워지고 편집마다 다시 패치된다. 첫 패치는 즉시 판정해
-  // 첫 페인트 전에 lang을 단다(MutationObserver 콜백은 패치 직후 마이크로태스크) — 늦게 달면 폰트·줄바꿈이
+  // 첫 페인트 전에 lang을 단다(MutationObserver 콜백은 패치 직후 마이크로태스크) — 늦게 달면 줄바꿈이
   // 한 번 더 바뀐다. 이후 변경은 묶어서 재판정
   var langTimer = null;
   var langFirstDone = false;

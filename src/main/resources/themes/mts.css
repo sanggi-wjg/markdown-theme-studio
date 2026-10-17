@@ -343,13 +343,6 @@ html[data-mts-theme] body table {
   width: fit-content;
   max-width: 100%;
 }
-/* 한글은 글자 단위로 줄바꿈돼 min-content가 사실상 1글자다 — 폭이 부족하면
-   auto 레이아웃이 한글 열을 세로 띠로 압착한다. 단어 단위(keep-all)로 막고,
-   그래도 부족한 폭은 위 overflow-x 스크롤이 받는다 */
-html[data-mts-theme] body th,
-html[data-mts-theme] body td {
-  word-break: keep-all;
-}
 
 /* ---------- 한국어 문서 (mts.js가 본문 글자로 판정해 <html data-mts-lang="ko">를 단다) ----------
    한국어는 띄어쓰기가 있어 어절 단위 줄바꿈이 관행이다 — 본문 전체 keep-all("가독/성"처럼 음절
@@ -359,6 +352,14 @@ html[data-mts-theme] body td {
 html[data-mts-lang="ko"][data-mts-theme] body {
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+/* 기본 스타일의 table { word-break: normal }이 body 상속을 끊어 셀은 따로 단다. 글자 단위
+   줄바꿈이면 한글 열의 min-content가 1글자라, 폭이 부족할 때 auto 레이아웃이 그 열을 세로
+   띠로 압착한다 — 그래도 부족한 폭은 표 overflow-x 스크롤이 받는다. 한국어에만: 띄어쓰기
+   없는 문자 체계에 keep-all을 걸면 문장 전체가 한 덩어리가 돼 표가 넘친다 */
+html[data-mts-lang="ko"][data-mts-theme] body th,
+html[data-mts-lang="ko"][data-mts-theme] body td {
+  word-break: keep-all;
 }
 html[data-mts-theme] body th {
   text-align: left;
