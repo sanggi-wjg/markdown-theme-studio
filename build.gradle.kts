@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 plugins {
@@ -21,6 +22,9 @@ dependencies {
         // 최소 지원 버전(2025.1) 기준으로 컴파일해 상위 버전 호환성을 보장한다
         intellijIdeaCommunity("2025.1")
         bundledPlugin("org.intellij.plugins.markdown")
+        // 설정 서비스 방송 테스트(ThemeStudioSettingsTest)가 실제 애플리케이션 메시지 버스를 쓴다 — @TestApplication
+        testFramework(TestFrameworkType.Platform)
+        testFramework(TestFrameworkType.JUnit5)
     }
     testImplementation(kotlin("test"))
     // IPGP가 주입하는 플랫폼 테스트 실행기가 JUnit4 클래스를 요구한다
