@@ -39,8 +39,18 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 
 - 번들 기능(copy 버튼 생존, 실행 아이콘 숨김, 링크·data URI 이미지 로드): `tools/.venv/bin/python tools/mts_review2.py features`
 - 좁은 패널: `tools/.venv/bin/python tools/mts_review2.py narrow 400` → 확인 후 `clearemu`로 원복
-- 위젯 키보드 접근성(위젯을 건드렸을 때 필수): `tools/.venv/bin/python tools/mts_review2.py widget` — Enter로 열기→선택 테마에 포커스, 방향키로 전환, Esc로 닫고 Aa로 포커스 복귀, 보이지 않는 포커스 대상 0. `ok: true`여야 한다
+- 위젯 키보드 접근성(위젯을 건드렸을 때 필수): `tools/.venv/bin/python tools/mts_review2.py widget` — Enter로 열기→선택 테마에 포커스, 방향키로 전환, Esc로 닫고 Aa로 포커스 복귀, 보이지 않는 포커스 대상 0. `ok: true`여야 한다. 방향키 전환은 IDE 설정(`options/markdownThemeStudio.xml`)까지 영구히 바꾼다 — 끝나면 원래 테마로 되돌리고, 감사 전엔 글자 크기·폭 오프셋도 0으로
 - 커스텀 CSS 경쟁: `css off` = 클린 환경 시뮬레이션, `css on` = Typora 최악 조건 복원
+
+## 3.5 IDE 설정 동기화 — 설정 상태 경로(ThemeStudioSettings·PreviewSettingsSync·mts-ide.js·위젯 저장)를 건드렸을 때
+
+`tools/mts_sync.py`(사용법은 파일 머리말). 상태 파일은 샌드박스 `config_runIde/options/markdownThemeStudio.xml`(2025.1), `config_runIdeLatest/options/…`(최신)
+
+- **IDE는 설정을 창 비활성화·정상 종료 때만 저장한다** — 샌드박스는 비활성화가 안 일어나고, pkill(SIGTERM)은 저장 없이 끝난다(설정도, JCEF localStorage의 미커밋 쓰기도 잃는다 — Chromium은 첫 커밋 뒤 커밋을 분 단위로 미룬다). 번들 performanceTesting 스크립트로 저장·정상 종료한다: 스크립트 파일에 `%sleep 15000` + `%saveDocumentsAndSettings`/`%sleep 10000` 반복(주기 저장) 또는 `%sleep 150000` + `%saveDocumentsAndSettings` + `%exitApp`(정상 종료)을 쓰고 `JAVA_TOOL_OPTIONS="-Dtestscript.filename=<파일>"`로 샌드박스를 띄운다. `%openFile <절대경로>`로 두 번째 preview, `%action MarkdownThemeStudio.SwitchTheme` + `%takeScreenshot <폴더>`로 액션 팝업 캡처(`log_*/screenshots/`). 팝업 항목 선택은 자동화할 수 없다(입력 이벤트 불가) — 선택 이후 경로는 `extset`(같은 Kotlin 갱신·방송 경로)으로 본다
+- 2026.2는 정상 종료 뒤에도 `cef_server` 프로세스가 남아 Gradle runIde가 끝나지 않는다 — 종료 뒤 자기 worktree 패턴으로 정리
+- 확인 항목: ① 위젯 변경 → `ask` 응답·XML ② 재기동(+`clearls`) 후 XML 값으로 복원 ③ `legacy` → `reload` 마이그레이션(rev 0일 때만) ④ preview 두 개에서 한쪽 변경이 다른 쪽에 즉시 반영 ⑤ `-DmarkdownThemeStudio.browserPipe.disabled=true`로 띄워 위젯 변경이 로컬에만 남고(pending), 같은 조건 재기동에서 유지되며, 정상 재기동 때 IDE로 올라가는지 ⑥ `extset` 허용 밖 값 무시
+- 감사(`mts_audit.py`)는 글자 크기·폭 오프셋 0을 전제한다 — 오프셋은 IDE 설정이라 재기동해도 남으므로 감사 전에 0으로(`extset 'seq=9999&fs=0&w=0'` 또는 위젯 Reset all)
+- preview origin은 내장 서버 포트(63342부터 빈 포트)라 다른 IDE·샌드박스가 먼저 떠 있으면 바뀐다 — 그때 localStorage는 비어 보인다(IDE 상태가 원천이라 정상 동작)
 
 ## 4. 스팟 체크
 

@@ -50,6 +50,10 @@ check "pluginIcon.svg" 'META-INF/pluginIcon\.svg' "$entries"
 check "pluginIcon_dark.svg" 'META-INF/pluginIcon_dark\.svg' "$entries"
 check "themes/mts.css" 'themes/mts\.css' "$entries"
 check "themes/mts.js" 'themes/mts\.js' "$entries"
+# IDE 설정 동기화 — 브리지가 빠지면 위젯은 localStorage로 조용히 강등돼 Settings Sync가 안 된다
+check "themes/mts-ide.js" 'themes/mts-ide\.js' "$entries"
+check "message bundle" 'messages/MarkdownThemeStudioBundle\.properties' "$entries"
+check "Switch Markdown Theme 액션" 'id="MarkdownThemeStudio.SwitchTheme"' "$xml"
 
 if [ "$fail" -ne 0 ]; then
   echo "패키징 검증 실패" >&2

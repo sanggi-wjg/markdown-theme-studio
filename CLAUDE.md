@@ -28,11 +28,16 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - **호환성 조기경보**: `.github/workflows/compat.yml`이 매주 최신 릴리즈·EAP에 Verifier + 번들 Markdown 계약 감시(`tools/upstream_contract.py` — default.css·대상 DOM 클래스·확장점·렌더러 선택을 `tools/upstream/` 메이저별 스냅샷과 diff)를 돌리고, 변화가 있으면 이슈를 연다. 변화를 검토해 테마 영향이 없으면 스냅샷을 갱신한다. 공개 저장소 schedule은 60일 무활동 시 자동 비활성화되므로 Actions 탭에서 꺼져 있지 않은지 릴리즈 때 확인
 - **릴리즈**: build.gradle.kts `version`·changeNotes 갱신 PR 머지 → `git tag vX.Y.Z && git push origin vX.Y.Z` — release.yml이 태그·버전 일치 확인 후 build-zip.sh + verifyPlugin을 통과하면 GitHub Release에 zip을 첨부한다. Marketplace 업로드는 수동(정책)
 
-## 아키텍처 (소스 3파일)
+## 아키텍처 (preview 주입 3파일 + IDE 설정 동기화)
 
 - `ThemeStudioPreviewExtension.kt` — EP `org.intellij.markdown.browserPreviewExtensionProvider` 구현. `Priority.AFTER_ALL`이라 우리 스타일시트가 cascade 마지막에 로드된다. ResourceProvider로 리소스를 서빙하며 서빙 시점에 두 변환을 한다: ① `importantify()` — mts.css의 전 선언에 `!important` 부여, ② mts.js 앞에 `window.__mtsDark = <IDE LaF 다크 여부>` 프리루드 주입
 - `themes/mts.css` — 스코프 계약: `html[data-mts-theme="gh|nt|dc|rd"]` = 활성 테마, `html.mts-dark` = 다크 외관, `html.mts-laf-dark` = 실제 IDE LaF 다크(코드펜스 전용 도메인 — 외관 강제와 무관하게 mts.js가 항상 LaF 기준으로 세팅). `html[data-mts-lang="ko"]` = mts.js가 본문(코드·스타일·수식 제외)으로 판정한 한국어 문서(한글 20자 이상, 한글 어절이 (한글 어절+알파벳 단어)의 1/5 이상 — 영어 문서에 섞인 한글 몇 줄로는 달리지 않는다) — 한국어 어절 단위 줄바꿈(keep-all, 표 셀 포함)의 키. 영어 등 다른 언어 문서엔 달리지 않아 기본 동작 그대로다(언어별 특화는 한국어까지만 — 플러그인은 범용 대상). 같은 값을 `lang`에도 달지만(접근성) `lang`이 비었거나 우리가 단 값일 때만 — 플랫폼 lang과 공존. 테마 off면 둘 다 없다. 속성이 없으면 플러그인 완전 비활성(기본 preview 그대로). 공용 구조 규칙 → 테마별 규칙 순서이며, 같은 특이도끼리는 파일 내 뒤가 이긴다
 - `themes/mts.js` — 스위처 위젯. 본문은 IncrementalDOM이 `document.body`만 패치하므로 위젯은 반드시 `<html>` 직속에 부착한다. 테마(Default='off'=속성 제거)·외관(auto/light/dark)·폰트 오프셋(±3px, `--mts-fs-offset` 인라인 변수)은 localStorage에 저장. 위젯 스타일은 테마 스코프 **밖**에 둔다 — off 상태에서도 위젯은 살아야 한다
+- **설정 상태의 원천은 IDE다** (#33 최소 슬라이스) — 위젯 값 4종(테마·외관·글자 크기·폭)은 앱 레벨 `ThemeStudioSettings`(`PersistentStateComponent`, `options/markdownThemeStudio.xml`, `SettingsCategory.UI`)에 있고 Backup and Sync로 IDE 간 동기화된다. localStorage는 미러이자 강등 경로다. category가 OTHER면 Settings Sync가 무조건 제외하고, IDE 제품 간 동기화는 사용자가 "Sync settings across"에서 전 제품(2025.1 "All JetBrains IDE products", 2025.2+ "JetBrains IDE products and Android Studio")을 골랐을 때만이다(기본은 제품별 스냅샷). 서비스는 plugin.xml `applicationService`로 등록한다 — `@Service` 경량 서비스는 처음 쓰이기 전까지 컴포넌트 목록에 없어 Settings Sync가 원격 값을 건너뛴다
+  - `PreviewPrefs.kt`(값·허용 목록·순수 상태 전이 — revision 0 = IDE에 값 없음, 조건부 변경 base) · `PreviewProtocol.kt`(JS 메시지 파싱·검증, 상태 JSON·프리루드) · `ThemeStudioSettings.kt`(서비스 + 앱 토픽 방송, EDT에서 변경) · `PreviewSettingsSync.kt`(패널당 1개 — 프리루드 서빙, BrowserPipe 구독, 방송→`BrowserPipe.send`) · `PipeHandler.java`(BrowserPipe.Handler — **Java인 이유**: 이 Kotlin 설정은 251의 default `messageReceived`에 `invokespecial` 위임 브리지를 생성해 252+에서 미해결 메서드 참조가 된다) · `SwitchThemeAction.kt`(Find Action "Switch Markdown Theme", `messages/MarkdownThemeStudioBundle.properties`)
+  - `themes/mts-ide.js` — JS 쪽 브리지(`window.__mtsSync`). 초기값 우선순위·마이그레이션·미확인(pending) 로컬 변경 처리가 여기 있다(머리말 참고, 테스트는 `tools/lint/sync.test.mjs` — `npm run lint`에 포함). 스크립트 경로에 확장 인스턴스마다 다른 토큰을 넣는다 — PreviewStaticServer는 Last-Modified=IDE 빌드 날짜 + 조건부 요청에 304라 같은 URL이면 패널 재로드(reloadWithOffset) 때 옛 프리루드가 캐시에서 나온다(263은 캐시 무시 재로드로 고쳤지만 251~262는 그대로)
+  - JS→IDE는 `MarkdownHtmlPanel.getBrowserPipe()`(@ApiStatus.Experimental — Verifier가 251~263 전부 Compatible + "1 usage of experimental API"로 보고)와 `__IntelliJTools.messagePipe.post` — JS는 `IdeReady` 뒤에만 post할 수 있어 큐에 쌓는다. pipe가 없거나 실패하면 프리루드 `pipe:false`/확인 응답 없음 → 위젯 변경은 localStorage에 pending으로 남고, IDE 값이 그 뒤 안 바뀌었으면 다음 로드에서도 로컬이 이긴다(강등). JS에서 온 값은 Kotlin(`PreviewProtocol.parseSet`)과 JS(`normalizeState`) 양쪽에서 허용 목록·범위로 검증한다. 강등 경로 재현·비상 스위치: `-DmarkdownThemeStudio.browserPipe.disabled=true`
+  - 실시간 반영: 변경(위젯·액션·Settings Sync의 `loadState`)은 EDT에서 앱 토픽으로 방송되고 패널마다 `BrowserPipe.send`로 민다(보낸 preview엔 seq를 실은 확인 응답). 새로 여는 preview는 프리루드로 받는다. IDE는 설정을 창 비활성화·정상 종료 때 저장하므로 Settings Sync 전파도 그때다. 실렌더 검증 절차는 `/verify-preview` 3.5
 
 ## 플랫폼 제약 — 어기면 조용히, 주로 다크 모드에서만 깨진다
 
@@ -52,6 +57,7 @@ preview 렌더링 문제는 CDP로 직접 본다. `tools/`에 하네스가 있�
 - `tools/mts_shot.py list|shot <테마> <light|dark> <out.png>|eval '<js>'` — 타겟 확인·스크린샷·JS 평가
 - `tools/mts_audit.py` — 요소 동물원을 주입해 4테마×2외관 전수 대비(WCAG)·레이아웃 검사
 - `tools/mts_review2.py features|narrow <px>|clearemu|css off|on` — 번들 기능 회귀·좁은 패널·커스텀 CSS 유무 시뮬레이션
+- `tools/mts_sync.py` — IDE 설정 동기화 검사(프리루드·localStorage 미러·IDE 상태 응답, 마이그레이션·강등 흉내)
 - `tools/mts_tokens.py` — 코드펜스 토큰 색 대비 감사 (기본 preview 베이스라인 + 4테마×2외관 = 9콤보). `fixtures/code-syntax.md`가 preview에 열려 있어야 한다: `./gradlew runIde --args="$PWD $PWD/fixtures/code-syntax.md"`. 토큰 색은 실행 중 LaF를 따르므로 라이트 LaF 1차 → 필요시 다크 LaF 2차. REGRESSION(기본 preview보다 악화) 0가 목표, BASELINE-LIMIT은 IDE 스킴 한계
 
 샌드박스가 여는 마지막 프로젝트에 Typora 커스텀 CSS가 있으면 최악 조건 테스트가 된다(의도적으로 유용). 클린 환경은 `css off`로 시뮬레이션.
