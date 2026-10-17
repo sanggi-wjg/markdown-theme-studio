@@ -6,6 +6,10 @@
     if (old) old.remove();
     var d = document.createElement('div');
     d.id = 'mts-audit';
+    function runLink(cls, icon, extra) {
+      return '<a class="' + cls + '" href="#" role="button" data-command="Run:mts-audit"' + extra + '>' +
+        '<img src="commandRunner/' + icon + '"></a>';
+    }
     d.innerHTML =
       '<h1>제목1</h1><h3>제목3</h3><h6>제목6</h6>' +
       '<p class="z-p">본문 텍스트 문단입니다.</p>' +
@@ -19,6 +23,18 @@
       '<tbody><tr><td class="z-td1">첫 행</td></tr><tr><td class="z-td2">둘째 행</td></tr></tbody></table>' +
       '<pre class="z-pre"><code>val x = veryLongFunctionCallExample(argumentOne, argumentTwo, argumentThree, argumentFour)</code></pre>' +
       '<p class="z-code-holder"><code class="z-code">인라인코드칩</code></p>' +
+      // commandRunner 실행 링크 (CommandRunnerExtension 템플릿 그대로) — 테마 활성 시 전부 숨어야 한다.
+      // 인라인: 2026.1+ run-icon-line / 2025.1 run-icon, 펜스: 블록 run-icon code-block + 줄 run-icon-line code-block.
+      // z-runtwin은 아이콘 없는 같은 텍스트 칩 — 숨긴 아이콘이 칩 폭·높이를 바꾸지 않는지 비교한다.
+      // 문단을 나눠 칩마다 줄 머리에 둔다(한 줄에 몰면 좁은 폭에서 칩이 줄바꿈돼 박스 비교가 어긋난다)
+      '<p><code class="z-runcode">' + runLink('run-icon-line', 'run.png', '') + './gradlew build</code></p>' +
+      '<p><code class="z-runtwin">./gradlew build</code></p>' +
+      '<p><code>' + runLink('run-icon', 'run.png', '') + './gradlew build</code></p>' +
+      '<table><tbody><tr><td><code class="z-runcell">' + runLink('run-icon-line', 'run.png', '') +
+      './gradlew :bench:run</code></td></tr></tbody></table>' +
+      '<pre><code class="language-shell">' +
+      runLink('run-icon code-block', 'runrun.png', ' data-commandtype="block"') + '<span>./gradlew build\n</span>' +
+      runLink('run-icon-line code-block', 'run.png', '') + '</code></pre>' +
       '<dl><dt class="z-dt">용어</dt><dd class="z-dd">설명 텍스트</dd></dl>' +
       '<hr>' +
       '<p class="z-url">https://example.com/path/' + Array(24).join('longsegment') + '</p>' +
@@ -81,7 +97,8 @@
     th: '.z-th', tdOdd: '.z-td1', tdEven: '.z-td2', preCode: '.z-pre code', inlineCode: '.z-code',
     dt: '.z-dt', dd: '.z-dd', h1: '#mts-audit h1', h3: '#mts-audit h3', h6: '#mts-audit h6',
     taskItem: '.task-list-item', fmKey: '.z-fmk', fmValue: '.z-fmv', fmChip: '.z-fmchip',
-    fmObjKey: '.z-fmobjk', fmObjValue: '.z-fmobjv', fmPre: '.z-fmpre'
+    fmObjKey: '.z-fmobjk', fmObjValue: '.z-fmobjv', fmPre: '.z-fmpre',
+    runCode: '.z-runcode', runCell: '.z-runcell'
   };
   ['note', 'tip', 'important', 'warning', 'caution'].forEach(function (t) {
     sels['alert-' + t] = '.z-al-' + t;
@@ -112,6 +129,26 @@
       bg: getComputedStyle(box).backgroundColor
     } : 'MISSING';
   }
+  // commandRunner 실행 링크 — 테마 활성 시 번들 렌더(문서)·동물원 모두 박스가 없어야 한다(display:none이면
+  // 링크·이미지 모두 getClientRects가 빈다). 숨긴 링크가 칩 폭·높이를 바꾸지 않는지 같은 텍스트 칩과 비교
+  var runs = Array.prototype.slice.call(document.querySelectorAll('body a[data-command]'));
+  var runCode = document.querySelector('#mts-audit .z-runcode');
+  var rc = runCode.getBoundingClientRect();
+  var tw = document.querySelector('#mts-audit .z-runtwin').getBoundingClientRect();
+  out._runIcons = {
+    total: runs.length,
+    doc: runs.filter(function (a) { return !a.closest('#mts-audit'); }).length,
+    visible: runs.filter(function (a) {
+      var img = a.querySelector('img');
+      return a.getClientRects().length > 0 || (img !== null && img.getClientRects().length > 0);
+    }).map(function (a) {
+      return (a.closest('#mts-audit') ? 'zoo ' : 'doc ') + a.className +
+        (a.closest('td') ? ' (td)' : a.closest('pre') ? ' (pre)' : ' (p)');
+    }),
+    chipDw: +(rc.width - tw.width).toFixed(2),
+    chipDh: +(rc.height - tw.height).toFixed(2),
+    chipText: runCode.textContent
+  };
   var body = document.body;
   var pre = document.querySelector('#mts-audit .z-pre');
   var urlP = document.querySelector('#mts-audit .z-url');

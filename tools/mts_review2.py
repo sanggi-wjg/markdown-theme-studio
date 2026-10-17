@@ -17,6 +17,11 @@ if cmd == "features":
         "   return b ? getComputedStyle(b).display : 'no-element';})(),"
         " runIconsHidden: (function(){var r=document.querySelector('.run-icon');"
         "   return r ? getComputedStyle(r).display : 'no-element';})(),"
+        # 실행 링크 전수(펜스 블록·줄, 인라인 코드·표 셀) — 테마 활성 시 visible이 비어야 한다
+        " runLinks: (function(){var a=Array.from(document.querySelectorAll('a[data-command]'));"
+        "   return {total: a.length, visible: a.filter(function(x){var i=x.querySelector('img');"
+        "     return x.getClientRects().length>0 || (i && i.getClientRects().length>0);})"
+        "     .map(function(x){return x.className;})};})(),"
         " loadedScripts: Array.from(document.querySelectorAll('script[src]'))"
         "   .map(function(s){return s.src.split('/').pop().split('?')[0];}),"
         " links: document.querySelectorAll('a[href]').length"

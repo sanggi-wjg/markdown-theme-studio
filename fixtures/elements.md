@@ -105,3 +105,16 @@ flowchart LR
     local -->|miss| remote[(Remote tier)]
     remote -->|miss| origin[Origin DB]
 ```
+
+## 실행 가능한 코드 — 번들 commandRunner (테마 활성 시 실행 아이콘이 숨어야 한다)
+
+인라인 실행 명령 `./gradlew build` 옆에 일반 인라인 코드 `NebulaCache`가 있다 — 두 칩의 높이·패딩이 같아야 한다(인라인 칩에도 실행 아이콘이 붙는다 — 2025.1 `.run-icon`, 2026.1+ `.run-icon-line`).
+
+| 작업 | 명령 |
+|---|---|
+| 벤치마크 | `./gradlew :nebula-bench:run --args="--namespace catalog"` |
+| 일반 코드 | `cache.close()` |
+
+```shell
+./gradlew :nebula-bench:run --args="--namespace catalog"
+```
