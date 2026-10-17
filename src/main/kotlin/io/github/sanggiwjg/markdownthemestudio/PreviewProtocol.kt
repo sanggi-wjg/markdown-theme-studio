@@ -71,4 +71,8 @@ internal object PreviewProtocol {
         val state = stateJson(prefs)
         return "window.__mtsIde = {\"pipe\":$pipe," + state.substring(1) + ";\n"
     }
+
+    /** 서빙되는 mts-ide.js 바이트 — [prelude]를 앞에 붙인다. CI 정적 렌더 하네스도 이 함수로 같은 바이트를 만든다 */
+    fun servedBridge(script: ByteArray, prefs: PreviewPrefs?, pipe: Boolean): ByteArray =
+        prelude(prefs, pipe).toByteArray() + script
 }
