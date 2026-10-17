@@ -1,8 +1,9 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 plugins {
     id("org.jetbrains.kotlin.jvm") version "2.2.21"
-    id("org.jetbrains.intellij.platform") version "2.18.1"
+    id("org.jetbrains.intellij.platform") version "2.19.0"
 }
 
 group = "io.github.sanggiwjg"
@@ -138,17 +139,32 @@ intellijPlatform {
 
         ideaVersion {
             sinceBuild = "251"
-            untilBuild = "262.*"
+            // untilBuild는 두지 않는다(오픈엔드) — IDE는 until-build를 지켜서 상한이 있으면 새
+            // 메이저 출시일에 설치·업데이트가 막힌다. JetBrains 공식 권장이기도 하다.
+            // 플랫폼 API 표면이 확장점 1개라 깨질 위험이 작고, 깨지면 주간 compat 워크플로
+            // (최신 릴리즈·EAP Verifier + 번들 Markdown 계약 감시)가 사용자보다 먼저 알린다
         }
     }
 
     pluginVerification {
         ides {
-            recommended()
-            // recommended()가 최신 메이저를 아직 안 주는 경우 대비 — 사용자 실기기(2026.1)와
-            // 최신 GA(2026.2) 명시. 253부터 IC 단독 배포가 없어 통합 IntelliJ IDEA 타입을 쓴다
-            create(IntelliJPlatformType.IntellijIdea, "2026.1.1")
-            create(IntelliJPlatformType.IntellijIdea, "2026.2")
+            if (providers.gradleProperty("verifyIdes").orNull == "latest") {
+                // 주간 조기경보: 사용자가 실제로 쓰는 IDE 종류별 최신 릴리즈 1개 + 최신 EAP 1개.
+                // latest{}는 타입별 최신만 남긴다 — select{sinceBuild}는 메이저마다 누적돼 계속 늘어난다
+                listOf(ProductRelease.Channel.RELEASE, ProductRelease.Channel.EAP).forEach { channel ->
+                    latest {
+                        types = listOf(
+                            IntelliJPlatformType.IntellijIdea,
+                            IntelliJPlatformType.WebStorm,
+                            IntelliJPlatformType.PyCharm,
+                        )
+                        channels = listOf(channel)
+                    }
+                }
+            } else {
+                // 릴리즈 게이트: 지원 범위 전체(2025.1~최신) 메이저별 최신 빌드
+                recommended()
+            }
         }
     }
 }

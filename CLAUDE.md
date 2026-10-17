@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트
 
-JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독성 테마 4종(GitHub/Soft/Docs/Reader)과 preview 우측 상단 테마 스위처를 제공하는 플러그인. 파싱·싱크스크롤 등 렌더링 파이프라인은 건드리지 않고 스타일만 재정의한다. 지원 범위 2025.1~2026.x, 컴파일은 항상 최소 버전(IC 2025.1) 기준.
+JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독성 테마 4종(GitHub/Soft/Docs/Reader)과 preview 우측 상단 테마 스위처를 제공하는 플러그인. 파싱·싱크스크롤 등 렌더링 파이프라인은 건드리지 않고 스타일만 재정의한다. 지원 범위 2025.1 이상(until-build 오픈엔드 — 상한을 두면 새 메이저 출시일에 설치가 막힌다), 컴파일은 항상 최소 버전(IC 2025.1) 기준.
 
 ## Git 전략
 
@@ -21,9 +21,10 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223)이 jvmArgs로 켜져 있음
 - `./gradlew runIdeLatest [-PlatestIdePath=<IDE 설치 경로>]` — 최신 IDE(IntelliJ IDEA 2026.2) 샌드박스. 경로를 주면 다운로드 대신 로컬 설치본 사용(macOS는 `.app` 경로 그대로). 같은 디버깅 포트를 쓰므로 runIde와 동시 실행 불가
 - `./gradlew prepareSandbox` — 샌드박스에 재배포. 단 CSS/JS는 패널 생성 시점에 서빙되므로 확실한 반영은 샌드박스 재시작
-- `./gradlew verifyPlugin` — 지원 IDE 범위 바이너리 호환성 검사
+- `./gradlew verifyPlugin` — 지원 범위(2025.1~최신 EAP) 메이저별 바이너리 호환성 검사. `-PverifyIdes=latest`는 최신 릴리즈·EAP를 IDEA·WebStorm·PyCharm별로 검사(주간 조기경보용)
 - `cd tools/lint && npm ci && npm run lint` — stylelint(CSS)·ESLint(JS), 버그성 규칙만 + 수동 `!important` 금지. CI `lint` 잡이 PR마다 실행
 - `./gradlew test`의 `CssContractTest` — mts.css 변수 계약 자동 검사: ① fallback 없는 `var()`는 그 스코프(공용 규칙이면 네 테마 전부)에서 정의돼 있어야 하고 ② 라이트 루트 블록의 색 변수는 올바른 다크 도메인에서 재정의돼야 한다(코드펜스 `--mts-code-bg`/`--mts-pre-fg`는 `mts-laf-dark`, 나머지는 `mts-dark` — 반대 도메인에 두면 외관 강제 조합에서만 깨진다) ③ 변수를 선언하는 루트 셀렉터는 `html(.mts-dark|.mts-laf-dark)?[data-mts-theme(="id")]` 형식이어야 한다(목록·작은따옴표·`:root`·접두 없는 형태는 검사가 놓치므로 실패). 다크에서 라이트 색을 의도적으로 공유하려면 테스트의 `sharedByDesign`에 근거와 함께 등록
+- **호환성 조기경보**: `.github/workflows/compat.yml`이 매주 최신 릴리즈·EAP에 Verifier + 번들 Markdown 계약 감시(`tools/upstream_contract.py` — default.css·대상 DOM 클래스·확장점·렌더러 선택을 `tools/upstream/` 메이저별 스냅샷과 diff)를 돌리고, 변화가 있으면 이슈를 연다. 변화를 검토해 테마 영향이 없으면 스냅샷을 갱신한다. 공개 저장소 schedule은 60일 무활동 시 자동 비활성화되므로 Actions 탭에서 꺼져 있지 않은지 릴리즈 때 확인
 - **릴리즈**: build.gradle.kts `version`·changeNotes 갱신 PR 머지 → `git tag vX.Y.Z && git push origin vX.Y.Z` — release.yml이 태그·버전 일치 확인 후 build-zip.sh + verifyPlugin을 통과하면 GitHub Release에 zip을 첨부한다. Marketplace 업로드는 수동(정책)
 
 ## 아키텍처 (소스 3파일)

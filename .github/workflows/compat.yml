@@ -1,0 +1,124 @@
+name: Compatibility watch
+
+# 주간 조기경보 — 최신 IDE 릴리즈·EAP에서 ① Plugin Verifier ② 번들 Markdown 계약
+# (default.css·DOM 클래스·확장점·렌더러 선택)을 검사한다. 실패 = 사용자보다 먼저 알아야 할
+# 업스트림 변화. 스케줄·수동 실행에서는 이슈를 열고(이미 열려 있으면 댓글), PR에서는 Verifier 실패·감시
+# 불능만 체크를 실패시키고 계약 변화(drift)는 요약 경고로 남긴다 — PR과 무관한 업스트림 변화로 빨간 체크가
+# 뜨면 "CI 통과 후 머지" 판단을 흐린다.
+# 계약 변화를 검토했으면 build/contract의 새 파일로 tools/upstream/ 스냅샷을 갱신하는 PR을 낸다.
+# 주의: 공개 저장소의 schedule은 60일 무활동이면 GitHub가 자동 비활성화한다 — Actions 탭에서 다시 켠다.
+on:
+  schedule:
+    - cron: "0 0 * * 1" # 매주 월요일 09:00 KST
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - build.gradle.kts
+      - gradle/**
+      - .github/workflows/compat.yml
+      - tools/upstream_contract.py
+      - tools/upstream/**
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # IDE 배포본 여러 개(IDEA·WebStorm·PyCharm × 릴리즈·EAP)를 풀면 기본 러너 디스크가 모자란다
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      # IDE 배포본(종당 수 GB)이 저장소 캐시(10GB 한도)를 채워 build.yml 캐시를 밀어내지 않게 읽기만 한다.
+      # EAP가 매주 바뀌어 재사용 이득도 없다
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+
+      - name: Verify plugin (latest releases + EAP)
+        id: verify
+        continue-on-error: true
+        run: ./gradlew verifyPlugin -PverifyIdes=latest
+
+      # Verifier가 Gradle 캐시에 풀어 둔 IDE를 그대로 재사용한다 — 추가 다운로드 없음
+      # 결과: ok(변화 없음) / drift(계약 변화) / error(감시 불능 — 추출 실패·크래시·최신 메이저 누락)
+      - name: Check bundled Markdown contract
+        id: contract
+        run: |
+          mkdir -p build/contract
+          set +e
+          python3 -I tools/upstream_contract.py extract build/contract ~/.gradle/caches/*/transforms/*/transformed/*
+          if [ $? -ne 0 ]; then
+            code=2 # extract에는 drift가 없다 — 크래시(1)든 미발견(2)이든 감시 불능
+          else
+            python3 -I tools/upstream_contract.py compare build/contract tools/upstream > build/contract-diff.md
+            code=$?
+            cat build/contract-diff.md
+          fi
+          # drift는 3만 — 1은 파이썬 크래시·사용법 오류라 error로 분류해야 고장이 경고로 묻히지 않는다
+          case "$code" in
+            0) echo "result=ok" >> "$GITHUB_OUTPUT" ;;
+            3) echo "result=drift" >> "$GITHUB_OUTPUT" ;;
+            *) echo "result=error" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compat-results
+          path: |
+            build/contract/
+            build/contract-diff.md
+            build/reports/pluginVerifier/
+
+      - name: Report
+        if: steps.verify.outcome == 'failure' || steps.contract.outputs.result != 'ok'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          VERIFY: ${{ steps.verify.outcome }}
+          CONTRACT: ${{ steps.contract.outputs.result }}
+        run: |
+          {
+            echo "업스트림 변화 감지 — 실행: ${RUN_URL}"
+            echo
+            echo "- Plugin Verifier: ${VERIFY}"
+            echo "- 번들 Markdown 계약: ${CONTRACT}"
+            echo
+            [ -s build/contract-diff.md ] && cat build/contract-diff.md
+            echo
+            echo "검토 후: 테마 영향이 있으면 수정 PR, 없으면 아티팩트 compat-results의 contract 파일로 tools/upstream/ 스냅샷 갱신 PR."
+          } > build/compat-report.md
+          cat build/compat-report.md >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            # PR: 이 PR이 깨뜨렸을 수 있는 것(Verifier·감시 불능)만 실패. drift는 업스트림 사정이라 경고만
+            if [ "$VERIFY" = "failure" ] || [ "$CONTRACT" = "error" ]; then exit 1; fi
+            echo "::warning::번들 Markdown 계약 변화(drift) — PR과 무관한 업스트림 변화일 수 있음. 요약 참고"
+            exit 0
+          fi
+          title="Compatibility watch: 업스트림 변화 감지"
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file build/compat-report.md
+          else
+            gh issue create --title "$title" --label platform --body-file build/compat-report.md
+          fi
+          exit 1

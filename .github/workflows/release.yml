@@ -44,11 +44,12 @@ jobs:
             exit 1
           fi
 
-      # test + buildPlugin + 패키징 검증(plugin.xml 버전·since/until·아이콘·리소스)
+      # test + buildPlugin + 패키징 검증(plugin.xml 버전·since·until 미지정·아이콘·리소스)
       - name: Build and verify packaging
         run: tools/build-zip.sh
 
-      # 지원 IDE 범위(2025.1~2026.2) 바이너리 호환성 — 릴리즈에서만 도는 무거운 게이트
+      # 지원 범위(2025.1~최신 EAP) 메이저별 바이너리 호환성 — 릴리즈에서만 도는 무거운 게이트.
+      # 최신 릴리즈·EAP 조기경보는 compat.yml이 주간으로 따로 돈다
       - name: Verify plugin compatibility
         run: ./gradlew verifyPlugin
 
