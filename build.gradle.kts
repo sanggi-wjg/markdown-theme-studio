@@ -39,17 +39,46 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.runIde {
+// runIde·runIdeLatest 공용 — 두 샌드박스가 같은 조건으로 뜨게 한다
+val sandboxJvmArgs = listOf(
     // 샌드박스 첫 실행 시 EUA/데이터 공유 다이얼로그가 크래시를 유발하므로 건너뛴다
-    jvmArgs(
-        "-Djb.consents.confirmation.enabled=false",
-        "-Djb.privacy.policy.text=<!--999.999-->",
-        "-Deap.require.definitive.answers=false",
-        // 클린 샌드박스에서 --args로 프로젝트를 열 때 신뢰 다이얼로그가 모달로 막는 것을 스킵
-        "-Didea.trust.all.projects=true",
-        // preview 렌더링을 CDP로 직접 검증하기 위한 JCEF 원격 디버깅
-        "-Dide.browser.jcef.debug.port=9223",
-    )
+    "-Djb.consents.confirmation.enabled=false",
+    "-Djb.privacy.policy.text=<!--999.999-->",
+    "-Deap.require.definitive.answers=false",
+    // 클린 샌드박스에서 --args로 프로젝트를 열 때 신뢰 다이얼로그가 모달로 막는 것을 스킵
+    "-Didea.trust.all.projects=true",
+    // preview 렌더링을 CDP로 직접 검증하기 위한 JCEF 원격 디버깅
+    "-Dide.browser.jcef.debug.port=9223",
+)
+
+tasks.runIde {
+    jvmArgs(sandboxJvmArgs)
+}
+
+intellijPlatformTesting {
+    runIde {
+        // 실사용 최신 IDE 실렌더 검증용 — 2025.1 샌드박스에선 안 보이는 번들 Markdown 변화
+        // (GitHub Alert·Compose 렌더러 선택 등)를 확인한다. 같은 디버깅 포트를 쓰므로 runIde와 동시 실행 불가.
+        // -PlatestIdePath=<IDE 설치 경로>를 주면 다운로드 대신 로컬 설치본을 쓴다
+        register("runIdeLatest") {
+            val latestIdePath = providers.gradleProperty("latestIdePath")
+            if (latestIdePath.isPresent) {
+                localPath = file(latestIdePath.get())
+            } else {
+                type = IntelliJPlatformType.IntellijIdea
+                version = "2026.2"
+            }
+            // 기본값이면 runIde(IC-2025.1) 샌드박스 디렉터리를 접미어만 바꿔 공유한다 — 분리
+            sandboxDirectory = layout.projectDirectory.dir(".intellijPlatform/sandbox-latest")
+            plugins {
+                // 통합 IntelliJ IDEA를 라이선스 없이 무료 모드로 고정 — 체험판/로그인 창 방지
+                disablePlugin("com.intellij.modules.ultimate")
+            }
+            task {
+                jvmArgs(sandboxJvmArgs)
+            }
+        }
+    }
 }
 
 intellijPlatform {

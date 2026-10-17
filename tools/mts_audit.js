@@ -20,14 +20,23 @@
       '<p class="z-code-holder"><code class="z-code">인라인코드칩</code></p>' +
       '<dl><dt class="z-dt">용어</dt><dd class="z-dd">설명 텍스트</dd></dl>' +
       '<hr>' +
-      '<p class="z-url">https://example.com/path/' + Array(24).join('longsegment') + '</p>';
+      '<p class="z-url">https://example.com/path/' + Array(24).join('longsegment') + '</p>' +
+      // GitHub Alert (2026.2+ 번들 렌더와 같은 마크업) — 유형 색 제목·본문 대비
+      ['note', 'tip', 'important', 'warning', 'caution'].map(function (t) {
+        return '<blockquote class="markdown-alert markdown-alert-' + t + '">' +
+          '<p class="markdown-alert-title z-al-' + t + '">' + t + '</p>' +
+          '<p class="z-al-body-' + t + '">알림 본문 텍스트</p></blockquote>';
+      }).join('');
     document.body.appendChild(d);
   }
 
   function parse(c) {
     var m = /rgba?\(([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\)/.exec(c || '');
-    if (!m) return null;
-    return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+    if (m) return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
+    // color-mix() 결과는 color(srgb 0~1 ...) 형식으로 계산된다 — 놓치면 틴트 배경을 투명으로 오판
+    m = /color\(srgb ([\d.e-]+) ([\d.e-]+) ([\d.e-]+)(?: \/ ([\d.]+))?\)/.exec(c || '');
+    if (m) return { r: m[1] * 255, g: m[2] * 255, b: m[3] * 255, a: m[4] === undefined ? 1 : +m[4] };
+    return null;
   }
   function lum(c) {
     function f(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
@@ -65,6 +74,10 @@
     dt: '.z-dt', dd: '.z-dd', h1: '#mts-audit h1', h3: '#mts-audit h3', h6: '#mts-audit h6',
     taskItem: '.task-list-item'
   };
+  ['note', 'tip', 'important', 'warning', 'caution'].forEach(function (t) {
+    sels['alert-' + t] = '.z-al-' + t;
+    sels['alertBody-' + t] = '.z-al-body-' + t;
+  });
   var out = {};
   Object.keys(sels).forEach(function (k) {
     var el = document.querySelector('#mts-audit ' + sels[k].replace('#mts-audit ', ''));
@@ -79,6 +92,17 @@
       bg: 'rgb(' + Math.round(bg.r) + ',' + Math.round(bg.g) + ',' + Math.round(bg.b) + ')'
     };
   });
+  // 2026.2+ 번들은 체크박스를 appearance:none으로 직접 그린다(체크 = ::after 테두리) —
+  // 체크 표시와 채움색의 대비를 본다. 네이티브 렌더(2025.1)는 측정 대상 아님
+  var box = document.querySelector('#mts-audit input[type="checkbox"]');
+  if (box && getComputedStyle(box).appearance === 'none') {
+    var mark = parse(getComputedStyle(box, '::after').borderRightColor);
+    var fill = parse(getComputedStyle(box).backgroundColor);
+    out.checkMark = mark && fill ? {
+      contrast: +contrast(mark, fill.a === 1 ? fill : blend(fill, effBg(box.parentElement))).toFixed(2),
+      bg: getComputedStyle(box).backgroundColor
+    } : 'MISSING';
+  }
   var body = document.body;
   var pre = document.querySelector('#mts-audit .z-pre');
   var urlP = document.querySelector('#mts-audit .z-url');

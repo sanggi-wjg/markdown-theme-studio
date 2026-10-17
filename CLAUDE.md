@@ -19,6 +19,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - `./gradlew buildPlugin` — `build/distributions/*.zip` 생성 (Install Plugin from Disk용)
 - `tools/build-zip.sh` — 배포용: test + buildPlugin + 패키징 검증(버전·idea-version·아이콘·리소스 포함 여부). 배포 zip은 이걸로 만든다
 - `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223)이 jvmArgs로 켜져 있음
+- `./gradlew runIdeLatest [-PlatestIdePath=<IDE 설치 경로>]` — 최신 IDE(IntelliJ IDEA 2026.2) 샌드박스. 경로를 주면 다운로드 대신 로컬 설치본 사용(macOS는 `.app` 경로 그대로). 같은 디버깅 포트를 쓰므로 runIde와 동시 실행 불가
 - `./gradlew prepareSandbox` — 샌드박스에 재배포. 단 CSS/JS는 패널 생성 시점에 서빙되므로 확실한 반영은 샌드박스 재시작
 - `./gradlew verifyPlugin` — 지원 IDE 범위 바이너리 호환성 검사
 - **릴리즈**: build.gradle.kts `version`·changeNotes 갱신 PR 머지 → `git tag vX.Y.Z && git push origin vX.Y.Z` — release.yml이 태그·버전 일치 확인 후 build-zip.sh + verifyPlugin을 통과하면 GitHub Release에 zip을 첨부한다. Marketplace 업로드는 수동(정책)
@@ -38,6 +39,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - 라이트 코드 배경은 IDE Light 스킴 주석 회색(#8c8c8c) 대비가 기본 preview(3.126) 이상이어야 한다 — `tools/mts_tokens.py`가 REGRESSION으로 검출
 - IDE LaF 변경 시 패널·확장 인스턴스가 파기 후 재생성된다. JS 상태는 살아남지 않는다는 전제로 작성 (프리루드가 매번 새로 주입되는 이유)
 - 번들 commandRunner의 실행 아이콘은 테마 활성 시 숨긴다(`.run-icon`, `.code-block`) — copy 버튼(`.code-fence-highlighter-*`)은 살려둘 것
+- **번들 렌더는 버전마다 요소가 늘어난다** — 수식(MathJax SVG, 2025.1~), GitHub Alert(`blockquote.markdown-alert-<type>`, 2026.2~), Mermaid(설치 IDE에 따라). IDE `colors.css`가 주는 의미 색(Alert 유형 색 등)은 비-important라 우리 규칙에 전부 덮이므로 테마 도메인에 재선언해야 한다. 샌드박스(2025.1)만 보면 이런 변화를 놓친다 — 스타일 변경은 `runIdeLatest`로도 확인하고, 새 요소는 `fixtures/elements.md`와 `mts_audit.js` 동물원에 추가한다
 
 ## 렌더링 검증 — 추측하지 말고 눈으로 확인
 
