@@ -39,7 +39,7 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 
 - 번들 기능(copy 버튼 생존, 실행 아이콘 숨김, 링크·data URI 이미지 로드): `tools/.venv/bin/python tools/mts_review2.py features`
 - 좁은 패널: `tools/.venv/bin/python tools/mts_review2.py narrow 400` → 확인 후 `clearemu`로 원복
-- 위젯 키보드 접근성(위젯을 건드렸을 때 필수): `tools/.venv/bin/python tools/mts_review2.py widget` — Enter로 열기→선택 테마에 포커스, 방향키로 전환, Esc로 닫고 Aa로 포커스 복귀, 보이지 않는 포커스 대상 0. `ok: true`여야 한다
+- 위젯 키보드 접근성(위젯을 건드렸을 때 필수): `tools/.venv/bin/python tools/mts_review2.py widget` — Enter로 열기→선택 테마에 포커스, 방향키로 전환, Esc로 닫고 Aa로 포커스 복귀, 보이지 않는 포커스 대상 0. `ok: true`여야 한다. 방향키 전환은 IDE 설정(`options/markdownThemeStudio.xml`)까지 영구히 바꾼다 — 끝나면 원래 테마로 되돌리고, 감사 전엔 글자 크기·폭 오프셋도 0으로
 - 커스텀 CSS 경쟁: `css off` = 클린 환경 시뮬레이션, `css on` = Typora 최악 조건 복원
 
 ## 3.5 IDE 설정 동기화 — 설정 상태 경로(ThemeStudioSettings·PreviewSettingsSync·mts-ide.js·위젯 저장)를 건드렸을 때

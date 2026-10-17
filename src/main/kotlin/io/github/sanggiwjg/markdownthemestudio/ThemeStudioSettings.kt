@@ -3,7 +3,6 @@ package io.github.sanggiwjg.markdownthemestudio
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.SerializablePersistentStateComponent
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -16,13 +15,18 @@ import com.intellij.util.messages.Topic
  * Settings Sync: 앱 레벨 + 로밍 가능한 저장소(기본 RoamingType.DEFAULT) + category가 OTHER가 아니어야 동기화
  * 대상이다(251 settingsSync `isSyncCategoryEnabled`·`getRoamableCategory` — OTHER는 무조건 제외). UI로 두어
  * "UI settings" 카테고리와 함께 켜고 끈다. IDE 제품 간(IDEA↔PyCharm 등) 동기화는 Backup and Sync의
- * "Sync settings across: All JetBrains IDE products"를 골랐을 때만이다 — 기본값은 제품별 스냅샷
- * (`<product>/settings.sync.snapshot.zip`)이라 같은 제품의 다른 설치본끼리만 맞춰진다.
+ * "Sync settings across"에서 전 제품(2025.1 "All JetBrains IDE products", 2025.2+ "JetBrains IDE products and
+ * Android Studio")을 골랐을 때만이다 — 기본값은 제품별 스냅샷(`<product>/settings.sync.snapshot.zip`)이라 같은
+ * 제품의 다른 설치본끼리만 맞춰진다.
+ *
+ * 등록: plugin.xml `applicationService`로 한다(@Service 경량 서비스 금지). Settings Sync는 파일의 카테고리를
+ * 컴포넌트 목록(`processAllImplementationClasses`)에서 찾는데, 경량 서비스는 그 세션에서 처음 `service()`로
+ * 불리기 전엔 목록에 없다 — preview를 아직 안 연 IDE가 원격 값을 건너뛰고(`writeStatesToAppConfig`), 동기화
+ * 최초 스냅샷·Export Settings에서도 빠진다(251·263 settingsSync 소스, PluginDescriptorTest가 고정).
  *
  * 스레드: 상태는 불변 스냅샷([PreviewPrefs])이라 어느 스레드에서 읽어도 된다(리소스 서빙은 netty 스레드).
  * 변경([update])과 방송은 EDT에서 한다 — preview 파기(EDT)와 BrowserPipe.send가 엇갈리지 않게.
  */
-@Service(Service.Level.APP)
 @State(
     name = "MarkdownThemeStudio",
     storages = [Storage("markdownThemeStudio.xml")],

@@ -12,7 +12,12 @@
             implementation="io.github.sanggiwjg.markdownthemestudio.ThemeStudioPreviewExtension$Provider"/>
     </extensions>
 
-    <!-- 설정 원천(ThemeStudioSettings)은 @Service 경량 서비스라 등록이 필요 없다 -->
+    <!-- 설정 원천은 명시 등록한다 — @Service 경량 서비스는 처음 쓰이기 전까지 컴포넌트 목록에 없어 Settings Sync가
+         그 파일의 카테고리를 찾지 못한다(preview를 안 연 IDE가 원격 값을 건너뜀). ThemeStudioSettings KDoc 참고 -->
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="io.github.sanggiwjg.markdownthemestudio.ThemeStudioSettings"/>
+    </extensions>
+
     <actions>
         <!-- 그룹에 넣지 않는다 — Find Action(⇧⌘A)·Keymap에서 찾아 쓰는 진입점 -->
         <action id="MarkdownThemeStudio.SwitchTheme"

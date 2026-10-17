@@ -205,3 +205,37 @@ test("messagePipe가 없는 환경(정적 하네스 등)에서도 예외 없이 
   p.push({ theme: "nt" });
   assert.equal(p.store["mts-pending"], "1");
 });
+
+test("조건부 업로드가 거절되면(seq 없는 현재 상태 회신) IDE 값을 적용하고 미확인을 푼다", () => {
+  const p = load({ ide: ide(700), store: { "mts-ide-rev": "700", "mts-pending": "1" }, alreadyReady: true });
+  assert.deepEqual(p.connect(custom), custom);
+  p.receive({ rev: 900, ...DEFAULTS, theme: "dc" });
+  assert.deepEqual(p.applied, [{ ...DEFAULTS, theme: "dc" }]);
+  assert.equal(p.store["mts-pending"], "0");
+  assert.equal(p.store["mts-ide-rev"], "900");
+});
+
+test("IDE 값이 없고(rev 0) 미확인 로컬이 기본값이면 올리지 않는다 — 현재 상태만 묻는다", () => {
+  const p = load({ ide: ide(0), store: { "mts-ide-rev": "0", "mts-pending": "1" }, alreadyReady: true });
+  assert.deepEqual(p.connect({ ...DEFAULTS }), DEFAULTS);
+  assert.deepEqual(p.posted, [["mts:ready", ""]]);
+});
+
+test("connect 전에 온 상태는 버리고, IdeReady 뒤 ready 회신으로 맞춘다", () => {
+  const p = load({ ide: ide(700) });
+  p.receive({ rev: 800, ...DEFAULTS, theme: "nt" });
+  assert.deepEqual(p.connect({ ...DEFAULTS }), DEFAULTS);
+  p.ideReady();
+  assert.deepEqual(p.posted, [["mts:ready", ""]]);
+  p.receive({ rev: 800, ...DEFAULTS, theme: "nt" });
+  assert.deepEqual(p.applied, [{ ...DEFAULTS, theme: "nt" }]);
+});
+
+test("값이 그대로인 변경(Unchanged)도 자기 seq 회신이면 미확인을 푼다", () => {
+  const p = load({ ide: ide(700), alreadyReady: true });
+  p.connect({ ...DEFAULTS });
+  p.push({ theme: "gh" });
+  assert.equal(p.store["mts-pending"], "1");
+  p.receive({ rev: 700, ...DEFAULTS, seq: 1 });
+  assert.equal(p.store["mts-pending"], "0");
+});

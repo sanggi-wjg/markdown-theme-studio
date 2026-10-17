@@ -67,7 +67,7 @@ Markdown preview 우측 상단의 **Aa** 버튼을 누르면 설정 패널이 �
 
 테마·외관·글자 크기·폭은 IDE 설정(`options/markdownThemeStudio.xml`)에 저장됩니다. 한 preview에서 바꾸면 다른 preview·다른 프로젝트 창에도 바로 반영됩니다.
 
-- **Backup and Sync(Settings Sync)** — **UI settings** 카테고리에 포함되어 동기화됩니다. IntelliJ IDEA·WebStorm·PyCharm처럼 **서로 다른 IDE 제품끼리** 맞추려면 Backup and Sync 설정의 **Sync settings across**를 **All JetBrains IDE products**로 바꾸세요(기본값은 같은 제품의 다른 설치본끼리만 동기화). 받는 쪽 IDE에도 이 플러그인이 설치돼 있어야 합니다
+- **Backup and Sync(Settings Sync)** — **UI settings** 카테고리에 포함되어 동기화됩니다. IntelliJ IDEA·WebStorm·PyCharm처럼 **서로 다른 IDE 제품끼리** 맞추려면 Backup and Sync 설정의 **Sync settings across**를 전 제품(2025.2 이상 **JetBrains IDE products and Android Studio**, 2025.1 **All JetBrains IDE products**)으로 바꾸세요(기본값은 같은 제품의 다른 설치본끼리만 동기화). 받는 쪽 IDE에도 이 플러그인이 설치돼 있어야 합니다
 - **이전 버전에서 업데이트** — preview에 저장돼 있던 기존 선택은 그 IDE에 아직 설정 값이 없으면 처음 preview를 열 때 IDE 설정으로 옮겨집니다. 이미 다른 IDE에서 동기화된 값이 있으면 그 값이 우선합니다. 예전 저장소는 IDE 내장 서버 포트(63342~)별이라, 여러 IDE를 동시에 띄워 포트가 바뀌었으면 옮길 값을 찾지 못할 수 있습니다 — 한 번 다시 고르면 그때부터는 IDE 설정에 남습니다
 
 ## 개발
@@ -104,7 +104,7 @@ tools/build-zip.sh      # 배포 zip 빌드 + 패키징 검증 (테스트 포함
 **다른 IDE와 설정이 맞춰지지 않는다**
 
 - Backup and Sync가 켜져 있고 **UI settings** 카테고리가 포함돼 있는지 확인하세요
-- 제품이 다르면(IDEA↔PyCharm 등) **Sync settings across: All JetBrains IDE products**가 필요합니다
+- 제품이 다르면(IDEA↔PyCharm 등) **Sync settings across**를 전 제품(2025.2+ **JetBrains IDE products and Android Studio**, 2025.1 **All JetBrains IDE products**)으로 골라야 합니다
 - 동기화로 값이 들어오면 열린 preview에도 바로 반영됩니다. 반영되지 않는 preview는 파일을 다시 열면 맞춰집니다
 
 **IDE 설정 연동이 동작하지 않는 환경**
