@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # IDE 배포본 여러 개(IDEA·WebStorm·PyCharm × 릴리즈·EAP)를 풀면 기본 러너 디스크가 모자란다
       - name: Free disk space
@@ -41,14 +41,14 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           df -h /
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
 
       # IDE 배포본(종당 수 GB)이 저장소 캐시(10GB 한도)를 채워 build.yml 캐시를 밀어내지 않게 읽기만 한다.
       # EAP가 매주 바뀌어 재사용 이득도 없다
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: true
 
@@ -81,7 +81,7 @@ jobs:
 
       - name: Upload results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: compat-results
           path: |
