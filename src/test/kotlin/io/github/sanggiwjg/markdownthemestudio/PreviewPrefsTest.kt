@@ -81,4 +81,9 @@ class PreviewPrefsTest {
         assertEquals("markdownThemeStudio.xml", state.storages.single().value)
         assertTrue(state.storages.single().roamingType.isRoamable)
     }
+
+    @Test
+    fun `액션 테마 목록은 위젯과 같은 순서 — 견본 4종 다음 Default`() {
+        assertEquals(listOf("gh", "nt", "dc", "rd", "off"), SwitchThemeAction.themeChoices())
+    }
 }
