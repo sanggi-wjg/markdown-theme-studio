@@ -24,7 +24,14 @@ html[data-mts-theme] body {
   line-height: var(--mts-lh);
   background: var(--mts-bg);
   color: var(--mts-fg);
-  /* --mts-w-offset은 위젯 W-/W+가 <html> 인라인 스타일로 주입한다 (±240px) */
+  /* 본문 단(글줄) 폭 = --mts-measure(테마별, 패딩 제외) + W± 오프셋.
+     border-box라 max-width가 좌우 패딩을 포함한다. 번들 default.css는 body 자손만
+     border-box(body *)이고 body 자체는 content-box라, 선언이 없으면 패딩이 max-width
+     바깥에 붙어 단이 measure보다 2×pad-x(64px) 넓었다.
+     명시 필수: 사용자 커스텀 CSS(Typora 스니펫의 body { box-sizing: border-box !important })가
+     있는 프로젝트에선 단이 measure 그대로라 프로젝트마다 본문 폭이 64px 달랐다.
+     --mts-w-offset은 위젯 W-/W+가 <html> 인라인 스타일로 주입한다 (±240px) */
+  box-sizing: border-box;
   max-width: calc(var(--mts-measure) + var(--mts-w-offset, 0px) + 2 * var(--mts-pad-x));
   margin: 0 auto;
   padding: 40px var(--mts-pad-x) 72px;
