@@ -39,12 +39,16 @@ html[data-mts-theme] {
      JCEF가 VS16을 무시하고 흑백으로 그린다. Helvetica Neue엔 그 글리프가 없어
      시스템 폴백이 Apple Color Emoji로 간다(Default preview와 동일).
      이모지 폰트를 선두에 두면 공백·숫자까지 가로채므로 항상 뒤에 둔다 */
-  --mts-sans: "Helvetica Neue", "Segoe UI", Roboto, Arial,
-    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR",
+  --mts-sans: "Helvetica Neue", "Segoe UI", Roboto, Arial, var(--mts-cjk-sans),
     "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
   --mts-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, "SF Mono", Menlo,
-    Consolas, "Liberation Mono", "Apple SD Gothic Neo", "Malgun Gothic",
-    monospace;
+    Consolas, "Liberation Mono", var(--mts-cjk-sans), monospace;
+  /* CJK 폰트는 문서 언어(mts.js가 다는 lang)별로 고른다 — 한자는 언어마다 자형이 달라(한·중·일 통합
+     한자), 한국어 폰트로 일본어·중국어를 그리면 한자가 한국식 자형으로 나온다. 기본(lang 없음·ko)은 한국어 */
+  --mts-cjk-sans: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", "Noto Sans CJK KR";
+  /* 한글 세리프는 설치된 웹폰트급(Noto Serif KR·나눔명조)이 있을 때만 쓰고, 없으면 고딕으로 간다.
+     generic serif의 macOS 한글 폴백은 AppleMyungjo(획이 얇고 자간이 넓은 구형 폰트)다 (Reader 헤딩) */
+  --mts-cjk-serif: "Noto Serif KR", "Nanum Myeongjo", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR";
   --mts-pad-x: 32px;
 
   /* GitHub Alert 유형 색(라이트) — 근거는 아래 Alert 규칙 주석 */
@@ -259,6 +263,41 @@ html[data-mts-theme] body table {
 html[data-mts-theme] body th,
 html[data-mts-theme] body td {
   word-break: keep-all;
+}
+
+/* ---------- 문서 언어별 (mts.js가 본문 글자로 판정해 <html data-mts-lang>을 단다) ----------
+   키는 lang이 아니라 우리 표식 — 플랫폼이 lang(UI 로케일 등)을 달게 돼도 판정 결과로 조판한다.
+   한국어: 띄어쓰기가 있는 언어라 어절 단위 줄바꿈이 관행이다 — 본문 전체 keep-all("가독/성"처럼
+   음절 중간에서 끊기지 않게). 긴 영문 식별자·URL은 overflow-wrap이 받는다.
+   일본어: 띄어쓰기가 없어 keep-all이면 구두점에서만 줄이 바뀌어 표가 가로로 늘어난다 — 대신
+   문절 단위 줄바꿈(auto-phrase, Chromium 119+, 콘텐츠 언어가 ja여야 동작 — mts.js가 lang도 단다).
+   중국어: 문절 분할이 없다 — 글자 단위(normal)로 두되, 표 열이 한 글자 폭 세로 띠로 압착되지 않게
+   셀 바닥 폭을 둔다 */
+html[data-mts-lang="ko"][data-mts-theme] body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+html[data-mts-lang="ja"][data-mts-theme] body,
+html[data-mts-lang="ja"][data-mts-theme] body th,
+html[data-mts-lang="ja"][data-mts-theme] body td {
+  word-break: auto-phrase;
+}
+html[data-mts-lang="zh"][data-mts-theme] body th,
+html[data-mts-lang="zh"][data-mts-theme] body td {
+  word-break: normal;
+  min-width: 4em;
+}
+/* 위 규칙이 특이도로 공용 td:has(code)의 8em 바닥을 덮지 않게 다시 선언 */
+html[data-mts-lang="zh"][data-mts-theme] body td:has(code) {
+  min-width: 8em;
+}
+html[data-mts-lang="ja"][data-mts-theme] {
+  --mts-cjk-sans: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", "Noto Sans CJK JP";
+  --mts-cjk-serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif CJK JP", "Hiragino Sans";
+}
+html[data-mts-lang="zh"][data-mts-theme] {
+  --mts-cjk-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", "Noto Sans CJK SC";
+  --mts-cjk-serif: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "PingFang SC";
 }
 html[data-mts-theme] body th {
   text-align: left;
@@ -597,11 +636,8 @@ html[data-mts-theme="rd"] {
   --mts-code-bg: #f9f7f1;
   --mts-pre-fg: #1a1c20;
   --mts-code-radius: 6px;
-  /* 한글 세리프는 설치된 웹폰트급(Noto Serif KR·나눔명조)이 있을 때만 쓰고, 없으면
-     고딕으로 간다. generic serif의 macOS 한글 폴백은 AppleMyungjo(획이 얇고 자간이
-     넓은 구형 폰트)라 명시하지 않아도 그리로 떨어지므로 고딕을 먼저 둔다 */
-  --mts-serif: Georgia, "Times New Roman", "Noto Serif KR", "Nanum Myeongjo",
-    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", serif;
+  /* CJK 세리프는 공용 --mts-cjk-serif(언어별) — 한글은 AppleMyungjo 폴백을 피해 고딕으로 간다 */
+  --mts-serif: Georgia, "Times New Roman", var(--mts-cjk-serif), serif;
   --mts-fs: 18px;
   --mts-lh: 1.85;
   --mts-measure: 640px;

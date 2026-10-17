@@ -104,7 +104,94 @@
       root.setAttribute('data-mts-theme', id);
     }
     save(THEME_KEY, id);
+    applyLang();
     refreshWidget();
+  }
+
+  // ---------- 문서 언어 ----------
+  // preview <html>에는 lang이 없다. 본문 글자의 한글·가나·한자 비율로 ko/ja/zh를 판정해 lang을 단다 —
+  // CJK 줄바꿈(mts.css: 한국어 어절 keep-all, 일본어 문절 auto-phrase)과 언어별 폰트 스택, 스크린리더
+  // 발음(WCAG 3.1.1)이 이 값을 쓴다. Default(off)에선 달지 않고(플러그인 완전 비활성), 우리가 단
+  // lang만 관리한다(data-mts-lang 표식)
+  var LANG_MARK = 'data-mts-lang';
+  var LANG_CJK_ENOUGH = 1500; // CJK 글자가 이만큼 모이면 판정에 충분하다
+  var LANG_SCAN_MAX = 60000; // 라틴 위주 긴 문서에서 판정 비용 상한(글자)
+  // 코드·스타일은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>). 위젯·감사 주입 DOM도 제외.
+  // 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는 형제 순회를 못 줄인다)
+  // 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은 nodeName이 소문자)
+  var LANG_SKIP = /^(pre|code|style|script)$/i;
+
+  function detectLang() {
+    if (!document.body) return null;
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode: function (n) {
+        if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
+        if (LANG_SKIP.test(n.nodeName) || n.id === 'mts-audit') return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_SKIP;
+      }
+    });
+    // 한글(음절·자모·호환 자모) / 가나(히라가나·가타카나) / 한자(확장 A·통합) / 전각 쉼표(，) / 일본식 쉼표(、)
+    var hangul = 0, kana = 0, han = 0, fwComma = 0, jpComma = 0, scanned = 0, n;
+    while (scanned < LANG_SCAN_MAX && hangul + kana + han < LANG_CJK_ENOUGH && (n = walker.nextNode())) {
+      var t = n.nodeValue;
+      scanned += t.length;
+      hangul += (t.match(/[가-힣ᄀ-ᇿ㄰-㆏]/g) || []).length;
+      kana += (t.match(/[぀-ヿ]/g) || []).length;
+      han += (t.match(/[㐀-䶿一-鿿]/g) || []).length;
+      fwComma += (t.match(/，/g) || []).length;
+      jpComma += (t.match(/、/g) || []).length;
+    }
+    var cjk = hangul + kana + han;
+    if (cjk < 20) return null; // CJK가 거의 없으면 판정하지 않는다(라틴 문서는 lang 없이 기본 동작)
+    if (hangul / cjk >= 0.5) return 'ko';
+    // 일본어: 체언 위주 기술 문서·표는 가나가 2%대까지 떨어진다 — 소량의 가나도 일본어 증거다
+    if (kana >= 3 && kana / cjk >= 0.02) return 'ja';
+    // 중국어는 양성 증거가 있을 때만(가나 없음 + 한자 위주 + 전각 쉼표가 일본식 쉼표보다 많음).
+    // 애매하면 판정하지 않는다 — 틀린 lang은 자형·발음·줄바꿈을 모두 틀리게 만든다
+    if (kana === 0 && han / cjk >= 0.8 && fwComma > jpComma) return 'zh';
+    return null;
+  }
+
+  // CSS는 우리 표식(data-mts-lang)을 키로 쓴다 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다.
+  // lang 속성은 비어 있거나 우리가 단 값일 때만 관리한다(접근성·auto-phrase용)
+  // 우리가 단 lang 값 — 속성 값만으로는 플랫폼이 같은 값을 단 경우와 구분할 수 없다(페이지 수명 = 속성 수명)
+  var langSetByUs = null;
+
+  function applyLang() {
+    var lang = currentTheme === 'off' ? null : detectLang();
+    var ownsLang = !root.hasAttribute('lang') ||
+      (langSetByUs !== null && root.getAttribute('lang') === langSetByUs);
+    if (lang) {
+      root.setAttribute(LANG_MARK, lang);
+      if (ownsLang) {
+        root.setAttribute('lang', lang);
+        langSetByUs = lang;
+      }
+    } else if (root.hasAttribute(LANG_MARK)) {
+      if (ownsLang && langSetByUs !== null) {
+        root.removeAttribute('lang');
+        langSetByUs = null;
+      }
+      root.removeAttribute(LANG_MARK);
+    }
+  }
+
+  // 본문은 로드 뒤 첫 IncrementalDOM 패치로 채워지고 편집마다 다시 패치된다. 첫 패치는 즉시 판정해
+  // 첫 페인트 전에 lang을 단다(MutationObserver 콜백은 패치 직후 마이크로태스크) — 늦게 달면 폰트·줄바꿈이
+  // 한 번 더 바뀐다. 이후 변경은 묶어서 재판정
+  var langTimer = null;
+  var langFirstDone = false;
+  function watchLang() {
+    if (!window.MutationObserver || !document.body) return;
+    new MutationObserver(function () {
+      if (!langFirstDone && document.body.firstChild) {
+        langFirstDone = true;
+        applyLang();
+        return;
+      }
+      clearTimeout(langTimer);
+      langTimer = setTimeout(applyLang, 400);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 
   function applyFsOffset() {
@@ -352,7 +439,8 @@
 
   function ensureWidget() {
     if (document.getElementById('mts-root')) return;
-    var host = el('div', { id: 'mts-root' });
+    // lang=en: 위젯 라벨은 영어 — 문서 lang(ko·ja·zh)을 상속하면 스크린리더가 다른 언어 음성으로 읽는다
+    var host = el('div', { id: 'mts-root', lang: 'en' });
     var button = el('button', {
       id: 'mts-aa', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false',
       'aria-controls': 'mts-panel', 'aria-label': 'Markdown theme settings',
@@ -393,10 +481,16 @@
   applyWOffset();
   applyTheme(savedTheme());
 
-  // 위젯은 <html> 직속이라 본문 incremental 패치에 제거되지 않는다 — 1회 부착으로 충분
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', ensureWidget);
-  } else {
+  // 위젯은 <html> 직속이라 본문 incremental 패치에 제거되지 않는다 — 1회 부착으로 충분.
+  // 본문은 로드 뒤에 패치로 채워지므로 언어는 준비 시점에 다시 판정하고 이후 변경을 감시한다
+  function onReady() {
     ensureWidget();
+    applyLang();
+    watchLang();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', onReady);
+  } else {
+    onReady();
   }
 })();
