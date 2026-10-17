@@ -409,7 +409,8 @@
       setStepper('w', '—', true, true, 'maximum content width');
     } else {
       // 실제 적용 값을 보여준다 — 오프셋(±px)보다 사용자가 바로 이해하는 단위.
-      // 폭은 본문 단의 최대 폭(computed max-width; border-box면 패딩 제외). 패널이 더 좁으면 실제 단은
+      // 폭은 본문 단의 최대 폭 = --mts-measure + 오프셋. body는 border-box(mts.css 명시)라 computed
+      // max-width에서 좌우 패딩을 뺀다(content-box 분기는 방어용). 패널이 더 좁으면 실제 단은
       // 패널에 맞춰 줄어드므로 라벨이 "Max width"다
       var bs = getComputedStyle(document.body);
       var fs = parseFloat(bs.fontSize);
