@@ -18,8 +18,9 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 
 - `./gradlew buildPlugin` — `build/distributions/*.zip` 생성 (Install Plugin from Disk용)
 - `tools/build-zip.sh` — 배포용: test + buildPlugin + 패키징 검증(버전·idea-version·아이콘·리소스 포함 여부). 배포 zip은 이걸로 만든다
-- `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223)이 jvmArgs로 켜져 있음
-- `./gradlew runIdeLatest [-PlatestIdePath=<IDE 설치 경로>]` — 최신 IDE(IntelliJ IDEA 2026.2) 샌드박스. 경로를 주면 다운로드 대신 로컬 설치본 사용(macOS는 `.app` 경로 그대로). 같은 디버깅 포트를 쓰므로 runIde와 동시 실행 불가
+- `./gradlew runIde` — IC 2025.1 샌드박스 실행. EUA 다이얼로그 스킵과 JCEF 원격 디버깅(포트 9223, `-PcdpPort=<포트>`로 변경)이 jvmArgs로 켜져 있음
+- `./gradlew runIdeLatest [-PlatestIdePath=<IDE 설치 경로>]` — 최신 IDE(IntelliJ IDEA 2026.2) 샌드박스. 경로를 주면 다운로드 대신 로컬 설치본 사용(macOS는 `.app` 경로 그대로). 같은 디버깅 포트라 runIde와 동시에 띄우려면 한쪽을 `-PcdpPort`로
+- **worktree 병렬 작업**: 샌드박스(`.intellijPlatform/`)는 worktree마다 따로라 포트만 다르면 동시에 띄울 수 있다 — `./gradlew runIdeLatest -PcdpPort=9224 …`, 하네스는 `MTS_CDP_PORT=9224 tools/.venv/bin/python tools/mts_audit.py`. 샌드박스 종료는 **자기 worktree 것만**: `pkill -f "$(pwd -P)/.intellijPlatform/"`(설정 경로 인자에 매칭). `idea.plugin.in.sandbox.mode=true` 패턴은 모든 worktree의 샌드박스를 죽이고, 패턴을 문자열 그대로 쓰면 그 명령을 실행한 셸의 커맨드라인에도 걸린다(`$(pwd -P)`는 실행 전 문자열엔 경로가 없어 안전)
 - `./gradlew prepareSandbox` — 샌드박스에 재배포. 단 CSS/JS는 패널 생성 시점에 서빙되므로 확실한 반영은 샌드박스 재시작
 - `./gradlew verifyPlugin` — 지원 범위(2025.1~최신 EAP) 메이저별 바이너리 호환성 검사. `-PverifyIdes=latest`는 최신 릴리즈·EAP를 IDEA·WebStorm·PyCharm별로 검사(주간 조기경보용)
 - `cd tools/lint && npm ci && npm run lint` — stylelint(CSS)·ESLint(JS), 버그성 규칙만 + 수동 `!important` 금지. CI `lint` 잡이 PR마다 실행
