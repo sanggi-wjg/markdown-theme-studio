@@ -7,6 +7,8 @@
 // 검사(판정 기준은 tools/mts_audit.py와 같다 — FAIL 3.0 / WARN 4.5, small 3.0, del 1.8):
 //   - 동물원: tools/mts_audit.js가 주입하는 요소 동물원의 대비·레이아웃(가로 넘침, pre 스크롤, URL 줄바꿈,
 //     본문 크기·정렬)과 commandRunner 실행 아이콘 숨김(동물원 + 스냅샷 본문의 실제 실행 링크)
+//   - Mermaid: 동물원(측정 문맥)·스냅샷 본문 mermaid의 HTML 라벨 박스가 테마 off·클린(custom CSS 시트 끔)과 같은지,
+//     라벨 글자색이 mermaid 지정색(span)인지(#59)
 //   - 본문: 실제 스냅샷 본문의 보이는 글자 노드 전부의 대비(scan.js — 코드펜스·취소선·SVG·수식·동물원 제외)와
 //     본문 단 폭(--mts-measure)
 //   - 위젯: 스위처의 보이는 글자 노드 대비를 닫힌 상태(휴지 Aa 버튼)·열린 상태(패널) × 테마 5(off 포함)
@@ -57,6 +59,9 @@ const FIXTURES = Object.keys(EXPECTED_LANG).sort();
 // 스냅샷 본문의 commandRunner 실행 링크(a[data-command]) 최소 개수 — 숨김 판정이 실제 번들 마크업에도 걸리는지.
 // elements.md: 인라인 1 + 표 셀 1 + shell 펜스(블록 1·줄 1), sample.md: 작업 목록의 인라인 1
 const EXPECTED_RUN_LINKS = { elements: 4, sample: 1 };
+// 스냅샷 본문의 Mermaid HTML 라벨(svg foreignObject 안) 최소 개수 — 캡처가 mermaid 렌더 전이면 라벨 박스 판정이 동물원만
+// 보고 조용히 통과한다. elements.md: flowchart 노드 4 + 간선 3
+const EXPECTED_MERMAID_LABELS = { elements: 7 };
 // 30×30 단색 PNG — 번들 실행 아이콘의 원본 크기(30px) 대역
 const RUN_ICON_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAK0lEQVR42u3NMQEAAAQAMDVF0ExLYnDs2L3IrrkQYrFYLBaLxWKxWCz+Gy904Xmdae+ZnQAAAABJRU5ErkJggg==",
@@ -164,6 +169,16 @@ function judgeZoo(combo, data) {
     // 스냅샷에서 실행 링크가 빠지면(번들 commandRunner가 링크를 달지 않은 채 캡처 등) 문서 쪽 판정이 조용히 빈다
     const want = EXPECTED_RUN_LINKS[combo.split("/")[2].split("@")[0]] ?? 0;
     if (run.doc < want) flag("실행 아이콘", `[${combo}] 스냅샷 실행 링크 ${run.doc}개 (기대 ${want}개 이상) — 캡처 확인`);
+  }
+  // Mermaid 라벨 박스는 테마 off·클린과, 글자색은 mermaid 지정색과 같아야 한다(#59) — mts_audit.py와 같은 판정 +
+  // 스냅샷 라벨 개수
+  const mm = data._mermaid;
+  if (!mm) flag("Mermaid", `[${combo}] mts_audit.js가 _mermaid를 내지 않음`);
+  else {
+    if (mm.zoo < 3) flag("Mermaid", `[${combo}] Mermaid 동물원 라벨 ${mm.zoo}개 (기대 3) — 렌더 실패?`);
+    for (const d of mm.diffs) flag("Mermaid", `[${combo}] Mermaid 라벨: ${d}`);
+    const want = EXPECTED_MERMAID_LABELS[combo.split("/")[2].split("@")[0]] ?? 0;
+    if (mm.doc < want) flag("Mermaid", `[${combo}] 스냅샷 Mermaid 라벨 ${mm.doc}개 (기대 ${want}개 이상) — 캡처 확인`);
   }
   const lay = data._layout;
   if (lay.bodyHScroll > 2) flag("레이아웃", `[${combo}] body 가로 오버플로 ${lay.bodyHScroll}px`);

@@ -10,6 +10,25 @@
       return '<a class="' + cls + '" href="#" role="button" data-command="Run:mts-audit"' + extra + '>' +
         '<img src="commandRunner/' + icon + '"></a>';
     }
+    // Mermaid HTML 라벨 — 2026.2 번들(mermaid 11) 마크업 축약: svg 자체 <style>(#<id> p { margin: 0 } 포함) +
+    // foreignObject > div(인라인 style) > span > p. mermaid.render가 라벨을 재는 자리(body 직속 div 안 svg)와 같은
+    // 문맥에 둔다. 한 줄 라벨(nowrap, 굵게 포함)·간선 라벨(labelBkg)·200px에서 접히는 한글 라벨(break-spaces)
+    function mermaidLabel(y, cls, span, style, text) {
+      return '<g transform="translate(0,' + y + ')"><foreignObject width="240" height="80">' +
+        '<div xmlns="http://www.w3.org/1999/xhtml"' + (cls ? ' class="' + cls + '"' : '') + ' style="' + style +
+        ' line-height: 1.5; max-width: 200px; text-align: center;"><span class="' + span + '"><p>' + text +
+        '</p></span></div></foreignObject></g>';
+    }
+    var oneLine = 'display: table-cell; white-space: nowrap;';
+    // 라벨 색은 적대적 커스텀 CSS(p #333)·colors.css와 겹치지 않는 값 — 같으면 custom 모드에서 글자색 검사가 헛돈다
+    var mermaidZoo = '<svg id="mermaid-mts-audit" xmlns="http://www.w3.org/2000/svg" width="240" height="130">' +
+      '<style>#mermaid-mts-audit{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#333;}' +
+      '#mermaid-mts-audit p{margin:0;}#mermaid-mts-audit .label{color:#1f6feb;}#mermaid-mts-audit span{color:#1f6feb;}' +
+      '#mermaid-mts-audit .edgeLabel p{background-color:rgba(232,232,232,0.8);}</style>' +
+      mermaidLabel(0, '', 'nodeLabel', oneLine, '<strong>노드</strong> 라벨') +
+      mermaidLabel(30, 'labelBkg', 'edgeLabel', oneLine, 'miss') +
+      mermaidLabel(60, '', 'nodeLabel', 'display: table; white-space: break-spaces; width: 200px;',
+        '캐시무효화이벤트 원격저장소동기화 연결풀관리작업자') + '</svg>';
     d.innerHTML =
       '<h1>제목1</h1><h3>제목3</h3><h6>제목6</h6>' +
       '<p class="z-p">본문 텍스트 문단입니다.</p>' +
@@ -49,6 +68,7 @@
       '<tbody><tr><td class="z-fmobjv">홍길동</td></tr></tbody></table></td></tr></tbody></table>' +
       // TOML·파싱 실패 front matter(2026.3에서도 pre) — 배경 투명이라 글자도 외관 도메인이어야 한다
       '<pre class="frontmatter-header z-fmpre">+++ title = "x" +++</pre>' +
+      '<div class="z-mermaid">' + mermaidZoo + '</div>' +
       // GitHub Alert (2026.2+ 번들 렌더와 같은 마크업) — 유형 색 제목·본문 대비
       ['note', 'tip', 'important', 'warning', 'caution'].map(function (t) {
         return '<blockquote class="markdown-alert markdown-alert-' + t + '">' +
@@ -153,6 +173,55 @@
     chipDw: +(rc.width - tw.width).toFixed(2),
     chipDh: +(rc.height - tw.height).toFixed(2),
     chipText: runCode.textContent
+  };
+  // Mermaid 라벨 박스 — mermaid는 렌더할 때 잰 라벨 크기로 노드·간선을 배치하므로 테마가 라벨 박스를 바꾸면 배치와
+  // 어긋난다(#59). 동물원(측정 문맥) + 문서의 실제 mermaid(표시 문맥, pre > code > div.mermaid) 라벨 전부를 테마 off·
+  // 클린(사용자 Custom CSS 시트 inline.css 끔)과 견준다 — 사용자 CSS가 mermaid의 비-important 값을 덮는 것도 잡힌다.
+  // 박스는 foreignObject 로컬 단위(svg 축척은 본문 폭에 따라 테마마다 달라 화면 px로는 비교할 수 없다)
+  var htmlEl = document.documentElement;
+  var labels = Array.prototype.slice.call(document.querySelectorAll('body svg foreignObject > *'));
+  function labelBoxes() {
+    return labels.map(function (el) {
+      var r = el.getBoundingClientRect();
+      var m = el.parentNode.getScreenCTM();
+      return [r.width / m.a, r.height / m.d];
+    });
+  }
+  var themedBoxes = labelBoxes();
+  var theme = htmlEl.getAttribute('data-mts-theme');
+  // link.disabled는 시트를 내렸다 다시 받는다(비동기) — 시트 자체를 끈다
+  var customSheets = Array.prototype.filter.call(document.styleSheets, function (s) {
+    return !s.disabled && (s.href || '').indexOf('inline.css') >= 0;
+  });
+  htmlEl.removeAttribute('data-mts-theme');
+  customSheets.forEach(function (s) { s.disabled = true; });
+  var offBoxes = labelBoxes();
+  customSheets.forEach(function (s) { s.disabled = false; });
+  if (theme !== null) htmlEl.setAttribute('data-mts-theme', theme);
+  function labelName(el) {
+    return (el.closest('#mts-audit') ? 'zoo ' : 'doc ') + JSON.stringify((el.textContent || '').trim().slice(0, 16));
+  }
+  var diffs = [];
+  labels.forEach(function (el, i) {
+    var dw = themedBoxes[i][0] - offBoxes[i][0];
+    var dh = themedBoxes[i][1] - offBoxes[i][1];
+    if (Math.abs(dw) > 0.5 || Math.abs(dh) > 0.5) {
+      diffs.push(labelName(el) + ' 박스 ' + offBoxes[i].map(function (v) { return +v.toFixed(1); }).join('×') +
+        '(off·클린) Δw=' + (+dw.toFixed(1)) + ' Δh=' + (+dh.toFixed(1)));
+    }
+    // 글자색은 mermaid가 라벨 span에 준 색이어야 한다 — 테마 색 리셋(color: inherit)이 사용자 CSS·colors.css의 p 색을
+    // 막는다(Typora p { color: #333 }이면 다크 노드 위 라벨 대비 1.3). off는 colors.css p 색이라 off와는 견주지 않는다
+    var p = el.querySelector('p');
+    if (p && p.parentElement) {
+      var pc = getComputedStyle(p).color;
+      var sc = getComputedStyle(p.parentElement).color;
+      if (pc !== sc) diffs.push(labelName(el) + ' 글자색 ' + pc + ' ≠ mermaid 지정색 ' + sc);
+    }
+  });
+  out._mermaid = {
+    zoo: labels.filter(function (el) { return el.closest('#mts-audit'); }).length,
+    doc: labels.filter(function (el) { return !el.closest('#mts-audit'); }).length,
+    diffs: diffs
   };
   var body = document.body;
   var pre = document.querySelector('#mts-audit .z-pre');

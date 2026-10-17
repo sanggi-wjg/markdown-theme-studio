@@ -276,7 +276,15 @@ html[data-mts-theme] body small:where(:not([style*="background" i])) {
   background: transparent;
 }
 
-html[data-mts-theme] body p { margin: 0 0 1em; }
+/* SVG 안 HTML 문단(mermaid 라벨 foreignObject > div > span > p)은 본문 문단이 아니다 — mermaid는 렌더할 때 잰 라벨
+   박스로 노드·간선을 배치하는데, 본문 여백이 자체 #<id> p { margin: 0 }을 덮어 라벨마다 1em(16px)이 커졌다(#59:
+   노드가 높아지고 글자·간선 라벨 배경이 위로 쏠린다). :where라 본문 p의 특이도는 그대로다 */
+html[data-mts-theme] body p:where(:not(svg p)) { margin: 0 0 1em; }
+/* mermaid의 0은 비-important라 사용자 CSS(Typora 스니펫 p { margin-bottom: 12px !important })에 다시 덮인다 — 같은
+   값을 명시한다. .mermaid가 아니라 svg id로 거는 이유: 라벨을 재는 곳은 mermaid.render가 body 직속에 만드는 임시
+   div 안의 svg#mermaid-generated-…다(번들 2026.2, .mermaid 밖). 라벨의 글꼴·크기·줄 간격·색은 위 상속 리셋이
+   mermaid 값(svg·라벨 div·span)을 그대로 내려받게 한다 */
+html[data-mts-theme] body svg[id^="mermaid"] p:where(:not([style*="margin" i])) { margin: 0; }
 html[data-mts-theme] body ul,
 html[data-mts-theme] body ol { margin: 0 0 1em; padding-left: 1.55em; }
 /* 왼쪽만 쓰는 들여쓰기도 나머지 변을 선언한다 — padding-left만 두면 나머지 변은 사용자 CSS 몫이 된다 */
@@ -509,6 +517,12 @@ html[data-mts-theme] body table:where(:not([style*="radius" i])) { border-radius
 html[data-mts-lang="ko"][data-mts-theme] body {
   word-break: keep-all;
   overflow-wrap: break-word;
+}
+/* SVG(mermaid 라벨)엔 상속시키지 않는다 — mermaid.render는 body 직속 임시 div에서 라벨을 재고(keep-all), 그려지는
+   자리(pre > code > [2026.3: div.mermaid-wrapper >] div.mermaid, default.css word-break: normal)는 normal이라 줄 수가 갈렸다: 200px에서 접히는 한글 라벨이 세 줄
+   높이로 재지고 두 줄로 그려져 한 줄이 빈다(#59). 테마 off와 같은 normal */
+html[data-mts-lang="ko"][data-mts-theme] body svg {
+  word-break: normal;
 }
 /* 기본 스타일의 table { word-break: normal }이 body 상속을 끊어 셀은 따로 단다. 글자 단위
    줄바꿈이면 한글 열의 min-content가 1글자라, 폭이 부족할 때 auto 레이아웃이 그 열을 세로
