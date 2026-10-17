@@ -109,51 +109,59 @@
   }
 
   // ---------- 문서 언어 ----------
-  // preview <html>에는 lang이 없다. 본문 글자의 한글·가나·한자 비율로 ko/ja/zh를 판정해 lang을 단다 —
-  // CJK 줄바꿈(mts.css: 한국어 어절 keep-all, 일본어 문절 auto-phrase)과 언어별 폰트 스택, 스크린리더
-  // 발음(WCAG 3.1.1)이 이 값을 쓴다. Default(off)에선 달지 않고(플러그인 완전 비활성), 우리가 단
-  // lang만 관리한다(data-mts-lang 표식)
+  // preview <html>에는 lang이 없다. 본문이 한국어면 data-mts-lang="ko"(+ lang)를 단다 — 한국어 어절 단위
+  // 줄바꿈(mts.css)과 스크린리더 발음(WCAG 3.1.1)이 이 값을 쓴다. 영어 등 다른 언어 문서는 아무것도 달지
+  // 않아 기본 동작 그대로다. Default(off)에선 달지 않고(플러그인 완전 비활성), 우리가 단 lang만 관리한다
   var LANG_MARK = 'data-mts-lang';
-  var LANG_CJK_ENOUGH = 1500; // CJK 글자가 이만큼 모이면 판정에 충분하다
-  var LANG_SCAN_MAX = 60000; // 라틴 위주 긴 문서에서 판정 비용 상한(글자)
-  // 코드·스타일은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>). 위젯·감사 주입 DOM도 제외.
-  // 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는 형제 순회를 못 줄인다)
-  // 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은 nodeName이 소문자)
-  var LANG_SKIP = /^(pre|code|style|script)$/i;
+  var LANG_ENOUGH = 1500; // 한글·한자·가나가 이만큼 모이면 판정에 충분하다
+  var LANG_ENOUGH_WORDS = 1000; // 어절·단어가 이만큼 모여도(영어 등 알파벳 위주 문서) 충분하다
+  var LANG_SCAN_MAX = 60000; // 글자가 드문(숫자·기호 위주) 긴 문서에서 판정 비용 상한(문자)
+  var HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/; // 음절·자모·호환 자모
+  var ALPHA = /[A-Za-zÀ-ÖØ-öø-ɏͰ-ӿ]/; // 라틴·확장 라틴·그리스·키릴
+  // 코드·스타일·수식은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>, 수식 식별자 — 번들
+  // 렌더는 수식을 span.math로 감싸 렌더 전엔 TeX 원문, 후엔 mjx-container와 보조 MathML 텍스트를 둔다).
+  // 위젯·감사 주입 DOM도 제외. 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는
+  // 형제 순회를 못 줄인다). 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은
+  // nodeName이 소문자)
+  var LANG_SKIP = /^(pre|code|style|script|mjx-container)$/i;
 
   function detectLang() {
     if (!document.body) return null;
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
-        if (LANG_SKIP.test(n.nodeName) || n.id === 'mts-audit') return NodeFilter.FILTER_REJECT;
+        if (LANG_SKIP.test(n.nodeName) || n.id === 'mts-audit' || (n.classList && n.classList.contains('math'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
         return NodeFilter.FILTER_SKIP;
       }
     });
-    // 한글(음절·자모·호환 자모) / 가나(히라가나·가타카나) / 한자(확장 A·통합) / 전각 쉼표(，) / 일본식 쉼표(、)
-    var hangul = 0, kana = 0, han = 0, fwComma = 0, jpComma = 0, scanned = 0, n;
-    while (scanned < LANG_SCAN_MAX && hangul + kana + han < LANG_CJK_ENOUGH && (n = walker.nextNode())) {
+    // 글자 수: 한글과, 비율 판단용으로 한자·가나. 단어 수: 한글이 든 어절과 알파벳만 든 단어
+    var hangul = 0, han = 0, koWords = 0, alphaWords = 0, scanned = 0, n;
+    while (scanned < LANG_SCAN_MAX && hangul + han < LANG_ENOUGH && koWords + alphaWords < LANG_ENOUGH_WORDS &&
+           (n = walker.nextNode())) {
       var t = n.nodeValue;
       scanned += t.length;
       hangul += (t.match(/[가-힣ᄀ-ᇿ㄰-㆏]/g) || []).length;
-      kana += (t.match(/[぀-ヿ]/g) || []).length;
-      han += (t.match(/[㐀-䶿一-鿿]/g) || []).length;
-      fwComma += (t.match(/，/g) || []).length;
-      jpComma += (t.match(/、/g) || []).length;
+      han += (t.match(/[぀-ヿ㐀-䶿一-鿿]/g) || []).length;
+      var words = t.split(/\s+/);
+      for (var i = 0; i < words.length; i++) {
+        if (HANGUL.test(words[i])) koWords++;
+        else if (ALPHA.test(words[i])) alphaWords++;
+      }
     }
-    var cjk = hangul + kana + han;
-    if (cjk < 20) return null; // CJK가 거의 없으면 판정하지 않는다(라틴 문서는 lang 없이 기본 동작)
-    if (hangul / cjk >= 0.5) return 'ko';
-    // 일본어: 체언 위주 기술 문서·표는 가나가 2%대까지 떨어진다 — 소량의 가나도 일본어 증거다
-    if (kana >= 3 && kana / cjk >= 0.02) return 'ja';
-    // 중국어는 양성 증거가 있을 때만(가나 없음 + 한자 위주 + 전각 쉼표가 일본식 쉼표보다 많음).
-    // 애매하면 판정하지 않는다 — 틀린 lang은 자형·발음·줄바꿈을 모두 틀리게 만든다
-    if (kana === 0 && han / cjk >= 0.8 && fwComma > jpComma) return 'zh';
-    return null;
+    // 한글이 20자 미만이면 판정하지 않는다. 한자 병기가 많아도 한글이 절반 이상이면 한국어.
+    // 알파벳 문자와는 어절로 견준다 — 한국어 기술 문서는 영문 용어에 조사가 붙어("Bean을") 어절로 세면
+    // 한국어로 남고(글자로 세면 "Spring Boot의 AutoConfiguration은 …" 한 문장이 0.2 언저리까지 떨어진다),
+    // 영어 문서에 섞인 한글 한 줄(번역본 링크 등)은 단어 수에 묻힌다 — lang="ko"를 달면 스크린리더가
+    // 영어 본문을 한국어 발음으로 읽는다. 0.2: 어절 하나가 영어 단어 1.5개 남짓이라 내용상 1/4 남짓.
+    // 실측 어절 비율 — 한국어 fixtures 0.76~0.87, 영문 용어 위주 한국어 0.55~0.75, 반반 이중언어 0.32,
+    // 한글 한 줄 섞인 영어·프랑스어·러시아어 문서 0.02~0.05
+    return hangul >= 20 && hangul / (hangul + han) >= 0.5 && koWords / (koWords + alphaWords) >= 0.2 ? 'ko' : null;
   }
 
   // CSS는 우리 표식(data-mts-lang)을 키로 쓴다 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다.
-  // lang 속성은 비어 있거나 우리가 단 값일 때만 관리한다(접근성·auto-phrase용)
+  // lang 속성은 비어 있거나 우리가 단 값일 때만 관리한다(접근성용)
   // 우리가 단 lang 값 — 속성 값만으로는 플랫폼이 같은 값을 단 경우와 구분할 수 없다(페이지 수명 = 속성 수명)
   var langSetByUs = null;
 
@@ -177,7 +185,7 @@
   }
 
   // 본문은 로드 뒤 첫 IncrementalDOM 패치로 채워지고 편집마다 다시 패치된다. 첫 패치는 즉시 판정해
-  // 첫 페인트 전에 lang을 단다(MutationObserver 콜백은 패치 직후 마이크로태스크) — 늦게 달면 폰트·줄바꿈이
+  // 첫 페인트 전에 lang을 단다(MutationObserver 콜백은 패치 직후 마이크로태스크) — 늦게 달면 줄바꿈이
   // 한 번 더 바뀐다. 이후 변경은 묶어서 재판정
   var langTimer = null;
   var langFirstDone = false;
@@ -439,7 +447,7 @@
 
   function ensureWidget() {
     if (document.getElementById('mts-root')) return;
-    // lang=en: 위젯 라벨은 영어 — 문서 lang(ko·ja·zh)을 상속하면 스크린리더가 다른 언어 음성으로 읽는다
+    // lang=en: 위젯 라벨은 영어 — 문서 lang(ko)을 상속하면 스크린리더가 한국어 음성으로 읽는다
     var host = el('div', { id: 'mts-root', lang: 'en' });
     var button = el('button', {
       id: 'mts-aa', type: 'button', 'aria-haspopup': 'dialog', 'aria-expanded': 'false',
