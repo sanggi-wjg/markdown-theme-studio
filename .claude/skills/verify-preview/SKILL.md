@@ -25,7 +25,7 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 
 - `tools/.venv/bin/python tools/mts_audit.py`
 - 요소 동물원을 주입해 4테마×2외관 8조합의 WCAG 대비·레이아웃·테마 정체성을 검사하고 `tools/audit-full.json`에 기록한다
-- 판정 기준(mts_audit.py 실제 임계값): **전 요소** 대비 3.0 미만 FAIL, 4.5 미만 WARN — 둘 다 위반 목록에 출력된다(예외 임계값: `del` 1.8, `small` 3.0). FAIL은 무조건 수정, WARN도 원인 확인 없이 통과 처리하지 않는다. 가로 오버플로는 무조건 수정 대상
+- 판정 기준(mts_audit.py 실제 임계값): **전 요소** 대비 3.0 미만 FAIL, 4.5 미만 WARN — 둘 다 위반 목록에 출력된다(예외: `small`과 취소선(`del`·마크다운 `span.user-del`) 안 글자는 FAIL 3.0만 — 동물원은 링크·코드·굵게·인용·표·h6·Alert 안 취소선까지 잰다). 대비는 opacity를 그룹 합성한 실제 값이다(대비 × opacity 곱셈은 흐림을 2배 가까이 과대평가한다). 취소선 흐림은 두 형태(문서·동물원)가 같은 opacity여야 한다(`_strike`). FAIL은 무조건 수정, WARN도 원인 확인 없이 통과 처리하지 않는다. 가로 오버플로는 무조건 수정 대상
 
 ## 2.5 코드펜스 토큰 감사 — 코드블록 배경/글자색을 건드렸을 때 필수
 

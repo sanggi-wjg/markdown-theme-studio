@@ -34,6 +34,7 @@ markdown-alert: present
 markdown-alert-title: present
 markdown-alert-icon: present
 task-list-item: present
+class="user-del": present
 mjx-container: present
 [preview resources]
 BrowserPipe.js

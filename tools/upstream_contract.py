@@ -37,6 +37,10 @@ MARKERS = [
     "markdown-alert-title",
     "markdown-alert-icon",
     "task-list-item",
+    # 마크다운 취소선 span.user-del — mts.css 취소선 흐림·색·배경 리셋이 기댄다. 클래스 이름이 아니라 GFM 라이브러리가
+    # 다는 속성 리터럴로 찾는다: 이름만으로는 2026.3 에디터 라이브 프리뷰(HeadingPainter CSS)에도 있어 GFM 렌더가
+    # 바뀌어도 늘 present가 된다
+    'class="user-del"',
     "mjx-container",
 ]
 EP = "org.intellij.markdown.browserPreviewExtensionProvider"

@@ -9,9 +9,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 JS = open(os.path.join(HERE, "mts_audit.js")).read()
 
 EXPECTED_FS = {"gh": 16.0, "nt": 16.5, "dc": 15.5, "rd": 18.0}
-# del은 의도적 저대비(취소선), 통과 기준 완화
-LOW_CONTRAST_OK = {"del": 1.8, "small": 3.0}
+# 대비는 opacity를 그룹 합성한 실제 값이다(mts_audit.js finalColors). small은 FAIL 3.0만 본다
+LOW_CONTRAST_OK = {"small": 3.0}
 FAIL, WARN = 3.0, 4.5
+# 취소선(del·마크다운 span.user-del) 안 글자(동물원 strike 표시)는 의도한 흐림이라 FAIL 3.0만 본다(WARN 없음).
+# static-harness run.mjs·scan.js와 같은 기준
+STRIKE_FAIL = 3.0
 
 cdp = CDP(preview_target()["webSocketDebuggerUrl"])
 report = {}
@@ -37,10 +40,10 @@ for theme in ["gh", "nt", "dc", "rd"]:
             c = v.get("contrast")
             if c is None:
                 continue
-            limit = LOW_CONTRAST_OK.get(k, FAIL)
+            limit = STRIKE_FAIL if v.get("strike") else LOW_CONTRAST_OK.get(k, FAIL)
             if c < limit:
                 violations.append(f"[{combo}] {k}: 대비 {c} (FAIL <{limit}) bg={v['bg']}")
-            elif c < WARN and k not in LOW_CONTRAST_OK:
+            elif c < WARN and not v.get("strike") and k not in LOW_CONTRAST_OK:
                 violations.append(f"[{combo}] {k}: 대비 {c} (WARN <4.5) bg={v['bg']}")
 
         # commandRunner 실행 아이콘은 테마 활성 시 숨는다(CLAUDE.md 계약) — 보이면 위반. 숨긴 링크가
@@ -65,6 +68,12 @@ for theme in ["gh", "nt", "dc", "rd"]:
             violations.append(f"[{combo}] 표 정렬: 동물원 셀 {align['cells']}개 (기대 11개)")
         for v in align["bad"]:
             violations.append(f"[{combo}] 표 정렬: {v}")
+        # 취소선 흐림은 두 형태(del·span.user-del) 모두 같아야 한다(#58)
+        strike = data["_strike"]
+        if not float(strike["opacity"]) < 1:
+            violations.append(f"[{combo}] 취소선 흐림 없음: del opacity={strike['opacity']}")
+        for v in strike["off"]:
+            violations.append(f"[{combo}] 취소선 흐림 불일치: {v} (del {strike['opacity']})")
 
         lay = data["_layout"]
         if lay["bodyHScroll"] > 2:

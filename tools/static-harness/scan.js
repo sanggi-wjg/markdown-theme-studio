@@ -2,9 +2,9 @@
 // 대상 'body': 실제 스냅샷 본문의 글자 노드 전부(감사 동물원·코드펜스 등 제외) + 본문 단 폭.
 // 대상 'widget': #mts-root(테마 스위처)의 보이는 글자 노드 전부 — axe color-contrast는 fixed 위젯 위에서
 //   전부 incomplete(판정 불가)로 끝나 직접 잰다.
-// 색 파싱·휘도·대비는 tools/mts_audit.js와 같은 식(복사 — 바꾸면 함께). 다른 점 하나: mts_audit.js는
-// opacity를 대비에 곱하는 근사인데, 여기선 opacity 그룹을 실제 합성식으로 배경 위에 섞는다. 휴지 상태
-// Aa 버튼(opacity 0.7)처럼 불투명 배경째 반투명한 요소는 곱셈 근사가 대비를 2배 가까이 높게 잡는다.
+// 색 파싱·휘도·대비·합성(finalColors)은 tools/mts_audit.js와 같은 식이다(복사했으니 바꾸면 함께). opacity 그룹은
+// 실제 합성식으로 배경 위에 섞는다. 대비에 opacity를 곱하는 근사는 휴지 상태 Aa 버튼(opacity 0.7)처럼 불투명
+// 배경째 반투명한 요소나 취소선 흐림에서 대비를 2배 가까이 높게 잡는다(#58에서 mts_audit.js도 이 식으로 바꿈).
 (function (target) {
   'use strict';
 
@@ -107,10 +107,11 @@
     out = scan(host, 'button:disabled', function () { return { fail: 3.0, warn: 4.5 }; });
     out.open = !document.getElementById('mts-panel').hidden;
   } else {
-    // 코드펜스 토큰 색은 IDE 렉서 인라인(감사 밖), 취소선은 의도적 저대비(동물원의 del 기준이 따로),
-    // SVG·수식은 글자 색이 테마 밖이다. 동물원은 mts_audit.js가 따로 판정한다
-    out = scan(document.body, '#mts-audit, pre, del, svg, mjx-container, .math, style, script', function (el) {
-      return el.closest('small') ? { fail: 3.0, warn: 3.0 } : { fail: 3.0, warn: 4.5 };
+    // 코드펜스 토큰 색은 IDE 렉서 인라인(감사 밖), SVG·수식은 글자 색이 테마 밖이다. 동물원은 mts_audit.js가 따로
+    // 판정한다. 취소선(raw HTML del, 마크다운 ~~ ~~ = span.user-del) 안 글자는 의도한 흐림이라 small처럼 FAIL 3.0만
+    // 본다(흐림은 위 finalColors가 실제로 합성한다 — run.mjs STRIKE_FAIL과 같은 기준)
+    out = scan(document.body, '#mts-audit, pre, svg, mjx-container, .math, style, script', function (el) {
+      return el.closest('small, del, span.user-del') ? { fail: 3.0, warn: 3.0 } : { fail: 3.0, warn: 4.5 };
     });
     // 본문 단 폭 = min(--mts-measure, 가용 폭 - 좌우 패딩). body는 border-box(mts.css 명시) — 박스 모델이나
     // 패딩·max-width를 커스텀 CSS에 뺏기면 프로젝트마다 단 폭이 달라진다

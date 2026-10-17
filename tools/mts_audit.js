@@ -32,7 +32,9 @@
     d.innerHTML =
       '<h1>제목1</h1><h3>제목3</h3><h6>제목6</h6>' +
       '<p class="z-p">본문 텍스트 문단입니다.</p>' +
-      '<p class="z-inline"><strong>강조</strong> <em>기울임</em> <del>취소선</del> <ins>삽입</ins> ' +
+      // 취소선은 두 형태 — raw HTML <del>, 마크다운 ~~ ~~(GFM 라이브러리 span.user-del, 2025.1~)
+      '<p class="z-inline"><strong>강조</strong> <em>기울임</em> <del>취소선</del> ' +
+      '<span class="user-del">마크다운취소선</span> <ins>삽입</ins> ' +
       '<small>스몰</small> <mark>마크</mark> <kbd>Cmd+C</kbd> <a href="#">링크텍스트</a> ' +
       // 원시 HTML로만 나오는 요소(b·i·u)와 위·아래 첨자(sup·sub) — color: inherit 리셋 블록 항목은 전부 여기 있어야
       // 리셋에서 빠졌을 때 커스텀 CSS의 맨 요소 색 규칙에 잡힌다
@@ -81,7 +83,17 @@
         return '<blockquote class="markdown-alert markdown-alert-' + t + '">' +
           '<p class="markdown-alert-title z-al-' + t + '">' + t + '</p>' +
           '<p class="z-al-body-' + t + '">알림 본문 텍스트</p></blockquote>';
-      }).join('');
+      }).join('') +
+      // 취소선 안 맥락 — 흐림은 이미 흐린 색(머리글·h6·인용·코드·링크)에서 대비를 가장 크게 깎는다
+      '<div class="z-strike"><p><span class="user-del"><a href="#" class="z-s-link">링크취소</a></span> ' +
+      '<span class="user-del"><code class="z-s-code">코드취소</code></span> ' +
+      '<span class="user-del"><strong class="z-s-strong">굵게취소</strong></span></p>' +
+      '<blockquote><p><span class="user-del z-s-quote">인용취소</span></p></blockquote>' +
+      '<table><thead><tr><th><span class="user-del z-s-th">머리글취소</span></th></tr></thead>' +
+      '<tbody><tr><td>첫 행</td></tr><tr><td><span class="user-del z-s-td2">둘째행취소</span></td></tr></tbody></table>' +
+      '<h6><span class="user-del z-s-h6">제목취소</span></h6>' +
+      '<blockquote class="markdown-alert markdown-alert-note"><p class="markdown-alert-title">note</p>' +
+      '<p><span class="user-del z-s-alert">알림취소</span></p></blockquote></div>';
     document.body.appendChild(d);
   }
 
@@ -118,19 +130,48 @@
     var hi = Math.max(L1, L2), lo = Math.min(L1, L2);
     return (hi + 0.05) / (lo + 0.05);
   }
+  // 요소 위치의 최종 (글자색, 배경색) — static-harness/scan.js의 finalColors와 같은 식이다(복사했으니 바꾸면 함께).
+  // 조상 사슬을 바깥부터 칠한다. opacity < 1인 요소(취소선 흐림)는 하위를 칠한 결과를 요소 아래 색과 opacity 비율로
+  // 섞는다. 예전의 대비 × opacity 곱셈 근사는 흐림이 글자를 배경 쪽으로 섞는 효과를 못 담아, opacity 0.62에서 실제
+  // 대비를 1.9~2.2배 높게 잡았다
+  var WHITE = { r: 255, g: 255, b: 255, a: 1 };
+  function colorOf(el, prop) { return parse(getComputedStyle(el)[prop]) || { r: 0, g: 0, b: 0, a: 0 }; }
+  function canvas() {
+    var h = colorOf(document.documentElement, 'backgroundColor');
+    return h.a > 0 ? WHITE : blend(colorOf(document.body, 'backgroundColor'), WHITE);
+  }
+  function finalColors(el) {
+    var chain = [];
+    for (var n = el; n && n.nodeType === 1; n = n.parentElement) chain.push(n);
+    var fg = colorOf(el, 'color');
+    function paint(i, under) {
+      var node = chain[i];
+      var own = colorOf(node, 'backgroundColor');
+      var here = own.a > 0 ? blend(own, under) : under;
+      var r = i === 0 ? { fg: blend(fg, here), bg: here } : paint(i - 1, here);
+      var o = parseFloat(getComputedStyle(node).opacity);
+      if (o < 1) {
+        r = { fg: blend({ r: r.fg.r, g: r.fg.g, b: r.fg.b, a: o }, under), bg: blend({ r: r.bg.r, g: r.bg.g, b: r.bg.b, a: o }, under) };
+      }
+      return r;
+    }
+    return paint(chain.length - 1, canvas());
+  }
 
   ensureZoo();
 
   var sels = {
     p: '.z-p', li: '.z-li', li2: '.z-li2', strong: '.z-inline strong', em: '.z-inline em',
-    del: '.z-inline del', ins: '.z-inline ins', small: '.z-inline small', mark: '.z-inline mark',
+    del: '.z-inline del', userDel: '.z-inline span.user-del', ins: '.z-inline ins', small: '.z-inline small', mark: '.z-inline mark',
     b: '.z-inline b', i: '.z-inline i', u: '.z-inline u', sup: '.z-inline sup', sub: '.z-inline sub', oli: '.z-oli',
     kbd: '.z-inline kbd', link: '.z-inline a', quoteP: '.z-qp', nestedQuoteP: '.z-qqp',
     th: '.z-th', tdOdd: '.z-td1', tdEven: '.z-td2', preCode: '.z-pre code', inlineCode: '.z-code',
     dt: '.z-dt', dd: '.z-dd', h1: '#mts-audit h1', h3: '#mts-audit h3', h6: '#mts-audit h6',
     taskItem: '.task-list-item', fmKey: '.z-fmk', fmValue: '.z-fmv', fmChip: '.z-fmchip',
     fmObjKey: '.z-fmobjk', fmObjValue: '.z-fmobjv', fmPre: '.z-fmpre',
-    runCode: '.z-runcode', runCell: '.z-runcell'
+    runCode: '.z-runcode', runCell: '.z-runcell',
+    strikeLink: '.z-s-link', strikeCode: '.z-s-code', strikeStrong: '.z-s-strong', strikeQuote: '.z-s-quote',
+    strikeTh: '.z-s-th', strikeTd2: '.z-s-td2', strikeH6: '.z-s-h6', strikeAlert: '.z-s-alert'
   };
   ['note', 'tip', 'important', 'warning', 'caution'].forEach(function (t) {
     sels['alert-' + t] = '.z-al-' + t;
@@ -141,13 +182,13 @@
     var el = document.querySelector('#mts-audit ' + sels[k].replace('#mts-audit ', ''));
     if (!el) { out[k] = 'MISSING'; return; }
     var cs = getComputedStyle(el);
-    var fg = parse(cs.color);
-    var bg = effBg(el);
-    var op = parseFloat(cs.opacity);
+    var c = finalColors(el);
     out[k] = {
-      contrast: fg ? +(contrast(fg, bg) * (isNaN(op) ? 1 : op)).toFixed(2) : null,
+      contrast: parse(cs.color) ? +contrast(c.fg, c.bg).toFixed(2) : null,
       fs: cs.fontSize, ta: cs.textAlign,
-      bg: 'rgb(' + Math.round(bg.r) + ',' + Math.round(bg.g) + ',' + Math.round(bg.b) + ')'
+      bg: 'rgb(' + Math.round(c.bg.r) + ',' + Math.round(c.bg.g) + ',' + Math.round(c.bg.b) + ')',
+      // 취소선 안 글자 — 판정(mts_audit.py·run.mjs)이 전용 임계값을 쓴다
+      strike: el.closest('del, span.user-del') ? true : undefined
     };
   });
   // 2026.2+ 번들은 체크박스를 appearance:none으로 직접 그린다(체크 = ::after 테두리) —
@@ -161,6 +202,20 @@
       bg: getComputedStyle(box).backgroundColor
     } : 'MISSING';
   }
+  // 취소선 흐림(opacity) — 테마 활성 시 두 형태(del·span.user-del)가 문서·동물원 모두 동물원 del과 같은 값이어야 한다.
+  // 대비는 흐림이 빠져도 오히려 오르므로 대비 판정으로는 셀렉터 누락을 못 잡는다. 작성자가 인라인으로 흐림을 준
+  // span.user-del은 작성자 값이 이기는 게 맞아(mts.css :where 제외) 뺀다
+  var strikeOp = getComputedStyle(document.querySelector('#mts-audit .z-inline del')).opacity;
+  var strikes = Array.prototype.slice.call(document.querySelectorAll('body del, body span.user-del'))
+    .filter(function (e) { return !(e.matches('span') && /opacity/i.test(e.getAttribute('style') || '')); });
+  out._strike = {
+    opacity: strikeOp,
+    doc: strikes.filter(function (e) { return !e.closest('#mts-audit'); }).length,
+    off: strikes.filter(function (e) { return getComputedStyle(e).opacity !== strikeOp; }).map(function (e) {
+      return (e.closest('#mts-audit') ? 'zoo ' : 'doc ') + e.tagName.toLowerCase() +
+        (e.className ? '.' + e.className : '') + ' opacity=' + getComputedStyle(e).opacity;
+    })
+  };
   // commandRunner 실행 링크 — 테마 활성 시 번들 렌더(문서)·동물원 모두 박스가 없어야 한다(display:none이면
   // 링크·이미지 모두 getClientRects가 빈다). 숨긴 링크가 칩 폭·높이를 바꾸지 않는지 같은 텍스트 칩과 비교
   var runs = Array.prototype.slice.call(document.querySelectorAll('body a[data-command]'));
