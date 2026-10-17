@@ -227,9 +227,102 @@ html[data-mts-theme] body pre code {
    (플랫폼 기본: background transparent / margin 0 / padding 0) */
 html[data-mts-theme] body pre.frontmatter-header {
   background: transparent;
+  /* 배경을 외관 도메인(투명)으로 돌렸으니 글자도 외관 도메인 — 공용 pre의 --mts-pre-fg(LaF 도메인)가
+     남으면 다크 LaF에서 라이트 외관을 강제할 때 대비 1.2까지 떨어졌다 */
+  color: var(--mts-fg);
   border: none;
   margin: 0;
   padding: 0;
+}
+/* 2026.3+ 번들은 YAML front matter를 table.frontmatter-header로 렌더한다(목록 = 중첩 표, 객체 =
+   thead가 있는 중첩 표). TOML·파싱 실패·과대 문서는 2026.3에서도 위 pre. 공용·테마 표 규칙(테두리·
+   지브라·헤더 채움)이 그대로 걸려 제목 위에 데이터 표처럼 무겁게 보였다 — 문서 메타데이터답게 작고
+   조용한 속성 목록으로. 테마 표 규칙(최고 Docs tbody tr:last-child td:first-child = 0,3,5)과 경쟁하는
+   셀은 자식 결합자·nth-child(n)로 특이도를 올린다 */
+html[data-mts-theme] body table.frontmatter-header {
+  border: none;
+  border-top: 1px solid var(--mts-border);
+  border-bottom: 1px solid var(--mts-border);
+  border-radius: 0;
+  border-collapse: collapse;
+  background: transparent;
+  font-size: 0.82em;
+  margin: 0 0 1.8em;
+}
+html[data-mts-theme] body table.frontmatter-header > tbody > tr {
+  border: none;
+  background: transparent;
+}
+html[data-mts-theme] body table.frontmatter-header > tbody > tr > th:nth-child(n),
+html[data-mts-theme] body table.frontmatter-header > tbody > tr > td:nth-child(n) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.35em 1.4em 0.35em 0;
+  vertical-align: baseline;
+  font-size: 1em; /* Soft의 th 0.92em 등 테마 셀 크기가 새지 않게 */
+  min-width: 0; /* 중국어 문서의 셀 바닥 폭(4em)이 새지 않게 */
+}
+html[data-mts-theme] body table.frontmatter-header > tbody > tr > th:nth-child(n) {
+  color: var(--mts-muted);
+  font-weight: 500;
+  text-align: left;
+}
+html[data-mts-theme] body table.frontmatter-header > tbody > tr > td:nth-child(n) {
+  color: var(--mts-fg);
+  /* 끊을 데 없는 긴 값(이미지·canonical URL)이 값 열을 늘려 제목 줄까지 패널 밖으로 밀던 것 */
+  overflow-wrap: anywhere;
+}
+/* 목록 값(thead 없는 중첩 표) → 인라인 칩 */
+html[data-mts-theme] body table.frontmatter-header td table:not(:has(> thead)),
+html[data-mts-theme] body table.frontmatter-header td table:not(:has(> thead)) > tbody,
+html[data-mts-theme] body table.frontmatter-header td table:not(:has(> thead)) > tbody > tr {
+  display: inline;
+  border: none;
+  background: transparent;
+  margin: 0;
+  font-size: 1em;
+}
+html[data-mts-theme] body table.frontmatter-header td table:not(:has(> thead)) > tbody > tr > td:nth-child(n) {
+  display: inline-block;
+  border: none;
+  border-radius: 4px;
+  background: var(--mts-icode-bg);
+  color: var(--mts-fg);
+  padding: 0.05em 0.55em;
+  margin: 0 0.35em 0.25em 0;
+  min-width: 0;
+  font-size: 1em;
+}
+/* 객체 값(thead에 키, tbody에 값) → 장식 없는 작은 표 — 칩으로 흩으면 키-값 대응이 끊긴다 */
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) {
+  display: table;
+  width: auto;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  margin: 0;
+  font-size: 1em;
+}
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > thead > tr,
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > tbody > tr {
+  border: none;
+  background: transparent;
+}
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > thead > tr > th:nth-child(n),
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > tbody > tr > td:nth-child(n) {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0 1.2em 0.15em 0;
+  color: var(--mts-fg);
+  font-size: 1em;
+  min-width: 0;
+  text-align: left;
+}
+html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > thead > tr > th:nth-child(n) {
+  color: var(--mts-muted);
+  font-weight: 500;
 }
 
 /* commandRunner 확장의 실행 아이콘(초록 삼각형)이 테마 레이아웃과 겹쳐
