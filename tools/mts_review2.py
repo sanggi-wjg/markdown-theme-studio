@@ -157,9 +157,15 @@ elif cmd == "clearemu":
     print("cleared")
 
 elif cmd == "css":
-    onoff = sys.argv[2] == "off"
+    off = sys.argv[2] == "off"
+    # 비활성 <link>의 시트는 document.styleSheets에서 빠져 다시 켤 대상을 못 찾는다 — link 요소로 찾는다.
+    # 커스텀 CSS가 없는 프로젝트도 빈 inline.css가 로드되므로 끄기 직전 규칙 수로 클린 여부를 보여 준다
+    # (다시 켠 직후엔 sheet가 아직 붙지 않는다)
     print(cdp.eval(
-        "var l=Array.from(document.styleSheets).find(function(s){return (s.href||'').indexOf('inline.css')>=0;});"
-        "l ? (l.ownerNode.disabled=%s, 'inline.css disabled=%s') : 'inline.css 없음(이미 클린 환경)'"
-        % ("true" if onoff else "false", onoff)
+        "var l=Array.from(document.querySelectorAll('link[rel~=stylesheet]'))"
+        ".find(function(e){return (e.href||'').indexOf('inline.css')>=0;});"
+        "var n=l && l.sheet ? l.sheet.cssRules.length : null;"
+        "l ? (l.disabled=%s, 'inline.css disabled=' + l.disabled + (n === null ? '' : ' (규칙 ' + n + '개)'))"
+        " : 'inline.css 링크 없음'"
+        % ("true" if off else "false")
     ))
