@@ -1,7 +1,9 @@
 (function () {
 
   function ensureZoo() {
-    if (document.getElementById('mts-audit')) return;
+    // 매번 새로 만든다 — 이전 버전 하네스가 남긴 동물원이 있으면 새 요소가 MISSING으로 나온다
+    var old = document.getElementById('mts-audit');
+    if (old) old.remove();
     var d = document.createElement('div');
     d.id = 'mts-audit';
     d.innerHTML =
@@ -20,6 +22,13 @@
       '<dl><dt class="z-dt">용어</dt><dd class="z-dd">설명 텍스트</dd></dl>' +
       '<hr>' +
       '<p class="z-url">https://example.com/path/' + Array(24).join('longsegment') + '</p>' +
+      // front matter (2026.3+ 번들 렌더와 같은 마크업 — 목록 값은 중첩 표)
+      '<table class="frontmatter-header"><tbody><tr><th class="z-fmk">title</th><td class="z-fmv">문서 제목</td></tr>' +
+      '<tr><th>tags</th><td><table><tbody><tr><td class="z-fmchip">fixture</td><td>tag</td></tr></tbody></table></td></tr>' +
+      '<tr><th>author</th><td><table><thead><tr><th class="z-fmobjk">name</th></tr></thead>' +
+      '<tbody><tr><td class="z-fmobjv">홍길동</td></tr></tbody></table></td></tr></tbody></table>' +
+      // TOML·파싱 실패 front matter(2026.3에서도 pre) — 배경 투명이라 글자도 외관 도메인이어야 한다
+      '<pre class="frontmatter-header z-fmpre">+++ title = "x" +++</pre>' +
       // GitHub Alert (2026.2+ 번들 렌더와 같은 마크업) — 유형 색 제목·본문 대비
       ['note', 'tip', 'important', 'warning', 'caution'].map(function (t) {
         return '<blockquote class="markdown-alert markdown-alert-' + t + '">' +
@@ -71,7 +80,8 @@
     kbd: '.z-inline kbd', link: '.z-inline a', quoteP: '.z-qp', nestedQuoteP: '.z-qqp',
     th: '.z-th', tdOdd: '.z-td1', tdEven: '.z-td2', preCode: '.z-pre code', inlineCode: '.z-code',
     dt: '.z-dt', dd: '.z-dd', h1: '#mts-audit h1', h3: '#mts-audit h3', h6: '#mts-audit h6',
-    taskItem: '.task-list-item'
+    taskItem: '.task-list-item', fmKey: '.z-fmk', fmValue: '.z-fmv', fmChip: '.z-fmchip',
+    fmObjKey: '.z-fmobjk', fmObjValue: '.z-fmobjv', fmPre: '.z-fmpre'
   };
   ['note', 'tip', 'important', 'warning', 'caution'].forEach(function (t) {
     sels['alert-' + t] = '.z-al-' + t;
