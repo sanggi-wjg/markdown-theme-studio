@@ -38,7 +38,9 @@ JetBrains IDE의 기본 Markdown preview 가독성을 개선하는 플러그인�
 
    → `build/distributions/markdown-theme-studio-<버전>.zip`
 
-2. IDE에서 **Settings → Plugins → ⚙️ → Install Plugin from Disk…** 로 zip 선택 후 재시작
+2. IDE에서 **Settings → Plugins → ⚙️ → Install Plugin from Disk…** 로 zip 선택
+
+   대부분 재시작 없이 바로 설치됩니다(Plugin Verifier 판정: 재시작 없이 활성화·비활성화 가능). 다만 **이미 열려 있던 Markdown preview에는 적용되지 않으므로** 파일을 닫았다 다시 열어 주세요. preview가 열린 상태에서 업데이트·제거하면 IDE가 재시작을 요청할 수 있습니다.
 
 ## 사용법
 
@@ -61,6 +63,22 @@ tools/build-zip.sh      # 배포 zip 빌드 + 패키징 검증 (테스트 포함
 - `themes/mts.js` — 스위처 위젯과 테마/외관 상태 관리
 
 자세한 아키텍처와 플랫폼 제약은 [CLAUDE.md](CLAUDE.md)를 참고하세요.
+
+## 문제 해결
+
+**테마가 보이지 않는다**
+
+- **preview 렌더러가 Compose로 설정돼 있다** — 2025.2~2026.2에는 실험 기능인 Compose 렌더러를 고르는 옵션이 있습니다. 이 플러그인은 Chromium(JCEF) preview에 스타일을 입히는 방식이라 Compose 렌더러에서는 동작하지 않습니다. **Settings → Languages & Frameworks → Markdown → Preview rendering engine**을 **Chromium browser**로 바꾸세요. (Compose 렌더러에는 외부 스타일을 넣을 공식 경로가 없습니다 — [#26](https://github.com/sanggi-wjg/markdown-theme-studio/issues/26))
+- **Default가 선택돼 있다** — preview 우측 상단 **Aa**에서 테마를 고르세요. Default는 플러그인 스타일을 끈 상태입니다.
+- **설치 직후 이미 열려 있던 preview** — 파일을 다시 열면 적용됩니다.
+
+**프로젝트에 커스텀 CSS가 있다**
+
+`.idea/markdown.xml`의 커스텀 CSS(예: Typora 테마 이식 스니펫)가 있어도 테마가 우선합니다. 커스텀 CSS를 그대로 쓰고 싶으면 **Aa → Default**를 고르세요.
+
+**설정이 IDE마다 따로 저장된다**
+
+테마·외관·글자 크기·폭은 preview 내부 저장소(localStorage)에 저장되어 IDE 설치본마다 따로입니다. IDE 간 동기화(Settings Sync)는 검토 중입니다 — [#33](https://github.com/sanggi-wjg/markdown-theme-studio/issues/33).
 
 ## 라이선스
 
