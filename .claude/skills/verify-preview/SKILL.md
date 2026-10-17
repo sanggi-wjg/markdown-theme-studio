@@ -15,10 +15,10 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 ## 1. 배포
 
 1. `./gradlew prepareSandbox`
-2. CSS/JS는 preview **패널 생성 시점**에 서빙된다. 파일이 바뀌었으면 샌드박스 재시작이 확실한 반영 수단이다: 기존 runIde를 띄운 백그라운드 태스크를 종료(잔존 IDE 프로세스는 저장소 루트에서 `pkill -f "$(pwd -P)/.intellijPlatform/"` — 이 worktree 샌드박스의 `-Didea.config.path` 인자에 매칭된다. `idea.plugin.in.sandbox.mode=true`는 다른 worktree에서 병렬로 띄운 샌드박스까지 죽이고, `idea`류 광역 패턴은 사용자의 실제 IntelliJ를 죽일 수 있다) → `./gradlew runIde`를 백그라운드로 재실행
+2. CSS/JS는 preview **패널 생성 시점**에 서빙된다. 파일이 바뀌었으면 샌드박스 재시작이 확실한 반영 수단이다: 기존 runIde를 띄운 백그라운드 태스크를 종료(잔존 IDE 프로세스는 `pkill -f "$(git -C <worktree> rev-parse --show-toplevel)/.intellijPlatform/"` 후 같은 패턴 `pgrep`이 비었는지 확인 — 이 worktree 샌드박스의 `-Didea.config.path` 인자에 매칭된다. 셸 cwd에 기대는 `$(pwd)`는 하위 디렉터리나 호출마다 cwd가 돌아가는 에이전트 셸에서 엉뚱한 대상을 겨냥한다. `idea.plugin.in.sandbox.mode=true`는 다른 worktree에서 병렬로 띄운 샌드박스까지 죽이고, `idea`류 광역 패턴은 사용자의 실제 IntelliJ를 죽일 수 있다) → `./gradlew runIde`를 백그라운드로 재실행
 3. **최신 플랫폼 확인**: 기본 샌드박스는 IC 2025.1이라 최신 번들 Markdown의 새 렌더 요소(2026.2의 GitHub Alert 등)가 보이지 않는다. 스타일 변경이면 2025.1 감사 후 `./gradlew runIdeLatest -PlatestIdePath="<IDE 설치 경로>" --args="$PWD $PWD/fixtures/elements.md"`로 한 번 더 감사한다(포트가 같아 기존 샌드박스를 먼저 종료하거나 `-PcdpPort`로 다른 포트에 띄운다)
 4. CDP 타겟 확인: `tools/.venv/bin/python tools/mts_shot.py list`
-   - 포트는 기본 9223 (build.gradle.kts `cdpPort` → jvmArgs `-Dide.browser.jcef.debug.port`). 다른 worktree 샌드박스와 병렬이면 `-PcdpPort=9224`로 띄우고 모든 하네스 명령에 `MTS_CDP_PORT=9224`를 준다(tools/*.py는 mts_shot.PORT를 공유)
+   - 포트는 기본 9223 (build.gradle.kts `cdpPort` → jvmArgs `-Dide.browser.jcef.debug.port`). 다른 worktree 샌드박스와 병렬이면 `-PcdpPort=9224`로 띄우고 모든 하네스 명령에 `MTS_CDP_PORT=9224`를 준다(tools/*.py는 mts_shot.PORT를 공유). worktree엔 `tools/.venv`가 없으니(gitignore) 만들거나 main 체크아웃의 venv 파이썬으로 실행
    - preview 타겟이 안 보이면 샌드박스에서 md 파일이 열려 preview 패널이 떠 있는지부터 확인
 
 ## 2. 전수 감사 — 스타일 변경 시 필수
