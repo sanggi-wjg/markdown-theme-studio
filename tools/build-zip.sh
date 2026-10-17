@@ -30,11 +30,20 @@ check() { # check <설명> <패턴> <대상>
     fail=1
   fi
 }
+check_absent() { # check_absent <설명> <패턴> <대상>
+  if printf '%s' "$3" | grep -q "$2"; then
+    printf '  FAIL %s\n' "$1"
+    fail=1
+  else
+    printf '  OK   %s\n' "$1"
+  fi
+}
 
 echo "패키징 검증:"
 check "plugin.xml version=${ver}" "<version>${ver}</version>" "$xml"
 check "since-build=251" 'since-build="251"' "$xml"
-check "until-build 존재" 'until-build=' "$xml"
+# until-build는 두지 않는다(오픈엔드) — 상한이 있으면 새 메이저 출시일에 설치가 막힌다
+check_absent "until-build 미지정(오픈엔드)" 'until-build=' "$xml"
 check "change-notes 존재" '<change-notes>' "$xml"
 check "vendor url 존재" '<vendor url=' "$xml"
 check "pluginIcon.svg" 'META-INF/pluginIcon\.svg' "$entries"

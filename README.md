@@ -28,7 +28,7 @@ JetBrains IDE의 기본 Markdown preview 가독성을 개선하는 플러그인�
 
 ## 설치
 
-지원 범위: **2025.1 ~ 2026.x** (IntelliJ 등 번들 Markdown 플러그인이 있는 JetBrains IDE)
+지원 범위: **2025.1 이상** (IntelliJ IDEA·WebStorm·PyCharm 등 번들 Markdown 플러그인이 있는 JetBrains IDE). 새 IDE 버전은 매주 최신 릴리즈·EAP로 호환성을 자동 점검합니다
 
 1. 플러그인 zip 빌드 (또는 배포된 zip 사용)
 
