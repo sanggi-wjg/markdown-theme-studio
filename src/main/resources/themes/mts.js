@@ -118,17 +118,21 @@
   var LANG_SCAN_MAX = 60000; // 글자가 드문(숫자·기호 위주) 긴 문서에서 판정 비용 상한(문자)
   var HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/; // 음절·자모·호환 자모
   var ALPHA = /[A-Za-zÀ-ÖØ-öø-ɏͰ-ӿ]/; // 라틴·확장 라틴·그리스·키릴
-  // 코드·스타일은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>). 위젯·감사 주입 DOM도 제외.
-  // 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는 형제 순회를 못 줄인다)
-  // 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은 nodeName이 소문자)
-  var LANG_SKIP = /^(pre|code|style|script)$/i;
+  // 코드·스타일·수식은 문서 언어가 아니다(주석·문자열 언어, mermaid SVG의 <style>, 수식 식별자 — 번들
+  // 렌더는 수식을 span.math로 감싸 렌더 전엔 TeX 원문, 후엔 mjx-container와 보조 MathML 텍스트를 둔다).
+  // 위젯·감사 주입 DOM도 제외. 요소 단위로 거부해야 하위 트리를 통째로 건너뛴다(텍스트 노드 거부는
+  // 형제 순회를 못 줄인다). 정확 일치(부분 문자열이면 P가 PRE에 걸린다), 대소문자 무시(SVG 안 <style>은
+  // nodeName이 소문자)
+  var LANG_SKIP = /^(pre|code|style|script|mjx-container)$/i;
 
   function detectLang() {
     if (!document.body) return null;
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
-        if (LANG_SKIP.test(n.nodeName) || n.id === 'mts-audit') return NodeFilter.FILTER_REJECT;
+        if (LANG_SKIP.test(n.nodeName) || n.id === 'mts-audit' || (n.classList && n.classList.contains('math'))) {
+          return NodeFilter.FILTER_REJECT;
+        }
         return NodeFilter.FILTER_SKIP;
       }
     });
