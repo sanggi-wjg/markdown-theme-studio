@@ -39,6 +39,7 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 
 - 번들 기능(copy 버튼 생존, 실행 아이콘 숨김, 링크·data URI 이미지 로드): `tools/.venv/bin/python tools/mts_review2.py features`
 - 좁은 패널: `tools/.venv/bin/python tools/mts_review2.py narrow 400` → 확인 후 `clearemu`로 원복
+- 위젯 키보드 접근성(위젯을 건드렸을 때 필수): `tools/.venv/bin/python tools/mts_review2.py widget` — Enter로 열기→선택 테마에 포커스, 방향키로 전환, Esc로 닫고 Aa로 포커스 복귀, 보이지 않는 포커스 대상 0. `ok: true`여야 한다
 - 커스텀 CSS 경쟁: `css off` = 클린 환경 시뮬레이션, `css on` = Typora 최악 조건 복원
 
 ## 4. 스팟 체크
@@ -48,7 +49,7 @@ description: mts.css/mts.js 변경 후 preview 실렌더 검증 절차 — 빌�
 
 ## 함정 — 실제로 겪은 것들
 
-- **위젯 기하 측정은 보이는 상태에서만.** 숨김 상태(`mts-hidden`)는 `translateY(-8px)`가 걸려 rect가 8px 어긋난다. `window.scrollTo(0,0)`를 **별도 eval로 먼저** 보내고 ~200ms 뒤에 측정하거나 peek 상태를 만들 것 — transition(0.18s)과 scroll 이벤트 비동기 때문에 같은 eval 안에서 scrollTo+측정을 하면 여전히 어긋난다. (숨김 상태 측정으로 거짓 음성이 난 전례가 있다)
+- **위젯 패널 기하는 열린 상태에서만 의미가 있다.** 닫힌 패널(`hidden`)은 rect가 0이다 — `narrow`는 측정 순간에만 펼쳐 잰다. 패널 안 값(px)은 `getComputedStyle` 기반이라 테마 전환 직후 같은 eval에서 읽어도 된다
 - 감사는 "라이트 정상 / 다크 깨짐" 패턴을 잡으라고 있는 것이다 — 다크 결과부터 본다
 - 샌드박스가 마지막으로 연 프로젝트에 Typora 커스텀 CSS가 있으면 그 자체가 최악 조건 테스트다 (의도적으로 유용 — 클린 환경이 필요하면 `css off`)
 

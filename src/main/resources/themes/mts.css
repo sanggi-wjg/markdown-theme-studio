@@ -668,132 +668,323 @@ html[data-mts-theme="rd"] body pre {
 }
 
 /* ---------- theme switcher widget ----------
-   <html> 직속 자식이라 본문 incremental 업데이트에서 살아남는다. */
+   <html> 직속 자식이라 본문 incremental 업데이트에서 살아남는다. 테마 스코프 밖에
+   둔다 — Default(off)에서도 위젯은 살아야 한다. 우측 상단 Aa 버튼 + 클릭으로 여는 패널.
+   스크롤해도 숨기지 않는다(버튼이 작아 숨길 이유가 없고, 숨김 상태가 키보드 포커스를
+   보이지 않는 곳에 남기던 문제가 함께 사라진다) */
 
-#mts-switcher {
+/* 위젯 내부 전 요소의 상속·박스 속성을 명시한다 — 사용자 Custom CSS의 맨 button·span·div·output
+   규칙(!important)이 상속에만 기대던 색·폰트·줄높이와 미선언 박스 속성(여백 포함)을 가로채지 못하게
+   (계약 2의 취지). 특이도 (1,0,0)이라 아래 #mts-root .x 규칙이 필요한 여백·outline을 다시 준다 */
+#mts-root * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  box-shadow: none;
+  outline: none;
+  min-width: 0;
+  min-height: 0;
+}
+#mts-root {
+  /* 불투명 — 반투명이면 패널 뒤 본문 글자가 비쳐 설정 라벨을 읽기 어렵다 */
+  --mts-w-bg: #ffffff;
+  --mts-w-fg: #2b2d33;
+  --mts-w-muted: #6c707e;
+  --mts-w-border: rgba(0, 0, 0, 0.12);
+  --mts-w-hover: rgba(0, 0, 0, 0.06);
+  --mts-w-on-bg: #2b2d33;
+  --mts-w-on-fg: #ffffff;
+  /* JetBrains Int UI 포커스 색 — IDE 안에서 익숙한 포커스 링 */
+  --mts-w-focus: #3574f0;
   position: fixed;
   top: 10px;
   right: 14px;
+  margin: 0; /* 위젯 루트도 div — 맨 div 여백 규칙에 밀리지 않게 */
+  padding: 0;
   z-index: 2147483000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--mts-w-fg);
+  color-scheme: light;
+}
+html.mts-dark #mts-root {
+  --mts-w-bg: #23252b;
+  --mts-w-fg: #dfe1e5;
+  --mts-w-muted: #9a9ea8;
+  --mts-w-border: rgba(255, 255, 255, 0.14);
+  --mts-w-hover: rgba(255, 255, 255, 0.09);
+  --mts-w-on-bg: #dfe1e5;
+  --mts-w-on-fg: #1e1f22;
+  --mts-w-focus: #548af7;
+  color-scheme: dark;
+}
+#mts-root button {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  margin: 0;
+  cursor: pointer;
+}
+#mts-root :focus { outline: none; }
+#mts-root :focus-visible {
+  outline: 2px solid var(--mts-w-focus);
+  outline-offset: 1px;
+}
+
+/* Aa 버튼 — 휴지 상태는 본문보다 뒤로 물러나고, 호버·포커스·열림에서 또렷해진다 */
+#mts-root #mts-aa {
+  display: block;
+  margin-left: auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  background: var(--mts-w-bg);
+  border: 1px solid var(--mts-w-border);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  /* 휴지 상태도 텍스트 대비 4.5 이상 — 0.6은 라이트 테마 위에서 3.9로 미달이었다(0.7 → 5.2 이상) */
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+#mts-root #mts-aa:hover,
+#mts-root #mts-aa:focus-visible,
+#mts-root.mts-open #mts-aa { opacity: 1; }
+
+/* 패널 — 좁은 preview에서도 화면 안에 들어오게 폭 상한을 뷰포트에 묶는다 */
+#mts-root #mts-panel {
+  margin-top: 6px;
+  width: 268px;
+  max-width: calc(100vw - 28px);
+  /* 짧은 preview(편집기 위아래 분할·하단 툴윈도우)에서 아래쪽 컨트롤이 화면 밖으로 잘려 닿을 수
+     없던 문제 — fixed라 페이지 스크롤로도 못 닿으므로 패널 자체를 스크롤한다 */
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--mts-w-bg);
+  border: 1px solid var(--mts-w-border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+}
+html.mts-dark #mts-root #mts-panel { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5); }
+#mts-root #mts-panel[hidden] { display: none; }
+/* 패널 컨테이너(tabindex=-1)는 조작 대상이 아니라 빈 곳 클릭 시 포커스를 붙잡아 두는 자리 — 링 없음 */
+#mts-root #mts-panel:focus-visible { outline: none; }
+#mts-root .mts-heading {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mts-w-muted);
+  margin: 0 0 7px;
+}
+#mts-root .mts-divider {
+  height: 1px;
+  margin: 10px 0;
+  background: var(--mts-w-border);
+}
+#mts-root .mts-hint { color: var(--mts-w-muted); font-weight: 400; }
+
+/* 테마 견본 카드 */
+#mts-root .mts-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(52px, 1fr));
+  gap: 6px;
+}
+#mts-root .mts-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+#mts-root .mts-card:hover { background: var(--mts-w-hover); }
+#mts-root .mts-card[aria-checked="true"] {
+  border-color: var(--mts-w-focus);
+  background: var(--mts-w-hover);
+}
+#mts-root .mts-swatch {
+  position: relative;
+  display: block;
+  height: 38px;
+  border-radius: 5px;
+  border: 1px solid var(--mts-w-border);
+  background: var(--mts-sw-bg);
+  color: var(--mts-sw-fg);
+  overflow: hidden;
+}
+#mts-root .mts-swatch-aa {
+  position: absolute;
+  left: 7px;
+  top: 5px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--mts-sw-font, inherit);
+}
+#mts-root .mts-swatch-bar {
+  position: absolute;
+  left: 7px;
+  right: 7px;
+  bottom: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--mts-sw-accent);
+}
+#mts-root .mts-card-label {
+  font-size: 11px;
+  font-weight: 550;
+  text-align: center;
+}
+/* 견본 색은 각 테마 블록의 --mts-bg / --mts-fg / 포인트(링크·인라인코드) 색과 맞춘다 */
+#mts-root .mts-card[data-mts-id="gh"] { --mts-sw-bg: #ffffff; --mts-sw-fg: #1f2328; --mts-sw-accent: #0969da; }
+#mts-root .mts-card[data-mts-id="nt"] { --mts-sw-bg: #faf6ef; --mts-sw-fg: #3b372e; --mts-sw-accent: #a8443a; }
+#mts-root .mts-card[data-mts-id="dc"] { --mts-sw-bg: #ffffff; --mts-sw-fg: #3c3c43; --mts-sw-accent: #3451b2; }
+#mts-root .mts-card[data-mts-id="rd"] {
+  --mts-sw-bg: #f6f5f1; --mts-sw-fg: #1a1c20; --mts-sw-accent: #dbd9d2;
+  --mts-sw-font: Georgia, "Times New Roman", serif;
+}
+html.mts-dark #mts-root .mts-card[data-mts-id="gh"] { --mts-sw-bg: #0d1117; --mts-sw-fg: #e6edf3; --mts-sw-accent: #4493f8; }
+html.mts-dark #mts-root .mts-card[data-mts-id="nt"] { --mts-sw-bg: #1b1c20; --mts-sw-fg: #d6d4ce; --mts-sw-accent: #e38c7f; }
+html.mts-dark #mts-root .mts-card[data-mts-id="dc"] { --mts-sw-bg: #1b1b1f; --mts-sw-fg: #d0d0d4; --mts-sw-accent: #a8b1ff; }
+html.mts-dark #mts-root .mts-card[data-mts-id="rd"] { --mts-sw-bg: #121417; --mts-sw-fg: #c9cdd3; --mts-sw-accent: #2c3036; }
+
+/* Default(off) 행 — 라디오 점으로 "카드와 같은 그룹의 선택지"임을 보인다 */
+#mts-root .mts-off {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 5px 6px;
+  border-radius: 6px;
+  text-align: left;
+  font-weight: 550;
+}
+#mts-root .mts-off:hover { background: var(--mts-w-hover); }
+#mts-root .mts-off-dot {
+  width: 12px;
+  height: 12px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px solid var(--mts-w-muted);
+  flex-shrink: 0;
+}
+#mts-root .mts-off[aria-checked="true"] .mts-off-dot {
+  border: 4px solid var(--mts-w-focus);
+}
+
+/* 크기·폭 스테퍼와 외관 세그먼트 */
+#mts-root .mts-row {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  /* 휴지 상태에서도 라벨이 읽혀야 한다 — 0.3은 비활성 컨트롤처럼 보여 테마 전환
-     기능을 찾기 어려웠다. 본문보다는 뒤로 물러나는 선 */
-  opacity: 0.6;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  min-height: 28px;
 }
-#mts-switcher:hover { opacity: 1; }
-/* 스크롤을 내리면 숨기고, 최상단으로 돌아오면 다시 보인다 (mts.js에서 토글).
-   스크롤 중에는 미니 핸들(점)이 남고, 핸들 호버/클릭 시 스위처가 복귀한다 */
-#mts-switcher.mts-hidden {
-  opacity: 0;
-  transform: translateY(-8px);
-  pointer-events: none;
+#mts-root .mts-row-label {
+  flex: 1;
+  font-weight: 550;
 }
-/* 보이는 점은 14px, 호버 판정 영역은 28x28px 투명 히트존 */
-#mts-handle {
-  position: fixed;
-  /* 스위처 원점(top 10/right 14)에 정렬 — 히트존이 스위처 영역을 벗어나면
-     peek 발동 후 mouseleave가 안 잡혀 스위처가 고착될 수 있다 */
-  top: 10px;
-  right: 14px;
-  z-index: 2147483000;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-}
-#mts-handle::after {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  background: rgba(60, 63, 69, 0.32);
-  transition: transform 0.18s ease;
-}
-html.mts-dark #mts-handle::after { background: rgba(226, 229, 234, 0.38); }
-#mts-handle.mts-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-#mts-handle:hover::after { transform: scale(1.35); }
-html.mts-dark #mts-switcher {
-  background: rgba(30, 32, 38, 0.85);
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-}
-#mts-switcher button {
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  background: transparent;
-  color: #3c3f45;
-}
-html.mts-dark #mts-switcher button { color: #c6cad1; }
-#mts-switcher button:hover { background: rgba(0, 0, 0, 0.07); }
-html.mts-dark #mts-switcher button:hover { background: rgba(255, 255, 255, 0.1); }
-#mts-switcher button.mts-on {
-  background: #3c3f45;
-  color: #ffffff;
-}
-#mts-switcher .mts-sep {
-  width: 1px;
-  align-self: stretch;
-  margin: 2px 3px;
-  background: currentColor;
-  opacity: 0.18;
-}
-#mts-switcher button.mts-appearance {
-  padding: 5px 9px;
+#mts-root .mts-step {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1;
+  border: 1px solid var(--mts-w-border);
 }
-#mts-switcher button.mts-appearance svg { display: block; }
-#mts-switcher button.mts-fs {
-  font-weight: 600;
-  padding: 3px 7px;
-}
-#mts-switcher button:disabled {
+#mts-root .mts-step:hover { background: var(--mts-w-hover); }
+#mts-root .mts-step:disabled {
   opacity: 0.35;
   cursor: default;
+  background: transparent;
 }
-#mts-switcher button:disabled:hover { background: transparent; }
-html.mts-dark #mts-switcher button:disabled:hover { background: transparent; }
-html.mts-dark #mts-switcher button.mts-on {
-  background: #e2e5ea;
-  color: #1e2026;
+#mts-root .mts-value {
+  min-width: 52px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+#mts-root .mts-off-note {
+  display: none;
+  margin-top: 2px;
+  font-size: 11px;
+}
+#mts-root.mts-theme-off .mts-off-note { display: block; }
+#mts-root .mts-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+#mts-root .mts-segment {
+  display: flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 7px;
+  background: var(--mts-w-hover);
+}
+#mts-root .mts-segment button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 550;
+}
+#mts-root .mts-segment button svg { display: block; }
+/* 아이콘 크기는 width/height 속성 대신 CSS로 고정 — 커스텀 CSS의 맨 svg 규칙이 키우지 못하게 */
+#mts-root svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+#mts-root .mts-step svg {
+  width: 11px;
+  height: 11px;
+}
+#mts-root .mts-segment button[aria-checked="true"] {
+  background: var(--mts-w-on-bg);
+  color: var(--mts-w-on-fg);
+}
+#mts-root .mts-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+#mts-root .mts-reset {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--mts-w-muted);
+  font-weight: 550;
+}
+#mts-root .mts-reset:hover {
+  background: var(--mts-w-hover);
+  color: var(--mts-w-fg);
 }
 
-/* 좁은 패널: 활성 테마 버튼만 남기고 접는다. 호버하면 전체 펼침 */
-@media (max-width: 560px) {
-  #mts-switcher button[data-mts-id]:not(.mts-on) { display: none; }
-  #mts-switcher button.mts-fs { display: none; }
-  #mts-switcher .mts-sep { display: none; }
-  #mts-switcher:hover button[data-mts-id]:not(.mts-on) { display: inline-block; }
-  #mts-switcher:hover button.mts-fs { display: inline-block; }
-  #mts-switcher:hover .mts-sep { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  #mts-root #mts-aa { transition: none; }
 }
 
 @media print {
-  #mts-switcher,
-  #mts-handle {
-    display: none;
-  }
+  #mts-root { display: none; }
 }

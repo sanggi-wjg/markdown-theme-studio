@@ -2,10 +2,11 @@
 
 JetBrains IDE의 기본 Markdown preview 가독성을 개선하는 플러그인입니다. 번들 Markdown 플러그인의 렌더링 파이프라인(파싱, 싱크 스크롤, 코드 하이라이트)은 그대로 두고 스타일만 재정의합니다.
 
-- **테마 4종 + Default** — 타이포그래피, 코드 블록, 표, CJK 텍스트에 맞춰 다듬은 테마를 preview 우측 상단 스위처에서 바로 전환. Default를 고르면 기본 preview 스타일로 복귀
-- **폰트 크기 조절** — 스위처의 A- / A+ 버튼으로 ±3px 조절
-- **라이트/다크 자동 추종** — IDE 테마를 따라가며, 수동 고정(auto / light / dark)도 가능
-- **선택 기억** — 테마·외관·폰트 크기 설정은 localStorage에 저장되어 유지
+- **테마 4종 + Default** — 타이포그래피, 코드 블록, 표, CJK 텍스트에 맞춰 다듬은 테마를 preview 우측 상단 **Aa** 메뉴에서 바로 전환. Default를 고르면 기본 preview 스타일로 복귀
+- **글자 크기·본문 폭 조절** — 현재 값(px)을 보면서 단계 조절, Reset all로 한 번에 초기화
+- **라이트/다크 자동 추종** — IDE 테마를 따라가며, 수동 고정(Auto / Light / Dark)도 가능
+- **키보드로 전부 조작** — Enter로 열고, 방향키로 고르고, Esc로 닫는다
+- **선택 기억** — 테마·외관·글자 크기·폭 설정은 localStorage에 저장되어 유지
 - **프로젝트 커스텀 CSS 위에서도 동작** — `.idea/markdown.xml`의 기존 커스텀 CSS(예: Typora 이식 스니펫)가 있어도 테마가 우선 적용
 
 ## 테마
@@ -44,7 +45,18 @@ JetBrains IDE의 기본 Markdown preview 가독성을 개선하는 플러그인�
 
 ## 사용법
 
-Markdown preview 우측 상단의 스위처에서 테마를 클릭해 전환합니다. **Default**는 플러그인 스타일을 끄고 기본 preview로 되돌립니다. **A- / A+**는 본문 폰트 크기를 조절하고, 맨 오른쪽 버튼은 외관(auto/light/dark)을 순환합니다. 스크롤을 내리면 스위처가 작은 점으로 접히고, 점에 커서를 올리면 다시 펼쳐집니다.
+Markdown preview 우측 상단의 **Aa** 버튼을 누르면 설정 패널이 열립니다.
+
+| 라이트 | 다크 |
+|---|---|
+| ![설정 패널 라이트](docs/screenshots/switcher-light.png) | ![설정 패널 다크](docs/screenshots/switcher-dark.png) |
+
+- **Theme** — 견본 카드(GitHub / Soft / Docs / Reader)를 눌러 전환. **Default**는 플러그인 스타일을 끄고 기본 preview로 되돌립니다
+- **Text size / Max width** — − / + 로 본문 글자 크기(±3px)와 본문 최대 폭(±240px)을 조절. 가운데에 현재 값이 표시됩니다(preview 패널이 더 좁으면 실제 본문 폭은 패널에 맞춰 줄어듭니다)
+- **Appearance** — Auto(IDE 테마 추종) / Light / Dark
+- **Reset all** — GitHub 테마·Auto·기본 크기와 폭으로 초기화
+
+키보드: Aa에 포커스 후 Enter/Space로 열고, 방향키로 항목 안에서 이동·선택, Tab으로 다음 항목, Esc로 닫습니다. 패널 밖을 클릭해도 닫힙니다.
 
 ## 개발
 
