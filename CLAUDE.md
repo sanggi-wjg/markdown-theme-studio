@@ -30,7 +30,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 ## 아키텍처 (소스 3파일)
 
 - `ThemeStudioPreviewExtension.kt` — EP `org.intellij.markdown.browserPreviewExtensionProvider` 구현. `Priority.AFTER_ALL`이라 우리 스타일시트가 cascade 마지막에 로드된다. ResourceProvider로 리소스를 서빙하며 서빙 시점에 두 변환을 한다: ① `importantify()` — mts.css의 전 선언에 `!important` 부여, ② mts.js 앞에 `window.__mtsDark = <IDE LaF 다크 여부>` 프리루드 주입
-- `themes/mts.css` — 스코프 계약: `html[data-mts-theme="gh|nt|dc|rd"]` = 활성 테마, `html.mts-dark` = 다크 외관, `html.mts-laf-dark` = 실제 IDE LaF 다크(코드펜스 전용 도메인 — 외관 강제와 무관하게 mts.js가 항상 LaF 기준으로 세팅). 속성이 없으면 플러그인 완전 비활성(기본 preview 그대로). 공용 구조 규칙 → 테마별 규칙 순서이며, 같은 특이도끼리는 파일 내 뒤가 이긴다
+- `themes/mts.css` — 스코프 계약: `html[data-mts-theme="gh|nt|dc|rd"]` = 활성 테마, `html.mts-dark` = 다크 외관, `html.mts-laf-dark` = 실제 IDE LaF 다크(코드펜스 전용 도메인 — 외관 강제와 무관하게 mts.js가 항상 LaF 기준으로 세팅). `html[data-mts-lang="ko|ja|zh"]` = mts.js가 본문 글자(코드·스타일 제외)로 판정한 문서 언어 — 줄바꿈(한국어 어절 keep-all, 일본어 문절 auto-phrase, 중국어 normal+셀 바닥 폭)과 언어별 CJK 폰트 스택(`--mts-cjk-sans/serif`)의 키. 같은 값을 `lang`에도 달지만(접근성·auto-phrase) `lang`이 비었거나 우리가 단 값일 때만 — 플랫폼 lang과 공존. 테마 off면 둘 다 없다. 속성이 없으면 플러그인 완전 비활성(기본 preview 그대로). 공용 구조 규칙 → 테마별 규칙 순서이며, 같은 특이도끼리는 파일 내 뒤가 이긴다
 - `themes/mts.js` — 스위처 위젯. 본문은 IncrementalDOM이 `document.body`만 패치하므로 위젯은 반드시 `<html>` 직속에 부착한다. 테마(Default='off'=속성 제거)·외관(auto/light/dark)·폰트 오프셋(±3px, `--mts-fs-offset` 인라인 변수)은 localStorage에 저장. 위젯 스타일은 테마 스코프 **밖**에 둔다 — off 상태에서도 위젯은 살아야 한다
 
 ## 플랫폼 제약 — 어기면 조용히, 주로 다크 모드에서만 깨진다
