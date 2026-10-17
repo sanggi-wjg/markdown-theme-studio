@@ -1,11 +1,12 @@
 {
   "name": "mts-lint",
   "private": true,
-  "description": "mts.css/mts.js 린트 — 버그성 규칙만(스타일 강제 없음). 실행: npm ci && npm run lint",
+  "description": "mts.css/mts.js 린트 — 버그성 규칙만(스타일 강제 없음) + 동기화 브리지(mts-ide.js) 단위 테스트. 실행: npm ci && npm run lint",
   "scripts": {
-    "lint": "npm run lint:css && npm run lint:js",
+    "lint": "npm run lint:css && npm run lint:js && npm run test:sync",
     "lint:css": "cd ../.. && tools/lint/node_modules/.bin/stylelint --config tools/lint/stylelint.config.mjs \"src/main/resources/themes/*.css\"",
-    "lint:js": "cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.mjs \"src/main/resources/themes/*.js\" \"tools/*.js\""
+    "lint:js": "cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.mjs \"src/main/resources/themes/*.js\" \"tools/*.js\"",
+    "test:sync": "node --test sync.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

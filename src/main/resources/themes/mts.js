@@ -1,6 +1,8 @@
 // Markdown Theme Studio — theme switcher.
 // 서빙 시 Kotlin ResourceProvider가 IDE LaF 기반 프리루드를 앞에 붙인다:
 //   window.__mtsDark = true|false;
+// 설정 값의 원천은 IDE 설정이다 — 먼저 로드되는 mts-ide.js(window.__mtsSync)가 IDE와 동기화하고,
+// 여기 localStorage는 미러이자 브리지가 없을 때(정적 하네스·IDE 연결 실패)의 강등 경로다.
 // 위젯은 <html> 직속 자식으로 붙여 본문 incremental 업데이트에서 살아남는다.
 // 아이콘은 유니코드 글리프가 JCEF 폰트에서 깨질 수 있어 인라인 SVG를 쓴다.
 // 구조: 우측 상단 Aa 버튼 하나 + 클릭으로 여는 설정 패널(비모달 dialog).
@@ -24,6 +26,7 @@
     { id: 'light', label: 'Light', title: 'Always light' },
     { id: 'dark', label: 'Dark', title: 'Always dark' }
   ];
+  var APPEARANCE_IDS = ['auto', 'light', 'dark'];
   var FS_KEY = 'mts-fs-offset';
   var FS_MIN = -3;
   var FS_MAX = 3;
@@ -31,6 +34,9 @@
   var W_MIN = -3;
   var W_MAX = 3;
   var W_STEP = 80; // px per step — 테마별 measure(640~860px)에 공통 적용
+  // 동기화 상태 필드 → localStorage 키 (필드 이름은 IDE 메시지와 같다: mts-ide.js·PreviewProtocol.kt)
+  var STORAGE_KEYS = { theme: THEME_KEY, appearance: APPEARANCE_KEY, fs: FS_KEY, w: W_KEY };
+  var DEFAULTS = { theme: DEFAULT_THEME, appearance: 'auto', fs: 0, w: 0 };
   var ICONS = {
     auto: '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">' +
       '<circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
@@ -51,10 +57,21 @@
       '<line x1="2" y1="6" x2="10" y2="6"/><line x1="6" y1="2" x2="6" y2="10"/></g></svg>'
   };
   var root = document.documentElement;
-  var appearanceMode = savedAppearance();
+  var local = { theme: savedTheme(), appearance: savedAppearance(), fs: savedFsOffset(), w: savedWOffset() };
+  // 처음 보여 줄 값은 브리지가 고른다(IDE 값 / 로컬 값 — 우선순위는 mts-ide.js 머리말). 브리지가 없거나 실패하면 로컬
+  var sync = window.__mtsSync || null;
+  var initial = local;
+  if (sync) {
+    try {
+      initial = sync.connect({ local: local, defaults: DEFAULTS, normalize: normalizeState, apply: applyState }) || local;
+    } catch (e) {
+      sync = null;
+    }
+  }
+  var appearanceMode = initial.appearance;
   var currentTheme = null; // applyTheme가 설정 — off는 속성이 없어 DOM에서 못 읽는다
-  var fsOffset = savedFsOffset();
-  var wOffset = savedWOffset();
+  var fsOffset = initial.fs;
+  var wOffset = initial.w;
 
   function savedTheme() {
     try {
@@ -96,6 +113,42 @@
     try { localStorage.setItem(key, value); } catch (e) { /* persistence unavailable */ }
   }
 
+  function writeLocal(state) {
+    Object.keys(STORAGE_KEYS).forEach(function (k) {
+      if (Object.prototype.hasOwnProperty.call(state, k)) save(STORAGE_KEYS[k], String(state[k]));
+    });
+  }
+
+  // 위젯에서 바꾼 값 — 로컬 미러에 쓰고 IDE로 보낸다(바꾼 필드만 — 다른 경로에서 바뀐 필드를 덮지 않게)
+  function persist(fields) {
+    writeLocal(fields);
+    if (!sync) return;
+    try { sync.push(fields); } catch (e) { /* 로컬에는 남았다 */ }
+  }
+
+  function inRange(v, min, max) {
+    return typeof v === 'number' && Math.floor(v) === v && v >= min && v <= max;
+  }
+
+  // IDE에서 온 값 검증 — 하나라도 허용 밖이면 통째로 버린다
+  function normalizeState(s) {
+    if (!s || THEME_IDS.indexOf(s.theme) < 0 || APPEARANCE_IDS.indexOf(s.appearance) < 0 ||
+        !inRange(s.fs, FS_MIN, FS_MAX) || !inRange(s.w, W_MIN, W_MAX)) return null;
+    return { theme: s.theme, appearance: s.appearance, fs: s.fs, w: s.w };
+  }
+
+  // IDE가 보낸 상태(다른 preview·Find Action·Settings Sync) 적용 — 로컬 미러만 맞추고 다시 보내지 않는다
+  function applyState(s) {
+    appearanceMode = s.appearance;
+    fsOffset = s.fs;
+    wOffset = s.w;
+    writeLocal(s);
+    applyAppearance();
+    applyFsOffset();
+    applyWOffset();
+    applyTheme(s.theme);
+  }
+
   function applyTheme(id) {
     currentTheme = id;
     if (id === 'off') {
@@ -103,9 +156,13 @@
     } else {
       root.setAttribute('data-mts-theme', id);
     }
-    save(THEME_KEY, id);
     applyLang();
     refreshWidget();
+  }
+
+  function pickTheme(id) {
+    applyTheme(id);
+    persist({ theme: id });
   }
 
   // ---------- 문서 언어 ----------
@@ -214,7 +271,7 @@
     var next = fsOffset + delta;
     if (next < FS_MIN || next > FS_MAX) return;
     fsOffset = next;
-    save(FS_KEY, String(fsOffset));
+    persist({ fs: fsOffset });
     applyFsOffset();
     refreshWidget();
   }
@@ -231,7 +288,7 @@
     var next = wOffset + delta;
     if (next < W_MIN || next > W_MAX) return;
     wOffset = next;
-    save(W_KEY, String(wOffset));
+    persist({ w: wOffset });
     applyWOffset();
     refreshWidget();
   }
@@ -251,22 +308,20 @@
 
   function setAppearance(mode) {
     appearanceMode = mode;
-    save(APPEARANCE_KEY, mode);
+    persist({ appearance: mode });
     applyAppearance();
     refreshWidget();
   }
 
   function resetAll() {
-    fsOffset = 0;
-    wOffset = 0;
-    save(FS_KEY, '0');
-    save(W_KEY, '0');
+    fsOffset = DEFAULTS.fs;
+    wOffset = DEFAULTS.w;
+    appearanceMode = DEFAULTS.appearance;
     applyFsOffset();
     applyWOffset();
-    appearanceMode = 'auto';
-    save(APPEARANCE_KEY, 'auto');
     applyAppearance();
-    applyTheme(DEFAULT_THEME);
+    applyTheme(DEFAULTS.theme);
+    persist({ theme: DEFAULTS.theme, appearance: DEFAULTS.appearance, fs: DEFAULTS.fs, w: DEFAULTS.w });
   }
 
   // ---------- 위젯 DOM ----------
@@ -329,7 +384,7 @@
       swatch.appendChild(el('span', { 'class': 'mts-swatch-bar' }));
       card.appendChild(swatch);
       card.appendChild(el('span', { 'class': 'mts-card-label' }, t.label));
-      card.addEventListener('click', function () { applyTheme(t.id); });
+      card.addEventListener('click', function () { pickTheme(t.id); });
       cards.appendChild(card);
     });
     themeGroup.appendChild(cards);
@@ -337,9 +392,9 @@
     off.appendChild(el('span', { 'class': 'mts-off-dot', 'aria-hidden': 'true' }));
     off.appendChild(el('span', null, 'Default'));
     off.appendChild(el('span', { 'class': 'mts-hint' }, 'stock preview'));
-    off.addEventListener('click', function () { applyTheme('off'); });
+    off.addEventListener('click', function () { pickTheme('off'); });
     themeGroup.appendChild(off);
-    radioGroupKeys(themeGroup, applyTheme);
+    radioGroupKeys(themeGroup, pickTheme);
     panel.appendChild(themeGroup);
 
     panel.appendChild(el('div', { 'class': 'mts-divider' }));
@@ -485,10 +540,11 @@
     refreshWidget();
   }
 
+  if (initial !== local) writeLocal(initial); // IDE 값으로 시작 — 미러를 맞춘다
   applyAppearance();
   applyFsOffset();
   applyWOffset();
-  applyTheme(savedTheme());
+  applyTheme(initial.theme);
 
   // 위젯은 <html> 직속이라 본문 incremental 패치에 제거되지 않는다 — 1회 부착으로 충분.
   // 본문은 로드 뒤에 패치로 채워지므로 언어는 준비 시점에 다시 판정하고 이후 변경을 감시한다
