@@ -43,6 +43,16 @@ for theme in ["gh", "nt", "dc", "rd"]:
             elif c < WARN and k not in LOW_CONTRAST_OK:
                 violations.append(f"[{combo}] {k}: 대비 {c} (WARN <4.5) bg={v['bg']}")
 
+        # commandRunner 실행 아이콘은 테마 활성 시 숨는다(CLAUDE.md 계약) — 보이면 위반. 숨긴 링크가
+        # 칩에 자리를 남기거나 코드 텍스트까지 지우면 역시 위반
+        run = data["_runIcons"]
+        for v in run["visible"]:
+            violations.append(f"[{combo}] 실행 아이콘 보임: {v}")
+        if abs(run["chipDw"]) > 0.5 or abs(run["chipDh"]) > 0.5:
+            violations.append(f"[{combo}] 실행 칩 크기 차이 Δw={run['chipDw']} Δh={run['chipDh']} (아이콘 없는 칩 대비)")
+        if run["chipText"] != "./gradlew build":
+            violations.append(f"[{combo}] 실행 칩 텍스트 손상: {run['chipText']!r}")
+
         lay = data["_layout"]
         if lay["bodyHScroll"] > 2:
             violations.append(f"[{combo}] body 가로 오버플로 {lay['bodyHScroll']}px")
@@ -61,6 +71,8 @@ with open(os.path.join(HERE, "audit-full.json"), "w") as f:
     json.dump(report, f, ensure_ascii=False, indent=1)
 
 print(f"총 위반: {len(violations)}건")
+print(f"실행 링크: 문서 {report['gh-light']['_runIcons']['doc']}개 + 동물원 "
+      f"{report['gh-light']['_runIcons']['total'] - report['gh-light']['_runIcons']['doc']}개 검사")
 for v in violations:
     print(" -", v)
 print("\n전체 데이터: audit-full.json")

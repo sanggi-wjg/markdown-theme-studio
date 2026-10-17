@@ -29,7 +29,9 @@ MARKERS = [
     "code-fence",
     "code-fence-highlighter-copy-button",
     "run-icon",
+    "run-icon-line",  # 2026.1+ 인라인 코드·펜스 줄 실행 링크 (2025.1은 run-icon)
     "code-block",
+    "data-command",  # 실행 링크 공통 속성 — mts.css 숨김 안전망 a[data-command]가 기댄다
     "frontmatter-header",
     "markdown-alert",
     "markdown-alert-title",

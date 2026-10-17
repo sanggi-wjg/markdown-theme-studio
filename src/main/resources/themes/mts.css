@@ -326,9 +326,18 @@ html[data-mts-theme] body table.frontmatter-header td table:has(> thead) > thead
 }
 
 /* commandRunner 확장의 실행 아이콘(초록 삼각형)이 테마 레이아웃과 겹쳐
-   깨져 보이므로 숨긴다 — 같은 기능이 에디터 거터에 있어 손실 없음 */
+   깨져 보이므로 숨긴다 — 같은 기능이 에디터 거터에 있어 손실 없음.
+   번들 마크업은 <a class="…" href="#" role="button" data-command="Run:<해시>"><img></a>:
+   - 펜스 블록: .run-icon.code-block / 펜스 줄: .run-icon.code-block(2025.1), .run-icon-line.code-block(2026.1+)
+   - 인라인 코드(표 셀 포함): .run-icon(2025.1), .run-icon-line(2026.1+) — <code> 안 텍스트 앞에 붙는다.
+     2026.1+는 .code-block 없이 .run-icon-line만 달아 숨김을 빠져나갔고, 공용 img max-width:100%가
+     번들의 max-width:1em을 덮어 30px 원본 크기로 칩·줄 높이를 밀었다
+   a[data-command]는 commandRunner.js가 실행 링크를 알아보는 속성 — 클래스가 또 바뀌어도 잡는 안전망.
+   display:none이어야 자리·클릭 영역·탭 순서가 함께 사라진다(opacity는 클릭이, visibility는 자리가 남는다) */
 html[data-mts-theme] body .run-icon,
-html[data-mts-theme] body .code-block {
+html[data-mts-theme] body .run-icon-line,
+html[data-mts-theme] body .code-block,
+html[data-mts-theme] body a[data-command] {
   display: none;
 }
 

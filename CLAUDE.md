@@ -42,7 +42,7 @@ JetBrains 번들 Markdown 플러그인의 preview에 CSS/JS를 주입해 가독�
 - 코드 펜스 토큰 색은 IDE 렉서가 **인라인 스타일**로 넣는다 — 컨테이너(배경·패딩·폰트)만 스타일링하고 토큰 색은 건드리지 않는다. 코드펜스의 배경(`--mts-code-bg`)·기본 글자색(`--mts-pre-fg`)은 외관(`mts-dark`)이 아니라 **LaF**(`mts-laf-dark`)를 따른다 — 토큰 색의 출처가 LaF의 에디터 스킴이라, 외관을 강제해도 코드블록은 LaF 도메인에 남아야 대비가 유지된다 (auto에선 둘이 같아 시각 차이 없음)
 - 라이트 코드 배경은 IDE Light 스킴 주석 회색(#8c8c8c) 대비가 기본 preview(3.126) 이상이어야 한다 — `tools/mts_tokens.py`가 REGRESSION으로 검출
 - IDE LaF 변경 시 패널·확장 인스턴스가 파기 후 재생성된다. JS 상태는 살아남지 않는다는 전제로 작성 (프리루드가 매번 새로 주입되는 이유)
-- 번들 commandRunner의 실행 아이콘은 테마 활성 시 숨긴다(`.run-icon`, `.code-block`) — copy 버튼(`.code-fence-highlighter-*`)은 살려둘 것
+- 번들 commandRunner의 실행 아이콘은 테마 활성 시 숨긴다(`.run-icon`, `.code-block`, 2026.1+ 인라인 코드·표 셀·펜스 줄의 `.run-icon-line`, 공통 속성 `a[data-command]`) — `display: none`이어야 클릭 영역·탭 순서까지 사라진다. copy 버튼(`.code-fence-highlighter-*`)은 살려둘 것
 - **번들 렌더는 버전마다 요소가 늘어난다** — 수식(MathJax SVG, 2025.1~), GitHub Alert(`blockquote.markdown-alert-<type>`, 2026.2~), Mermaid(설치 IDE에 따라), front matter 표(`table.frontmatter-header`, 2026.3~ — 이전 버전과 2026.3의 TOML·파싱 실패는 `pre.frontmatter-header`). 본문 요소는 body 직속이 아니라 `<div>` 래퍼 안에 있다(2026.2·2026.3 확인) — `body > p` 같은 자식 셀렉터는 쓰지 말고 자손 셀렉터만 쓸 것. IDE `colors.css`가 주는 의미 색(Alert 유형 색 등)은 비-important라 우리 규칙에 전부 덮이므로 테마 도메인에 재선언해야 한다. 샌드박스(2025.1)만 보면 이런 변화를 놓친다 — 스타일 변경은 `runIdeLatest`로도 확인하고, 새 요소는 `fixtures/elements.md`와 `mts_audit.js` 동물원에 추가한다
 
 ## 렌더링 검증 — 추측하지 말고 눈으로 확인
