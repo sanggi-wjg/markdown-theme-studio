@@ -54,8 +54,10 @@ internal class PreviewSettingsSync(panel: MarkdownHtmlPanel?) : Disposable {
             LOG.warn("Markdown Theme Studio settings are unavailable; the preview falls back to local storage", e)
             null
         }
-        val prelude = PreviewProtocol.prelude(prefs, pipe = link != null)
-        return ResourceProvider.Resource(prelude.toByteArray() + script, "text/javascript; charset=utf-8")
+        return ResourceProvider.Resource(
+            PreviewProtocol.servedBridge(script, prefs, pipe = link != null),
+            "text/javascript; charset=utf-8",
+        )
     }
 
     /** BrowserPipe 핸들러 스레드(JCEF) — 검증만 하고 EDT로 넘긴다 */

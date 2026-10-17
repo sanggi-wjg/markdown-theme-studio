@@ -85,4 +85,14 @@ class PreviewProtocolTest {
         assertTrue(PreviewProtocol.prelude(PreviewPrefs(revision = 9), pipe = false).startsWith("window.__mtsIde = {\"pipe\":false,\"rev\":9,"))
         assertEquals("", PreviewProtocol.prelude(null, pipe = true))
     }
+
+    @Test
+    fun `서빙되는 브리지는 프리루드 뒤에 스크립트 원본이다`() {
+        val script = "(function () {})();\n".toByteArray()
+        assertEquals(
+            PreviewProtocol.prelude(PreviewPrefs(revision = 9), pipe = false) + "(function () {})();\n",
+            PreviewProtocol.servedBridge(script, PreviewPrefs(revision = 9), pipe = false).decodeToString(),
+        )
+        assertEquals("(function () {})();\n", PreviewProtocol.servedBridge(script, null, pipe = true).decodeToString())
+    }
 }

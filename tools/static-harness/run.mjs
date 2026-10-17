@@ -1,7 +1,8 @@
 // CI 정적 렌더 하네스 — IDE 없이 PR마다 4테마×2외관 감사를 돌린다.
 // 입력: snapshots/<laf>/*.html(실제 preview 캡처, capture.py) + build/served(IDE가 서빙하는 바이트,
-// ./gradlew exportServedResources). IDE가 함께 서빙하는 설정 동기화 브리지(mts-ide-<토큰>.js, window.__mtsIde
-// 프리루드)는 싣지 않는다 — 위젯은 localStorage 강등 경로로 동작하고 초기 상태는 기본값이다. 사용자 Custom CSS 자리(inline.css)는 비우거나(clean) 적대적 스니펫
+// ./gradlew exportServedResources). IDE가 mts.js 앞에 함께 서빙하는 설정 동기화 브리지(mts-ide-<토큰>.js —
+// window.__mtsIde 프리루드 + window.__mtsSync)는 연동 검사 한 조합(auditBridge)에서만 싣는다 — 나머지 조합의
+// 위젯은 localStorage 강등 경로로 동작하고 초기 상태는 기본값이다. 사용자 Custom CSS 자리(inline.css)는 비우거나(clean) 적대적 스니펫
 // (adversarial-custom.css, custom)으로 채운다.
 // 검사(판정 기준은 tools/mts_audit.py와 같다 — FAIL 3.0 / WARN 4.5, small 3.0, del 1.8):
 //   - 동물원: tools/mts_audit.js가 주입하는 요소 동물원의 대비·레이아웃(가로 넘침, pre 스크롤, URL 줄바꿈,
@@ -12,6 +13,10 @@
 //     × 외관 2로 직접 잰다(clean·custom 둘 다). axe-core는 ARIA·접근 가능한 이름 규칙만 —
 //     color-contrast는 fixed 위젯에서 전부 incomplete(판정 불가)라 끄고 위 직접 계산으로 대신한다
 //   - 언어: IDE 로드 순서(빈 body에서 mts.js 실행 → 본문 패치)를 재현한 뒤 픽스처별 판정 기대값
+//   - 연동: 한 조합(다크 LaF·클린·sample·900px)에서 브리지 → mts.js 순으로 실어 고정 IDE 상태가 위젯 초기 상태·
+//     localStorage 미러로 가는지, rev 0이면 기본값으로 시작하는지, 위젯 변경이 브리지로 넘어가는지(미확인 표시),
+//     같은 저장소로 다시 열면 그 미확인 변경이 이기는지(rev 0이면 마이그레이션 대기로 남는지)와 페이지 에러 없음·
+//     첫 패치 언어 판정을 본다
 // 한계 — 회귀 조기 검출용이고 최종 판정은 CDP 하네스(verify-preview)다:
 //   - Linux headless Chromium + Playwright 기본 폰트다. macOS JCEF의 폰트 폴백에 좌우되는 문제(이모지
 //     글리프, 한글 폴백 폰트, 427px 패널의 실제 줄바꿈 폭)는 재현하지 않는다. JCEF와 Chromium 버전도 다르다
@@ -63,9 +68,14 @@ const MEASURE_TOL = 1.5;
 // 위젯 axe: ARIA·이름 규칙만 본다(대비는 scan.js가 직접)
 const AXE_OPTIONS = { rules: { "color-contrast": { enabled: false } }, resultTypes: ["violations", "incomplete"] };
 
+/** 출력이 다 나간 뒤 끝낸다 — process.exit()은 파이프로 받는 stdout·stderr에 아직 못 쓴 출력을 버린다(#60).
+ *  끝나지 않는 Promise다: await하면 아래로 진행하지 않고 쓰기 콜백의 exit으로 끝난다 */
+function exitAfter(stream, text, code) {
+  return new Promise(() => stream.write(text + "\n", () => process.exit(code)));
+}
+
 if (!fs.existsSync(path.join(SERVED, "mts.css"))) {
-  console.error("build/served 없음 — 먼저 ./gradlew exportServedResources");
-  process.exit(2);
+  await exitAfter(process.stderr, "build/served 없음 — 먼저 ./gradlew exportServedResources", 2);
 }
 // 스냅샷이 빠지면 조합이 조용히 줄어든다 — LaF 둘 × 기대 픽스처 전부가 있어야 돈다
 const missing = APPEARANCES.flatMap((laf) => [
@@ -73,8 +83,7 @@ const missing = APPEARANCES.flatMap((laf) => [
   `snapshots/${laf}/upstream`,
 ]).filter((p) => !fs.existsSync(path.join(HERE, p)));
 if (missing.length) {
-  console.error(`스냅샷 없음: ${missing.join(", ")} — capture-all.sh <light|dark>로 찍을 것`);
-  process.exit(2);
+  await exitAfter(process.stderr, `스냅샷 없음: ${missing.join(", ")} — capture-all.sh <light|dark>로 찍을 것`, 2);
 }
 // 픽스처가 바뀌었는데 스냅샷을 다시 찍지 않으면 낡은 DOM으로 조용히 통과한다 — 캡처 때 기록한 해시와 비교
 const stale = APPEARANCES.flatMap((laf) => FIXTURES.filter((f) => {
@@ -83,8 +92,8 @@ const stale = APPEARANCES.flatMap((laf) => FIXTURES.filter((f) => {
   return !fs.existsSync(rec) || fs.readFileSync(rec, "utf8").trim() !== now;
 }).map((f) => `${laf}/${f}`));
 if (stale.length) {
-  console.error(`스냅샷이 현재 fixtures와 다름: ${stale.join(", ")} — capture-all.sh <light|dark> <fixtures/x.md…>로 다시 찍을 것`);
-  process.exit(2);
+  await exitAfter(process.stderr,
+    `스냅샷이 현재 fixtures와 다름: ${stale.join(", ")} — capture-all.sh <light|dark> <fixtures/x.md…>로 다시 찍을 것`, 2);
 }
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(path.join(OUT, "shots"), { recursive: true });
@@ -260,6 +269,119 @@ async function axeWidget(page, label) {
   }
 }
 
+// 설정 동기화 브리지 연동 검사의 고정 IDE 상태(프리루드 필드 이름) — ExportServedResources.kt BRIDGE_PREFS와 같아야
+// 한다. build/served/mts-ide.stored.js는 이 값, mts-ide.unset.js는 같은 값에 rev 0이다(서빙 코드
+// PreviewProtocol.servedBridge로 만든 바이트)
+const BRIDGE_STATE = { rev: 7, theme: "nt", appearance: "light", fs: 1, w: -1 };
+
+/** 설정 동기화 브리지(mts-ide.js) ↔ mts.js 연동 — IDE처럼 브리지를 mts.js 앞에 싣고 결과 상태를 본다. mts.js는
+ *  connect()·push() 예외를 삼키고 로컬 값으로 강등하므로 연동이 깨져도 위젯은 멀쩡해 보인다. 한 조합만 —
+ *  다크 LaF(appearance=light가 기본값 auto → 다크와 갈린다)·클린·sample(ko)·900px */
+async function auditBridge(browser) {
+  const laf = "dark";
+  const fixture = "sample";
+  const vp = VIEWPORTS[0];
+  const dir = stage(laf, "clean");
+  const mtsJs = fs.readFileSync(path.join(SERVED, `mts.${laf}.js`), "utf8");
+  const s = BRIDGE_STATE;
+  const variants = [
+    // IDE 값으로 시작하고 localStorage 미러를 맞춘다(확인된 rev, 미확인 변경 없음)
+    { name: "IDE 값", file: "mts-ide.stored.js", rev: s.rev, want: {
+      theme: s.theme, appearance: s.appearance, dark: s.appearance !== "light", lafDark: true,
+      fs: s.fs ? `${s.fs}px` : "", w: s.w ? `${s.w * 80}px` : "", // 80 = mts.js W_STEP
+      store: {
+        "mts-appearance": s.appearance, "mts-fs-offset": String(s.fs), "mts-ide-rev": String(s.rev),
+        "mts-pending": "0", "mts-theme": s.theme, "mts-width-offset": String(s.w),
+      },
+    } },
+    // rev 0 = IDE에 값 없음 — 실려 온 값을 무시하고 로컬(빈 저장소 = 기본값)로 시작한다. 기본값이라 올리지도 적지도 않는다
+    { name: "IDE 값 없음(rev 0)", file: "mts-ide.unset.js", rev: 0, want: {
+      theme: "gh", appearance: "auto", dark: true, lafDark: true, fs: "", w: "", store: {},
+    } },
+  ];
+  const wantLang = EXPECTED_LANG[fixture];
+  // localStorage는 키 순서가 없다 — 페이지에서 읽을 때와 같은 정렬로 맞춰 비교한다
+  const sorted = (o) => Object.fromEntries(Object.keys(o).sort().map((k) => [k, o[k]]));
+  for (const v of variants) {
+    const label = `${laf}-laf/clean/${fixture}@${vp.width}/연동/${v.name}`;
+    const file = path.join(SERVED, v.file);
+    if (!fs.existsSync(file)) {
+      flag("연동", `[${label}] build/served/${v.file} 없음 — ./gradlew exportServedResources`);
+      continue;
+    }
+    const page = await browser.newPage({ viewport: vp, deviceScaleFactor: 1 });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
+    // 스크립트 오류만 — 리소스 로드 실패(스냅샷에 없는 IDE 서빙 이미지: 코드펜스 복사 버튼 아이콘 등)는 Chromium이
+    // console error로 내지만 연동과 무관하다
+    page.on("console", (m) => {
+      if (m.type() === "error" && !m.text().startsWith("Failed to load resource:")) errors.push(`console.error: ${m.text()}`);
+    });
+    await page.goto("file://" + path.join(dir, fixture + ".html"));
+    // IDE 로드 순서(openPage와 같다): 빈 body → 브리지 → mts.js(별개 스크립트 — 한쪽이 던져도 다른 쪽은 돈다) → 본문 패치
+    await page.evaluate(() => { window.__mtsBody = [...document.body.childNodes]; document.body.replaceChildren(); });
+    await page.addScriptTag({ content: fs.readFileSync(file, "utf8") });
+    await page.addScriptTag({ content: mtsJs });
+    const firstLang = await page.evaluate(async () => {
+      document.body.append(...window.__mtsBody);
+      delete window.__mtsBody;
+      await new Promise((r) => setTimeout(r, 0));
+      return ["data-mts-lang", "lang"].map((a) => document.documentElement.getAttribute(a));
+    });
+    await page.waitForTimeout(LANG_SETTLE_MS);
+    const read = () => page.evaluate(() => {
+      const r = document.documentElement;
+      const picked = (group) => {
+        const el = document.querySelector(`#mts-root ${group} [aria-checked="true"]`);
+        return el && el.getAttribute("data-mts-id");
+      };
+      return {
+        theme: r.getAttribute("data-mts-theme"), widgetTheme: picked(".mts-themes"), appearance: picked(".mts-segment"),
+        dark: r.classList.contains("mts-dark"), lafDark: r.classList.contains("mts-laf-dark"),
+        fs: r.style.getPropertyValue("--mts-fs-offset"), w: r.style.getPropertyValue("--mts-w-offset"),
+        lang: ["data-mts-lang", "lang"].map((a) => r.getAttribute(a)),
+        store: Object.fromEntries(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)])),
+      };
+    });
+    const got = await read();
+    const want = { ...v.want, store: sorted(v.want.store), widgetTheme: v.want.theme, lang: [wantLang, wantLang] };
+    for (const k of Object.keys(want)) {
+      if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) {
+        flag("연동", `[${label}] 초기 ${k}=${JSON.stringify(got[k])} (기대 ${JSON.stringify(want[k])})`);
+      }
+    }
+    if (JSON.stringify(firstLang) !== JSON.stringify(want.lang)) {
+      flag("연동", `[${label}] 언어 판정(첫 패치 직후) ${JSON.stringify(firstLang)} (기대 ${JSON.stringify(want.lang)})`);
+    }
+    judgeWidget(`${label}/위젯/닫힘`, await scan(page, "widget"), false);
+    // 위젯 변경 → 로컬 미러 + 브리지 push(pipe=false라 IDE로는 못 가고 미확인으로 남는다 — 기준 rev는 IDE에서 받은 값)
+    await page.evaluate(() => {
+      document.getElementById("mts-aa")?.click(); // 위젯이 없으면 위 judgeWidget이 이미 잡았다 — 여기서 멈추지 않는다
+      document.querySelector('#mts-root .mts-themes [data-mts-id="dc"]')?.click();
+    });
+    const pushed = (await read()).store;
+    const wantPushed = sorted({ ...v.want.store, "mts-theme": "dc", "mts-ide-rev": String(v.rev), "mts-pending": "1" });
+    if (JSON.stringify(pushed) !== JSON.stringify(wantPushed)) {
+      flag("연동", `[${label}] 위젯 변경 뒤 store=${JSON.stringify(pushed)} (기대 ${JSON.stringify(wantPushed)})`);
+    }
+    // 같은 컨텍스트(localStorage 유지)로 다시 연다 — mts.js가 저장값을 읽는 경로와, 미확인 로컬 변경이 같은 rev의
+    // 다음 로드에서도 이기는지(브리지 connect 규칙 2, pipe 없는 강등 경로). IDE 값이 없으면(rev 0) 마이그레이션 대기 상태로 남는다
+    await page.reload();
+    await page.evaluate(() => { window.__mtsBody = [...document.body.childNodes]; document.body.replaceChildren(); });
+    await page.addScriptTag({ content: fs.readFileSync(file, "utf8") });
+    await page.addScriptTag({ content: mtsJs });
+    await page.evaluate(() => { document.body.append(...window.__mtsBody); delete window.__mtsBody; });
+    const again = await read();
+    const wantAgain = v.rev ? wantPushed : sorted({ "mts-theme": "dc", "mts-ide-rev": "0", "mts-pending": "1" });
+    if (again.theme !== "dc" || again.widgetTheme !== "dc" || JSON.stringify(again.store) !== JSON.stringify(wantAgain)) {
+      flag("연동", `[${label}] 재로드 뒤 theme=${again.theme} widget=${again.widgetTheme} store=${JSON.stringify(again.store)} (기대 dc, ${JSON.stringify(wantAgain)})`);
+    }
+    for (const e of errors) flag("연동", `[${label}] ${e}`);
+    report[label] = { initial: got, firstLang, pushed, reloaded: again, errors };
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch();
 const report = {};
 let combos = 0;
@@ -312,6 +434,7 @@ for (const laf of APPEARANCES) {
     }
   }
 }
+await auditBridge(browser);
 await browser.close();
 
 fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify(report, null, 1));
@@ -322,4 +445,5 @@ const summary = [
 ].join("\n");
 fs.writeFileSync(path.join(OUT, "summary.md"), summary + "\n");
 console.log(summary);
-process.exit(violations.length ? 1 : 0);
+// process.exit()이 아니라 exitCode — 위반 목록이 길면 파이프 stdout 쓰기가 남아 있다(#60). 이벤트 루프가 비면 끝난다
+process.exitCode = violations.length ? 1 : 0;
