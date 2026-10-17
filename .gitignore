@@ -11,3 +11,5 @@ tools/__pycache__/
 tools/audit-full.json
 tools/tokens-full.json
 tools/*.png
+# 린트 도구 의존성
+tools/lint/node_modules/
