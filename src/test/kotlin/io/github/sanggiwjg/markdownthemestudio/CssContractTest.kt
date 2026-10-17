@@ -120,4 +120,33 @@ class CssContractTest {
         }
         assertTrue(problems.isEmpty(), "다크 계약 위반:\n${problems.joinToString("\n")}")
     }
+
+    @Test
+    fun `스위처 견본 색은 테마 블록 색과 같다`() {
+        // 견본은 테마 스코프 밖(Default에서도 보여야 함)이라 테마 변수를 참조할 수 없어 값을 복제한다 —
+        // 테마 색을 바꾸고 견본을 잊으면 패널이 다른 테마를 보여 준다. 견본 포인트는 테마마다 대표 변수가 다르다
+        val accentVar = mapOf("gh" to "--mts-link", "nt" to "--mts-icode-fg", "dc" to "--mts-link", "rd" to "--mts-border")
+        fun themeVars(dark: Boolean, id: String): Map<String, String> {
+            val sel = if (dark) "html.mts-dark[data-mts-theme=\"$id\"]" else "html[data-mts-theme=\"$id\"]"
+            return blocks.filter { it.first == sel }.flatMap { declaredVars(it.second).entries }.associate { it.key to it.value }
+        }
+        fun swatchVars(dark: Boolean, id: String): Map<String, String> {
+            val sel = (if (dark) "html.mts-dark " else "") + "#mts-root .mts-card[data-mts-id=\"$id\"]"
+            return blocks.filter { it.first == sel }.flatMap { declaredVars(it.second).entries }.associate { it.key to it.value }
+        }
+        val problems = accentVar.flatMap { (id, accent) ->
+            listOf(false, true).flatMap { dark ->
+                val t = themeVars(dark, id)
+                val sw = swatchVars(dark, id)
+                val mode = if (dark) "다크" else "라이트"
+                listOf("--mts-sw-bg" to "--mts-bg", "--mts-sw-fg" to "--mts-fg", "--mts-sw-accent" to accent)
+                    .mapNotNull { (swVar, themeVar) ->
+                        val want = t[themeVar]?.lowercase()
+                        val got = sw[swVar]?.lowercase()
+                        if (want != null && want == got) null else "$id $mode $swVar=$got ≠ 테마 $themeVar=$want"
+                    }
+            }
+        }
+        assertTrue(problems.isEmpty(), "견본 색 불일치:\n${problems.joinToString("\n")}")
+    }
 }
