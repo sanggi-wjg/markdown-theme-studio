@@ -1,0 +1,42 @@
+# 의존성 자동 갱신 — 새 IDE 메이저 지원에 IntelliJ Platform Gradle Plugin 갱신이 자주 필요하고,
+# GitHub Actions 버전도 주기적으로 deprecated된다. 주간·묶음 PR로 받는다.
+# cooldown 14일: 갓 배포된 버전은 회수·공급망 사고 위험이 있어 2주 지난 버전만 제안받는다
+# (tools/lint 초기 버전 고정과 같은 정책)
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 14
+    groups:
+      gradle:
+        patterns: ["*"]
+    ignore:
+      # build.gradle.kts가 언어 수준을 KOTLIN_2_1(251 번들 stdlib)로 고정한다 — 상위 Kotlin에서
+      # KOTLIN_2_1이 deprecated(→ERROR 예정)라 minor/major 갱신은 컴파일 기준 정책과 함께 수동 판단
+      - dependency-name: org.jetbrains.kotlin.jvm
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 14
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /tools/lint
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      lint:
+        patterns: ["*"]

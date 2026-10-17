@@ -1,0 +1,17 @@
+{
+  "name": "mts-lint",
+  "private": true,
+  "description": "mts.css/mts.js 린트 — 버그성 규칙만(스타일 강제 없음). 실행: npm ci && npm run lint",
+  "scripts": {
+    "lint": "npm run lint:css && npm run lint:js",
+    "lint:css": "cd ../.. && tools/lint/node_modules/.bin/stylelint --config tools/lint/stylelint.config.mjs \"src/main/resources/themes/*.css\"",
+    "lint:js": "cd ../.. && tools/lint/node_modules/.bin/eslint --config tools/lint/eslint.config.mjs \"src/main/resources/themes/*.js\" \"tools/*.js\""
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "globals": "17.13.0",
+    "stylelint": "17.16.0",
+    "stylelint-config-recommended": "18.0.0"
+  }
+}

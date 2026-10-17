@@ -1,5 +1,4 @@
 (function () {
-  var root = document.documentElement;
 
   function ensureZoo() {
     if (document.getElementById('mts-audit')) return;

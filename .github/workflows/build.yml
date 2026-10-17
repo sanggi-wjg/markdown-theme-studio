@@ -47,3 +47,22 @@ jobs:
         with:
           name: test-reports
           path: build/reports/tests/
+
+  # CSS/JS 린트 — 버그성 규칙만(tools/lint). Gradle 빌드와 독립이라 병렬로 돈다
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/lint/package-lock.json
+
+      - name: Lint
+        working-directory: tools/lint
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
