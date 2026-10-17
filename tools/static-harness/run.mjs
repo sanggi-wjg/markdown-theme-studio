@@ -17,6 +17,10 @@
 //     localStorage 미러로 가는지, rev 0이면 기본값으로 시작하는지, 위젯 변경이 브리지로 넘어가는지(미확인 표시),
 //     같은 저장소로 다시 열면 그 미확인 변경이 이기는지(rev 0이면 마이그레이션 대기로 남는지)와 페이지 에러 없음·
 //     첫 패치 언어 판정을 본다
+//   - 불변식: 테마가 관여하는 계산 스타일(INVARIANT_PROPS)은 사용자 Custom CSS가 있어도 clean과 같아야 한다 —
+//     같은 조합의 clean·custom을 본문·동물원 요소마다 비교한다(대비가 멀쩡해도 테마 줄 간격·여백·굵기가
+//     사용자 값으로 바뀌는 누수, #54)
+//   - 작성자 스타일: 문서 raw HTML의 인라인 style·표현 속성은 테마가 새로 고정한 선언보다 우선한다(checkAuthorStyles)
 // 한계 — 회귀 조기 검출용이고 최종 판정은 CDP 하네스(verify-preview)다:
 //   - Linux headless Chromium + Playwright 기본 폰트다. macOS JCEF의 폰트 폴백에 좌우되는 문제(이모지
 //     글리프, 한글 폴백 폰트, 427px 패널의 실제 줄바꿈 폭)는 재현하지 않는다. JCEF와 Chromium 버전도 다르다
@@ -67,6 +71,19 @@ const LANG_SETTLE_MS = 500;
 const MEASURE_TOL = 1.5;
 // 위젯 axe: ARIA·이름 규칙만 본다(대비는 scan.js가 직접)
 const AXE_OPTIONS = { rules: { "color-contrast": { enabled: false } }, resultTypes: ["violations", "incomplete"] };
+// 커스텀 누수 불변식 — 테마가 관여하는 속성. 계산값만 본다: 박스 크기·위치·스크롤바처럼 폰트·환경에 좌우되거나
+// 테마 밖 속성(아래 허용 목록)의 차이에 끌려 움직이는 레이아웃 파생값은 넣지 않는다. clean·custom을 같은 환경에서
+// 비교하므로 폰트 폴백 차이는 상쇄된다(font-family는 사용 폰트가 아니라 선언 목록이다)
+const INVARIANT_PROPS = [
+  "font-family", "font-size", "font-weight", "font-style", "line-height", "letter-spacing", "text-align",
+  "text-decoration-line", "color", "background-color", "background-image", "box-sizing",
+  ...["top", "right", "bottom", "left"].flatMap((s) =>
+    [`margin-${s}`, `padding-${s}`, `border-${s}-width`, `border-${s}-style`, `border-${s}-color`]),
+  "border-top-left-radius", "border-top-right-radius", "border-bottom-right-radius", "border-bottom-left-radius",
+];
+// 테마가 다루지 않는 자리(근거): 작업 목록 체크박스 여백은 default.css(.task-list-item input)가 주고 테마는 체크
+// 색만 다룬다 — 적대적 CSS의 margin-right: 6px는 실제 Typora 스니펫 값이다
+const INVARIANT_ALLOW = [{ el: /^input\b/, prop: /^margin-/ }];
 
 /** 출력이 다 나간 뒤 끝낸다 — process.exit()은 파이프로 받는 stdout·stderr에 아직 못 쓴 출력을 버린다(#60).
  *  끝나지 않는 Promise다: await하면 아래로 진행하지 않고 쓰기 콜백의 exit으로 끝난다 */
@@ -182,6 +199,129 @@ function judgeWidget(label, r, open) {
   if (r.scanned < (open ? 15 : 1)) flag("위젯", `[${label}] 위젯 글자 노드 ${r.scanned}개 — 렌더 실패?`);
   judgeLow("위젯", label, r.low);
   if (r.unparsed.length) flag("위젯", `[${label}] 위젯 색 파싱 실패 ${r.unparsed.join(" | ")}`);
+}
+
+/** 불변식 비교용 계산 스타일 — body와 본문·동물원 요소 전부. 제외: 위젯, SVG·수식 내부(mermaid·MathJax가 스스로
+ *  스타일을 준다), mermaid 줌 버튼(2026.3+ 번들이 body 안에 두는 IDE UI 컨트롤 — 테마가 다루지 않고 적대적 CSS의
+ *  맨 button 규칙을 그대로 받는다). 키는 DOM 경로, 값은 [태그.클래스, INVARIANT_PROPS 순서의 계산값] */
+async function themeStyles(page) {
+  return page.evaluate((props) => {
+    const out = {};
+    for (const el of [document.body, ...document.body.querySelectorAll("*")]) {
+      if (el.closest("#mts-root, svg, mjx-container, .mermaid-zoom-button")) continue;
+      const steps = [];
+      for (let n = el; n !== document.body; n = n.parentElement) {
+        steps.unshift(`${n.tagName.toLowerCase()}:${[...n.parentElement.children].indexOf(n)}`);
+      }
+      const cls = typeof el.className === "string" && el.className.trim() ? "." + el.className.trim().split(/\s+/).join(".") : "";
+      const cs = getComputedStyle(el);
+      out[steps.join(">") || "body"] = [el.tagName.toLowerCase() + cls, props.map((p) => cs.getPropertyValue(p))];
+    }
+    return out;
+  }, INVARIANT_PROPS);
+}
+
+/** custom 조합을 같은 조합의 clean과 비교한다. 테두리 색은 그 변이 그려지지 않으면(style none·hidden) 보지 않는다 —
+ *  테마는 그리지 않는 변의 style만 고정하고 색은 UA 값(표 gray 등)을 그대로 둔다(클린 렌더 불변).
+ *  누수 하나가 수십 조합·수백 요소에 반복되므로 (요소, 속성)별로 모아 끝에 한 건씩 낸다(reportInvariant) */
+const invariantLeaks = new Map();
+function judgeInvariant(combo, clean, custom) {
+  if (!clean) { flag("불변식", `[${combo}] 같은 조합의 clean 기준 없음`); return; }
+  const ck = Object.keys(clean);
+  const uk = Object.keys(custom);
+  if (ck.length !== uk.length || ck.some((k, i) => k !== uk[i])) {
+    flag("불변식", `[${combo}] clean·custom DOM 불일치(${ck.length}·${uk.length}요소) — 비교 불가`);
+    return;
+  }
+  for (const k of ck) {
+    const [label, a] = clean[k];
+    const b = custom[k][1];
+    INVARIANT_PROPS.forEach((p, i) => {
+      if (a[i] === b[i]) return;
+      const side = /^border-(\w+)-color$/.exec(p);
+      if (side) {
+        const s = INVARIANT_PROPS.indexOf(`border-${side[1]}-style`);
+        if (/^(none|hidden)$/.test(a[s]) && /^(none|hidden)$/.test(b[s])) return;
+      }
+      if (INVARIANT_ALLOW.some((x) => x.el.test(label) && x.prop.test(p))) return;
+      const key = `${label} ${p}`;
+      if (!invariantLeaks.has(key)) invariantLeaks.set(key, { combos: new Set(), n: 0, ex: `${a[i]} → ${b[i]}`, at: combo });
+      const v = invariantLeaks.get(key);
+      v.combos.add(combo);
+      v.n++;
+    });
+  }
+}
+
+/** 작성자 인라인 style·표현 속성 존중(#54) — 테마가 새로 고정한 선언(상속·default.css 값의 명시)은 문서 raw HTML이
+ *  요소에 직접 단 값을 덮지 않아야 한다(mts.css의 :where(:not([style*=…])) 제외). 프로브 요소를 주입해 계산값이
+ *  작성자 값인지 보고 바로 걷어낸다. Reader에서 본다 — 아래 속성을 Reader 테마 규칙이 따로 덮지 않는다(제목 세리프는
+ *  h1~h4라 h5로). 다른 테마의 테마별 규칙(Soft 이미지 모서리 등)은 원래 작성자 값을 이기는 설계라 대상이 아니다 */
+async function checkAuthorStyles(page, combo) {
+  const html =
+    '<p id="ap-p" style="line-height: 3; font-size: 22px; font-family: monospace">p</p>' +
+    '<p id="ap-pfont" style="font: 20px/2 serif">p font</p>' +
+    '<p id="ap-pbg" style="background: rgb(255, 243, 176)">p bg</p>' +
+    '<h5 id="ap-h5" style="font-family: monospace">h5</h5>' +
+    '<h3 id="ap-h3" style="background-color: rgb(224, 240, 255)">h3</h3>' +
+    '<p><img id="ap-img" width="20" height="20" style="border-radius: 50%; box-sizing: content-box; padding: 2px"></p>' +
+    '<table id="ap-t" style="border: 2px solid; border-radius: 6px">' +
+    '<thead id="ap-thead" style="border: 2px solid; color: rgb(200, 0, 0)"><tr><th id="ap-th" style="font-size: 20px; border-radius: 4px">h</th></tr></thead>' +
+    '<tbody id="ap-tbody" style="color: rgb(0, 128, 0)"><tr>' +
+    '<td id="ap-td" style="font-size: 20px; line-height: 2; font-family: monospace; border-radius: 4px">c</td></tr></tbody></table>' +
+    '<table id="ap-tb" border="1"><tbody><tr><td>c</td></tr></tbody></table>' +
+    // HTML4 표현 속성 frame(바깥 테두리)·rules(행 그룹 테두리)도 작성자 값이다
+    '<table id="ap-tf" frame="box"><tbody><tr><td>c</td></tr></tbody></table>' +
+    '<table border="1" rules="groups"><thead id="ap-trh"><tr><th>h</th></tr></thead><tbody id="ap-trb"><tr><td>c</td></tr></tbody></table>' +
+    '<ul id="ap-ul" style="padding: 10px 20px"><li id="ap-li" style="line-height: 3; font-size: 20px">li</li></ul>' +
+    '<blockquote id="ap-bq" style="border: 1px solid; border-radius: 10px">bq</blockquote>' +
+    '<p><a id="ap-a" href="#" style="font-weight: 900">a</a> <strong id="ap-strong" style="font-weight: 400">s</strong></p>' +
+    '<dl><dt id="ap-dt" style="margin: 0; padding: 5px">dt</dt><dd id="ap-dd" style="margin: 0; padding: 0">dd</dd></dl>' +
+    '<pre><code id="ap-code" style="line-height: 30px">x</code></pre>' +
+    '<p><input id="ap-cb" type="checkbox" disabled style="color: rgb(200, 0, 0)"></p>' +
+    '<hr id="ap-hr" style="border-radius: 3px">';
+  const expect = [
+    ["ap-p", "line-height", "66px"], ["ap-p", "font-size", "22px"], ["ap-p", "font-family", "monospace"],
+    ["ap-pfont", "line-height", "40px"], ["ap-pfont", "font-family", "serif"],
+    ["ap-pbg", "background-color", "rgb(255, 243, 176)"],
+    ["ap-h5", "font-family", "monospace"], ["ap-h3", "background-color", "rgb(224, 240, 255)"],
+    ["ap-img", "border-top-left-radius", "50%"], ["ap-img", "box-sizing", "content-box"],
+    ["ap-t", "border-top-style", "solid"], ["ap-t", "border-top-left-radius", "6px"],
+    ["ap-thead", "border-top-style", "solid"], ["ap-thead", "color", "rgb(200, 0, 0)"],
+    ["ap-th", "font-size", "20px"], ["ap-th", "border-top-left-radius", "4px"],
+    ["ap-tbody", "color", "rgb(0, 128, 0)"],
+    ["ap-td", "font-size", "20px"], ["ap-td", "line-height", "40px"], ["ap-td", "font-family", "monospace"],
+    ["ap-td", "border-top-left-radius", "4px"],
+    ["ap-tb", "border-top-style", "outset"], ["ap-tf", "border-top-style", "solid"],
+    ["ap-trh", "border-bottom-style", "solid"], ["ap-trb", "border-top-style", "solid"],
+    ["ap-ul", "padding-top", "10px"], ["ap-ul", "padding-right", "20px"],
+    ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"],
+    ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-top-right-radius", "10px"],
+    ["ap-a", "font-weight", "900"], ["ap-strong", "font-weight", "400"],
+    ["ap-dt", "margin-top", "0px"], ["ap-dt", "padding-left", "5px"],
+    ["ap-dd", "margin-bottom", "0px"], ["ap-dd", "padding-left", "0px"],
+    ["ap-code", "line-height", "30px"], ["ap-cb", "color", "rgb(200, 0, 0)"], ["ap-hr", "border-top-left-radius", "3px"],
+  ];
+  // 주입·측정·제거를 한 evaluate에서 끝낸다 — mts.js 언어 재판정(400ms 디바운스)은 걷어낸 뒤의 본문을 본다
+  const bad = await page.evaluate(([h, ex]) => {
+    const host = document.createElement("div");
+    host.innerHTML = h;
+    document.body.appendChild(host);
+    const out = ex.map(([id, prop, want]) => {
+      const el = document.getElementById(id);
+      const got = el ? getComputedStyle(el).getPropertyValue(prop) : "(요소 없음)";
+      return got === want ? null : `${id} ${prop}=${got} (작성자 값 ${want})`;
+    }).filter(Boolean);
+    host.remove();
+    return out;
+  }, [html, expect]);
+  for (const b of bad) flag("작성자 스타일", `[${combo}] 인라인 style·표현 속성을 테마가 덮음: ${b}`);
+}
+
+function reportInvariant() {
+  for (const [key, v] of invariantLeaks) {
+    flag("불변식", `[${v.at} 외 ${v.combos.size - 1}조합] 커스텀 CSS 누수 ${key}: ${v.ex} (${v.n}곳)`);
+  }
 }
 
 async function scan(page, target) {
@@ -388,6 +528,7 @@ let combos = 0;
 
 for (const laf of APPEARANCES) {
   const servedJs = fs.readFileSync(path.join(SERVED, `mts.${laf}.js`), "utf8");
+  const cleanStyles = new Map(); // 불변식 기준 — clean 모드가 먼저 돈다
   for (const mode of ["clean", "custom"]) {
     const dir = stage(laf, mode);
     for (const fixture of FIXTURES) {
@@ -415,6 +556,13 @@ for (const laf of APPEARANCES) {
             judgeZoo(combo, data);
             const body = await scan(page, "body");
             judgeBody(combo, body);
+            const styles = await themeStyles(page);
+            const styleKey = `${fixture}@${vp.width}/${theme}/${ap}`;
+            if (mode === "clean") cleanStyles.set(styleKey, styles);
+            else judgeInvariant(combo, cleanStyles.get(styleKey), styles);
+            if (mode === "clean" && laf === "light" && fixture === "elements" && vp.width === WIDE && theme === "rd" && ap === "light") {
+              await checkAuthorStyles(page, combo);
+            }
             report[combo] = { ...data, _body: body };
             combos++;
             // 클린은 전 조합, 커스텀(최악 조건)은 깨지기 쉬운 다크 외관만 남긴다
@@ -436,6 +584,7 @@ for (const laf of APPEARANCES) {
 }
 await auditBridge(browser);
 await browser.close();
+reportInvariant();
 
 fs.writeFileSync(path.join(OUT, "report.json"), JSON.stringify(report, null, 1));
 const byCat = Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(", ");

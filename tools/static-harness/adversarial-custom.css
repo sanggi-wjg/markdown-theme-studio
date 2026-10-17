@@ -6,7 +6,8 @@
    blockquote p, pre code.
    원칙: mts.css의 `color: inherit` 리셋 블록과 `background: transparent` 리셋 블록에 있는 요소는 전부
    여기서 겨냥한다 — 리셋에서 하나를 빼면 다크 외관 대비 검사(동물원·본문)에 잡힌다. 리셋 블록에 요소를
-   추가하면 여기에도 추가할 것 */
+   추가하면 여기에도 추가할 것. 맨 아래 "커스텀 누수 불변식" 절은 mts.css가 상속·부분 선언 대신 명시한 속성을
+   겨냥한다 — run.mjs의 불변식 검사(clean과 custom의 테마 관여 계산 스타일이 같다)가 이 겨냥으로 회귀를 잡는다 */
 
 body {
   -webkit-text-size-adjust: 100% !important;
@@ -24,7 +25,7 @@ body {
 }
 
 /* color: inherit 리셋 블록 전 요소 */
-p, ul, ol, dl, li, dd, dt, table, tr, td, blockquote,
+p, ul, ol, dl, li, dd, dt, table, thead, tbody, tr, td, blockquote,
 strong, b, em, i, del, ins, u, sup, sub, small {
   color: #333333 !important;
 }
@@ -144,3 +145,29 @@ button {
   background: #eeeeee !important;
   border: 1px solid #999999 !important;
 }
+
+/* 커스텀 누수 불변식(#54) — 실제 스니펫의 p, li, dd, dt { line-height }·dt/dd 여백·blockquote 모서리·strong
+   굵기·img box-sizing을 같은 성격의 속성 전부로 넓혔다. mts.css가 상속·부분 선언에 기대던 자리를 명시 선언으로
+   바꾸면 여기에 겨냥 규칙을 둘 것(빠지면 불변식 검사가 그 선언을 지워도 못 잡는다).
+   b의 굵기는 겨냥하지 않는다 — UA 값이 JCEF 버전마다 달라 테마가 고정하지 않는다(mts.css strong 주석) */
+p, ul, ol, dl, li, dd, dt, blockquote, table, thead, tbody, tr, th, td {
+  font-family: "Comic Sans MS", cursive !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+h1, h2, h3, h4, h5, h6 { font-family: Georgia, serif !important; }
+/* background: transparent 리셋 블록의 글자 요소(제목·링크·본문 블록·인라인 서식) */
+h1, h2, h3, h4, h5, h6, a, p, ul, ol, dl, li, dd, dt,
+strong, b, em, i, del, ins, u, sup, sub, small {
+  background-color: #f5f5f5 !important;
+}
+thead, tbody { border: 2px solid #cccccc !important; }
+dt, dd { padding: 3px !important; }
+blockquote { border: 1px solid #e0e0e0 !important; border-radius: 8px !important; }
+table { border: 1px solid #dfe2e5 !important; border-radius: 6px !important; }
+th, td { border-radius: 4px !important; }
+img, hr { border-radius: 6px !important; }
+ul, ol { padding: 4px 8px !important; }
+a { font-weight: bold !important; }
+pre code { line-height: 1.2 !important; }
+input[type="checkbox"] { color: #333333 !important; }

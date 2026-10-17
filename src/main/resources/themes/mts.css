@@ -82,6 +82,23 @@ html[data-mts-theme] body h4 { font-size: 1.05em; margin: 1.5em 0 0.5em; }
 html[data-mts-theme] body h5 { font-size: 1em;    margin: 1.4em 0 0.5em; }
 html[data-mts-theme] body h6 { font-size: 0.92em; margin: 1.4em 0 0.5em; color: var(--mts-muted); }
 
+/* 작성자 인라인 style 존중 — 이 파일의 선언은 서빙 때 전부 !important가 돼(importantify) 프로젝트 커스텀
+   CSS(시트)를 이기지만, 같은 이유로 문서 raw HTML의 비-important 인라인 style·표현 속성(<table border>)까지
+   이긴다. 클린 렌더에 없던 값을 새로 고정하는 선언(상속·default.css 값을 명시로 바꾼 것)은 그 속성을 인라인으로
+   지정한 요소를 :where(:not([style*="<속성>" i]))로 뺀다. :where는 특이도 0이라 공용 → 테마 순서와 특이도
+   계산은 그대로다. 이기려는 대상은 프로젝트 커스텀 CSS이지 작성자가 요소에 직접 단 스타일이 아니다 */
+
+/* 제목 글꼴은 body 상속(Reader h1~h4만 세리프, 뒤 테마 규칙) — 상속에만 기대면 사용자 CSS의
+   h1 { font-family }가 이긴다 */
+html[data-mts-theme] body h1:where(:not([style*="font" i])),
+html[data-mts-theme] body h2:where(:not([style*="font" i])),
+html[data-mts-theme] body h3:where(:not([style*="font" i])),
+html[data-mts-theme] body h4:where(:not([style*="font" i])),
+html[data-mts-theme] body h5:where(:not([style*="font" i])),
+html[data-mts-theme] body h6:where(:not([style*="font" i])) {
+  font-family: inherit;
+}
+
 /* 기본 colors.css가 p, ul, table, tr 등에 요소 셀렉터로 색을 직접 지정해
    body 상속을 이기므로, 전부 상속으로 되돌린다 (테마 색이 이겨야 함) */
 html[data-mts-theme] body p,
@@ -107,7 +124,58 @@ html[data-mts-theme] body sub,
 html[data-mts-theme] body small {
   color: inherit;
 }
+/* 행 그룹 색은 셀까지 상속된다 — 사용자 CSS의 tbody { color } 하나로 다크 셀 대비가 1.3까지 떨어졌다 */
+html[data-mts-theme] body thead:where(:not([style*="color" i])),
+html[data-mts-theme] body tbody:where(:not([style*="color" i])) {
+  color: inherit;
+}
+
+/* 본문 조판 값(글꼴·글자 크기·줄 간격)은 body(표는 table, 인용은 Soft·Reader)에만 선언하고 상속으로
+   내려보낸다. 상속에만 기대면 사용자 Custom CSS가 그 요소에서 테마 값을 덮는다 — 실제 Typora 이식 스니펫의
+   p, li, dd, dt { line-height: 1.7 !important }로 Reader 본문 줄 간격이 1.85에서 1.7이 됐다. 상속을 명시
+   선언(inherit)으로 바꿔 importantify로 이긴다. 값이 아니라 inherit라 부모가 다른 값을 주는 자리(표 셀 1.55,
+   Soft·Reader 인용 글자 크기, mermaid 라벨)도 클린 렌더 그대로다. 테마별 값은 뒤 규칙(table, 테마 blockquote·th)이
+   같은 특이도로 다시 준다. 인라인 서식 요소(strong·sup·code 등)의 조판 지표는 테마가 다루지 않는다.
+   인라인 style 제외는 속성별(font 단축은 줄 간격도 준다) */
+html[data-mts-theme] body p:where(:not([style*="font" i])),
+html[data-mts-theme] body ul:where(:not([style*="font" i])),
+html[data-mts-theme] body ol:where(:not([style*="font" i])),
+html[data-mts-theme] body dl:where(:not([style*="font" i])),
+html[data-mts-theme] body li:where(:not([style*="font" i])),
+html[data-mts-theme] body dt:where(:not([style*="font" i])),
+html[data-mts-theme] body dd:where(:not([style*="font" i])),
+html[data-mts-theme] body blockquote:where(:not([style*="font" i])),
+html[data-mts-theme] body table:where(:not([style*="font" i])),
+html[data-mts-theme] body thead:where(:not([style*="font" i])),
+html[data-mts-theme] body tbody:where(:not([style*="font" i])),
+html[data-mts-theme] body tr:where(:not([style*="font" i])),
+html[data-mts-theme] body th:where(:not([style*="font" i])),
+html[data-mts-theme] body td:where(:not([style*="font" i])) {
+  font-family: inherit;
+  font-size: inherit;
+}
+html[data-mts-theme] body p:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body ul:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body ol:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body dl:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body li:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body dt:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body dd:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body blockquote:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body table:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body thead:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body tbody:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body tr:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body th:where(:not([style*="line-height" i]):not([style*="font:" i])),
+html[data-mts-theme] body td:where(:not([style*="line-height" i]):not([style*="font:" i])) {
+  line-height: inherit;
+}
+
 html[data-mts-theme] body tr { border: none; }
+/* 표 구조 테두리는 셀(테마별)과 표(Docs)에만 그린다. border-collapse: collapse에선 행 그룹 테두리도
+   그려지므로 thead·tbody도 비운다 — style만: border 단축은 UA의 border-color(gray·inherit)까지 바꾼다 */
+html[data-mts-theme] body thead:where(:not(table[rules] > *):not([style*="border" i])),
+html[data-mts-theme] body tbody:where(:not(table[rules] > *):not([style*="border" i])) { border-style: none; }
 
 /* mark/kbd는 UA·기본 preview 스타일에 의존하던 요소 — 커스텀 CSS 경쟁에서
    무방비였고(리셋·명시 어디에도 없음), 특히 mark의 UA 노랑 배경은 다크에서
@@ -136,6 +204,11 @@ html[data-mts-theme] body kbd {
 /* 작업 목록 체크박스: native 렌더는 다크에서 시인성이 낮다 — 테마 링크색으로 통일 */
 html[data-mts-theme] body input[type="checkbox"] {
   accent-color: var(--mts-link);
+}
+/* 2026.2+ 빈 칸 테두리는 currentColor다(default.css input { color: inherit }와 같은 값을 명시) — 사용자 CSS의
+   input 색이 다크에서 빈 칸 테두리를 배경에 묻었다 */
+html[data-mts-theme] body input[type="checkbox"]:where(:not([style*="color" i])) {
+  color: inherit;
 }
 /* preview의 체크박스는 disabled라 accent-color가 먹지 않고 color-scheme을 따른다.
    normal(라이트)이면 빈 칸이 어두운 배경 위에 밝은 회색 채움 사각형으로 그려져
@@ -173,15 +246,65 @@ html[data-mts-theme] body td,
 html[data-mts-theme] body blockquote {
   background: transparent;
 }
+/* 글자색을 테마가 주는 요소는 배경도 테마가 준다 — 위 color: inherit 리셋 요소 전부와 색을 직접 주는 제목·a
+   (자체 배경을 주는 code·kbd·mark·pre는 제외). 글자색만 테마로 돌리고 배경을 남기면 다크에서 밝은 칸 위에 밝은
+   글자가 된다. mermaid 간선 라벨은 p에 자체 배경을 깔므로 SVG 안 p는 뺀다 */
+html[data-mts-theme] body h1:where(:not([style*="background" i])),
+html[data-mts-theme] body h2:where(:not([style*="background" i])),
+html[data-mts-theme] body h3:where(:not([style*="background" i])),
+html[data-mts-theme] body h4:where(:not([style*="background" i])),
+html[data-mts-theme] body h5:where(:not([style*="background" i])),
+html[data-mts-theme] body h6:where(:not([style*="background" i])),
+html[data-mts-theme] body a:where(:not([style*="background" i])),
+html[data-mts-theme] body p:not(svg p):where(:not([style*="background" i])),
+html[data-mts-theme] body ul:where(:not([style*="background" i])),
+html[data-mts-theme] body ol:where(:not([style*="background" i])),
+html[data-mts-theme] body dl:where(:not([style*="background" i])),
+html[data-mts-theme] body li:where(:not([style*="background" i])),
+html[data-mts-theme] body dd:where(:not([style*="background" i])),
+html[data-mts-theme] body dt:where(:not([style*="background" i])),
+html[data-mts-theme] body strong:where(:not([style*="background" i])),
+html[data-mts-theme] body b:where(:not([style*="background" i])),
+html[data-mts-theme] body em:where(:not([style*="background" i])),
+html[data-mts-theme] body i:where(:not([style*="background" i])),
+html[data-mts-theme] body del:where(:not([style*="background" i])),
+html[data-mts-theme] body ins:where(:not([style*="background" i])),
+html[data-mts-theme] body u:where(:not([style*="background" i])),
+html[data-mts-theme] body sup:where(:not([style*="background" i])),
+html[data-mts-theme] body sub:where(:not([style*="background" i])),
+html[data-mts-theme] body small:where(:not([style*="background" i])) {
+  background: transparent;
+}
 
 html[data-mts-theme] body p { margin: 0 0 1em; }
 html[data-mts-theme] body ul,
 html[data-mts-theme] body ol { margin: 0 0 1em; padding-left: 1.55em; }
+/* 왼쪽만 쓰는 들여쓰기도 나머지 변을 선언한다 — padding-left만 두면 나머지 변은 사용자 CSS 몫이 된다 */
+html[data-mts-theme] body ul:where(:not([style*="padding" i])),
+html[data-mts-theme] body ol:where(:not([style*="padding" i])) {
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+}
 html[data-mts-theme] body li { margin: 0.4em 0; }
 html[data-mts-theme] body li > ul,
 html[data-mts-theme] body li > ol { margin: 0.4em 0 0; }
+/* 정의 목록: 테마가 여백을 선언하지 않아 번들 default.css 값(dt 위 16px, dd 아래 16px·안쪽 0 16px —
+   2025.1~2026.3 동일)으로 보이던 요소라 사용자 CSS(p, li, dd, dt { margin-top: 0; margin-bottom: 12px })가
+   그대로 넘어왔다. 같은 값을 명시한다. dl 자체는 default.css의 맥락 규칙(blockquote > :first-child,
+   .markdown-alert-title + * 등의 margin-top: 0)을 받는 자리라 고정값으로 덮으면 클린 렌더가 바뀐다 — 두지 않는다 */
+html[data-mts-theme] body dt:where(:not([style*="margin" i])) { margin: 16px 0 0; }
+html[data-mts-theme] body dt:where(:not([style*="padding" i])) { padding: 0; }
+html[data-mts-theme] body dd:where(:not([style*="margin" i])) { margin: 0 0 16px; }
+html[data-mts-theme] body dd:where(:not([style*="padding" i])) { padding: 0 16px; }
+/* 굵기도 명시 — 사용자 CSS의 strong { font-weight: 600 }이 강조를 바꿨다. default.css(bold = 700)와 같은 값.
+   b는 두지 않는다: UA 값이 JCEF 버전마다 다르다(2025.1 Chromium 122 bold = 700, 2026.2 Chromium 144 bolder —
+   600인 th·제목 안에서 900) — 하나로 고정하면 한쪽의 클린 렌더가 바뀐다 */
+html[data-mts-theme] body strong:where(:not([style*="font" i])) { font-weight: 700; }
 
 html[data-mts-theme] body a { color: var(--mts-link); text-decoration: none; }
+/* Docs만 500을 준다(뒤 테마 규칙). 나머지 테마는 상속 그대로 */
+html[data-mts-theme] body a:where(:not([style*="font" i])) { font-weight: inherit; }
 html[data-mts-theme] body a:hover { text-decoration: underline; }
 html[data-mts-theme] body del { opacity: 0.62; }
 html[data-mts-theme] body hr {
@@ -190,7 +313,13 @@ html[data-mts-theme] body hr {
   border: none;
   margin: 2.2em 0;
 }
+/* GitHub만 2px(뒤 테마 규칙) */
+html[data-mts-theme] body hr:where(:not([style*="radius" i])) { border-radius: 0; }
 html[data-mts-theme] body img { max-width: 100%; }
+/* box-sizing은 default.css(border-box)와 같은 값 — 사용자 CSS(img { box-sizing: content-box })가 바꾸던 것.
+   모서리는 Soft만 8px(뒤 테마 규칙) */
+html[data-mts-theme] body img:where(:not([style*="box-sizing" i])) { box-sizing: border-box; }
+html[data-mts-theme] body img:where(:not([style*="radius" i])) { border-radius: 0; }
 
 html[data-mts-theme] body code {
   font-family: var(--mts-mono);
@@ -225,6 +354,10 @@ html[data-mts-theme] body pre code {
   padding: 0;
   border-radius: 0;
   font-size: 1em;
+}
+/* pre의 1.6 — default.css도 inherit */
+html[data-mts-theme] body pre code:where(:not([style*="line-height" i]):not([style*="font:" i])) {
+  line-height: inherit;
 }
 /* frontmatter 헤더는 코드 박스처럼 보이지 않게 기본 렌더를 유지한다
    (플랫폼 기본: background transparent / margin 0 / padding 0) */
@@ -344,6 +477,10 @@ html[data-mts-theme] body a[data-command] {
 html[data-mts-theme] body blockquote {
   margin: 0 0 1.15em;
 }
+/* 테두리는 테마별로 왼쪽만 그리므로(border-left) 나머지 변을 먼저 비운다. 모서리는 default.css와 같은
+   0 3px 3px 0(Docs만 8px, 뒤 테마 규칙) — 선언이 없으면 사용자 CSS의 border-radius가 넘어왔다 */
+html[data-mts-theme] body blockquote:where(:not([border]):not([style*="border" i])) { border: none; }
+html[data-mts-theme] body blockquote:where(:not([style*="radius" i])) { border-radius: 0 3px 3px 0; }
 html[data-mts-theme] body blockquote > :last-child { margin-bottom: 0; }
 
 html[data-mts-theme] body table {
@@ -359,6 +496,10 @@ html[data-mts-theme] body table {
   width: fit-content;
   max-width: 100%;
 }
+/* 표 테두리·모서리는 Docs만 표에 그린다(뒤 테마 규칙) — 나머지 테마는 없음을 명시. border-style만: border
+   단축은 UA의 table border-color(gray)까지 바꾼다. raw HTML <table border>의 표현 속성 테두리는 작성자 몫 */
+html[data-mts-theme] body table:where(:not([border]):not([frame]):not([style*="border" i])) { border-style: none; }
+html[data-mts-theme] body table:where(:not([style*="radius" i])) { border-radius: 0; }
 
 /* ---------- 한국어 문서 (mts.js가 본문으로 판정해 <html data-mts-lang="ko">를 단다) ----------
    한국어는 띄어쓰기가 있어 어절 단위 줄바꿈이 관행이다 — 본문 전체 keep-all("가독/성"처럼 음절
@@ -382,6 +523,11 @@ html[data-mts-theme] body th {
   font-weight: 600;
   color: var(--mts-fg);
   white-space: nowrap;
+}
+/* 셀 모서리는 Docs 표의 네 귀퉁이 셀만 둥글린다(뒤 테마 규칙, 특이도가 더 높다) */
+html[data-mts-theme] body th:where(:not([style*="radius" i])),
+html[data-mts-theme] body td:where(:not([style*="radius" i])) {
+  border-radius: 0;
 }
 /* 셀 안 긴 식별자·URL은 반대로 깨지지 않는 한 덩어리라 열 폭을 독식한다 —
    필요할 때 임의 지점 줄바꿈을 허용해 다른 열(주로 한글 설명)에 폭을 돌려준다 */
