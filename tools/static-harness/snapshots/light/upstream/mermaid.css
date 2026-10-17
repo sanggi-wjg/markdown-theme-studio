@@ -1,0 +1,2 @@
+.mermaid > .error-text { color: red; white-space: pre-wrap; font-family: monospace; }
+.mermaid > svg { display: block; margin-left: auto; margin-right: auto; }

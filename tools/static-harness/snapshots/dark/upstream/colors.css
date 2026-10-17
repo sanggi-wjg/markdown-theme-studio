@@ -1,0 +1,23 @@
+:root { --default-font-size: 13px; }
+body { background-color: rgb(25, 26, 28); font-size: var(--default-font-size) !important; }
+body, p, blockquote, ul, ol, dl, table, pre, code, tr { color: rgb(188, 190, 196); }
+a { color: rgb(113, 161, 254); }
+table td, table th { border: 1px solid rgb(51, 53, 59); }
+hr { background-color: rgb(51, 53, 59); }
+kbd, tr { border: 1px solid rgb(51, 53, 59); }
+h6 { color: rgb(115, 118, 124); }
+blockquote { border-left: 2px solid rgba(113, 161, 254, 0.4); }
+.footnotes { border-top-color: rgb(51, 53, 59); }
+input[type="checkbox"]:checked { border-color: rgb(113, 161, 254); background-color: rgb(113, 161, 254); }
+input[type="checkbox"]:checked::after { border-color: rgb(25, 26, 28); }
+blockquote, code, pre { background-color: rgba(212, 222, 231, 0.098); }
+blockquote.markdown-alert-note { border-left-color: rgb(57, 147, 212); }
+blockquote.markdown-alert-note .markdown-alert-title { color: rgb(57, 147, 212); }
+blockquote.markdown-alert-tip { border-left-color: rgb(92, 150, 44); }
+blockquote.markdown-alert-tip .markdown-alert-title { color: rgb(92, 150, 44); }
+blockquote.markdown-alert-important { border-left-color: rgb(167, 113, 191); }
+blockquote.markdown-alert-important .markdown-alert-title { color: rgb(167, 113, 191); }
+blockquote.markdown-alert-warning { border-left-color: rgb(166, 138, 13); }
+blockquote.markdown-alert-warning .markdown-alert-title { color: rgb(166, 138, 13); }
+blockquote.markdown-alert-caution { border-left-color: rgb(240, 82, 79); }
+blockquote.markdown-alert-caution .markdown-alert-title { color: rgb(240, 82, 79); }

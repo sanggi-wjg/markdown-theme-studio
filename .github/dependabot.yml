@@ -40,3 +40,15 @@ updates:
     groups:
       lint:
         patterns: ["*"]
+
+  # 정적 렌더 하네스(playwright·axe-core) — tools/lint와 같은 정책. playwright 갱신은 CI의
+  # `npx playwright install`이 맞는 Chromium을 받으므로 별도 조치 불필요
+  - package-ecosystem: npm
+    directory: /tools/static-harness
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 14
+    groups:
+      static-harness:
+        patterns: ["*"]

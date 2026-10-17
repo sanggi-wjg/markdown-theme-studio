@@ -14,8 +14,12 @@
       '<h1>제목1</h1><h3>제목3</h3><h6>제목6</h6>' +
       '<p class="z-p">본문 텍스트 문단입니다.</p>' +
       '<p class="z-inline"><strong>강조</strong> <em>기울임</em> <del>취소선</del> <ins>삽입</ins> ' +
-      '<small>스몰</small> <mark>마크</mark> <kbd>Cmd+C</kbd> <a href="#">링크텍스트</a></p>' +
+      '<small>스몰</small> <mark>마크</mark> <kbd>Cmd+C</kbd> <a href="#">링크텍스트</a> ' +
+      // 원시 HTML로만 나오는 요소(b·i·u)와 위·아래 첨자(sup·sub) — color: inherit 리셋 블록 항목은 전부 여기 있어야
+      // 리셋에서 빠졌을 때 커스텀 CSS의 맨 요소 색 규칙에 잡힌다
+      '<b>굵게b</b> <i>기울임i</i> <u>밑줄</u> 위<sup>첨자</sup> 아래<sub>첨자</sub></p>' +
       '<ul><li class="z-li">목록 항목<ul><li class="z-li2">중첩 항목</li></ul></li></ul>' +
+      '<ol><li class="z-oli">순서 항목</li></ol>' +
       '<ul><li class="task-list-item"><input type="checkbox" checked> 할일 항목</li></ul>' +
       '<blockquote><p class="z-qp">인용문 안 <code>인라인코드</code></p>' +
       '<blockquote><p class="z-qqp">중첩 인용문</p></blockquote></blockquote>' +
@@ -93,6 +97,7 @@
   var sels = {
     p: '.z-p', li: '.z-li', li2: '.z-li2', strong: '.z-inline strong', em: '.z-inline em',
     del: '.z-inline del', ins: '.z-inline ins', small: '.z-inline small', mark: '.z-inline mark',
+    b: '.z-inline b', i: '.z-inline i', u: '.z-inline u', sup: '.z-inline sup', sub: '.z-inline sub', oli: '.z-oli',
     kbd: '.z-inline kbd', link: '.z-inline a', quoteP: '.z-qp', nestedQuoteP: '.z-qqp',
     th: '.z-th', tdOdd: '.z-td1', tdEven: '.z-td2', preCode: '.z-pre code', inlineCode: '.z-code',
     dt: '.z-dt', dd: '.z-dd', h1: '#mts-audit h1', h3: '#mts-audit h3', h6: '#mts-audit h6',

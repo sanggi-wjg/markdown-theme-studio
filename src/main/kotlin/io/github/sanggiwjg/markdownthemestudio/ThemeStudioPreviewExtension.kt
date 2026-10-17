@@ -35,11 +35,10 @@ class ThemeStudioPreviewExtension(panel: MarkdownHtmlPanel? = null) : MarkdownBr
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? = when (resourceName) {
         STYLE_PATH -> readResource(STYLE_PATH)?.let {
-            ResourceProvider.Resource(importantify(it.decodeToString()).toByteArray(), "text/css; charset=utf-8")
+            ResourceProvider.Resource(servedStyle(it), "text/css; charset=utf-8")
         }
         SCRIPT_PATH -> readResource(SCRIPT_PATH)?.let {
-            val prelude = "window.__mtsDark = $isDark;\n"
-            ResourceProvider.Resource(prelude.toByteArray() + it, "text/javascript; charset=utf-8")
+            ResourceProvider.Resource(servedScript(it, isDark), "text/javascript; charset=utf-8")
         }
         else -> sync.loadResource(resourceName)
     }
@@ -55,7 +54,7 @@ class ThemeStudioPreviewExtension(panel: MarkdownHtmlPanel? = null) : MarkdownBr
     }
 
     companion object {
-        private const val STYLE_PATH = "themes/mts.css"
-        private const val SCRIPT_PATH = "themes/mts.js"
+        internal const val STYLE_PATH = "themes/mts.css"
+        internal const val SCRIPT_PATH = "themes/mts.js"
     }
 }
