@@ -49,7 +49,7 @@ tools: Bash, Read, Grep, Glob
 1. CLAUDE.md 정독 → 리뷰 대상(diff 또는 파일) 정독 → 계약 위반 검사
 2. 단위 테스트: `./gradlew test` (빠름 — 의존성 캐시됨)
 3. **동적 검증** — 샌드박스가 떠 있으면 반드시 수행:
-   - 샌드박스 확인: `curl -s localhost:9223/json | grep markdown-preview-index`
+   - 샌드박스 확인: `curl -s localhost:9223/json | grep markdown-preview-index` — 리뷰 요청에 포트가 지정됐으면(worktree 병렬 작업) curl에 그 포트를 직접 적고, 모든 하네스 명령에 `MTS_CDP_PORT=<포트>`를 준다(명령 앞 할당은 같은 줄의 `${MTS_CDP_PORT}` 확장엔 안 먹는다)
    - 실행 준비(1회): `cd tools && python3 -m venv .venv && .venv/bin/pip install -q websocket-client`
    - 8조합(4테마×라이트/다크) 감사: `cd tools && .venv/bin/python mts_audit.py` — 대비(WCAG)·레이아웃·테마 정체성
    - 시각 확인: `cd tools && .venv/bin/python mts_shot.py shot <테마> <light|dark> <out.png>`

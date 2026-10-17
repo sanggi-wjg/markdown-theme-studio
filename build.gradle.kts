@@ -40,6 +40,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// JCEF 원격 디버깅 포트. 샌드박스 디렉터리는 worktree마다 따로라(.intellijPlatform/) 포트만 다르게 주면
+// 여러 worktree의 샌드박스를 동시에 띄울 수 있다 — -PcdpPort=9224 + 하네스는 MTS_CDP_PORT=9224
+val cdpPort = providers.gradleProperty("cdpPort").getOrElse("9223")
+
 // runIde·runIdeLatest 공용 — 두 샌드박스가 같은 조건으로 뜨게 한다
 val sandboxJvmArgs = listOf(
     // 샌드박스 첫 실행 시 EUA/데이터 공유 다이얼로그가 크래시를 유발하므로 건너뛴다
@@ -49,7 +53,7 @@ val sandboxJvmArgs = listOf(
     // 클린 샌드박스에서 --args로 프로젝트를 열 때 신뢰 다이얼로그가 모달로 막는 것을 스킵
     "-Didea.trust.all.projects=true",
     // preview 렌더링을 CDP로 직접 검증하기 위한 JCEF 원격 디버깅
-    "-Dide.browser.jcef.debug.port=9223",
+    "-Dide.browser.jcef.debug.port=$cdpPort",
 )
 
 tasks.runIde {
@@ -59,7 +63,7 @@ tasks.runIde {
 intellijPlatformTesting {
     runIde {
         // 실사용 최신 IDE 실렌더 검증용 — 2025.1 샌드박스에선 안 보이는 번들 Markdown 변화
-        // (GitHub Alert·Compose 렌더러 선택 등)를 확인한다. 같은 디버깅 포트를 쓰므로 runIde와 동시 실행 불가.
+        // (GitHub Alert·Compose 렌더러 선택 등)를 확인한다. 같은 디버깅 포트라 runIde와 동시에 띄우려면 -PcdpPort로 바꾼다.
         // -PlatestIdePath=<IDE 설치 경로>를 주면 다운로드 대신 로컬 설치본을 쓴다
         register("runIdeLatest") {
             val latestIdePath = providers.gradleProperty("latestIdePath")

@@ -6,13 +6,15 @@
   mts_shot.py eval '<js>'                   # preview 페이지에서 JS 평가
 """
 import json
+import os
 import sys
 import base64
 import urllib.request
 
 import websocket
 
-PORT = 9223
+# 샌드박스 JCEF 디버깅 포트 — 다른 포트로 띄운 샌드박스(./gradlew runIde -PcdpPort=…)는 MTS_CDP_PORT로 지정
+PORT = int(os.environ.get("MTS_CDP_PORT", "9223"))
 
 
 def targets():

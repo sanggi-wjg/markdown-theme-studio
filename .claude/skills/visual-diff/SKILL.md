@@ -5,7 +5,7 @@ description: 스타일 변경의 before/after 스크린샷 비교 — 수정 전
 
 # before/after 시각 비교
 
-시각 피드백은 말로 "고쳤습니다"가 아니라 비교 컷으로 답한다. CDP 하네스는 verify-preview 스킬과 동일한 전제(샌드박스 + 포트 9223 + tools/.venv).
+시각 피드백은 말로 "고쳤습니다"가 아니라 비교 컷으로 답한다. CDP 하네스는 verify-preview 스킬과 동일한 전제(샌드박스 + 포트 9223(병렬 worktree면 `MTS_CDP_PORT`) + tools/.venv).
 
 ## 절차
 
