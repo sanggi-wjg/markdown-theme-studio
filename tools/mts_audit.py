@@ -53,7 +53,7 @@ for theme in ["gh", "nt", "dc", "rd"]:
         fs = float(lay["pFontSize"].replace("px", ""))
         if abs(fs - EXPECTED_FS[theme]) > 0.6:
             violations.append(f"[{combo}] 본문 크기 {fs}px (기대 {EXPECTED_FS[theme]}px)")
-        # Reader도 justify를 쓰지 않는다 — CJK justify가 자간까지 벌려 제거함
+        # Reader도 justify를 쓰지 않는다 — 한글 justify가 자간까지 벌려 제거함
         if lay["pTextAlign"] != "start":
             violations.append(f"[{combo}] p text-align={lay['pTextAlign']} (기대 start)")
 

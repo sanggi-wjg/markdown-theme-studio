@@ -92,8 +92,8 @@ intellijPlatform {
         description = """
             Readable Markdown preview themes for JetBrains IDEs.
             Replaces the default Markdown preview styling with four polished themes
-            (GitHub, Soft, Docs, Reader) tuned for typography, code blocks, tables and
-            CJK text. Switch themes from a floating picker at the top-right corner of
+            (GitHub, Soft, Docs, Reader) tuned for typography, code blocks and tables.
+            Switch themes from a floating picker at the top-right corner of
             the preview panel, adjust the font size (A-/A+), or pick Default to keep
             the stock preview styling; your choices are remembered. Light and dark
             variants follow the IDE theme automatically.
@@ -118,7 +118,7 @@ intellijPlatform {
             <ul>
                 <li>Code blocks now follow the IDE color scheme even when the appearance is manually overridden — syntax tokens stay readable in every combination</li>
                 <li>Brighter light-mode code backgrounds tuned for syntax token contrast (Soft, Docs, Reader)</li>
-                <li>Stable table column widths for CJK text — columns no longer collapse into vertical strips; long identifiers and URLs wrap instead of hogging width</li>
+                <li>Stable table column widths for Korean text — columns no longer collapse into vertical strips; long identifiers and URLs wrap instead of hogging width</li>
                 <li>Content width adjustment (W- / W+) in the switcher, remembered like font size</li>
             </ul>
             <h3>1.0.0</h3>

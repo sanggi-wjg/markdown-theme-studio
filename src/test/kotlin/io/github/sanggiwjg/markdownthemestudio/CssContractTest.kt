@@ -22,9 +22,6 @@ class CssContractTest {
     /** 테마 루트 스코프: html(.mts-dark|.mts-laf-dark)?[data-mts-theme(="id")] */
     private val scope = Regex("^html(\\.mts-(?:laf-)?dark)?\\[data-mts-theme(?:=\"(\\w+)\")?]$")
 
-    /** 문서 언어 변형 루트: html[data-mts-lang="xx"][data-mts-theme] — 폰트 스택 등 언어별 값만 둔다(색 금지) */
-    private val langScope = Regex("^html\\[data-mts-lang=\"[a-z]{2}\"]\\[data-mts-theme]$")
-
     /** 코드펜스 배경·기본 글자색은 외관이 아니라 실제 LaF(mts-laf-dark)를 따른다 — CLAUDE.md 플랫폼 제약 */
     private val lafDomain = setOf("--mts-code-bg", "--mts-pre-fg")
 
@@ -53,8 +50,7 @@ class CssContractTest {
         val unknown = blocks.filter { (sel, body) ->
             declaredVars(body).isNotEmpty() &&
                 (sel.contains(',') && sel.split(',').any { rootLike(it) } ||
-                    !sel.contains(',') && rootLike(sel) && scope.matchEntire(sel) == null &&
-                    langScope.matchEntire(sel) == null)
+                    !sel.contains(',') && rootLike(sel) && scope.matchEntire(sel) == null)
         }.map { it.first }
         assertTrue(unknown.isEmpty(), "변수를 선언하는 루트 셀렉터를 인식 못함(목록·작은따옴표·순서 변형) — 계약 검사가 건너뛴다: $unknown")
     }
@@ -90,14 +86,6 @@ class CssContractTest {
             }
         }.distinct()
         assertTrue(problems.isEmpty(), "미정의 변수(fallback 없음):\n${problems.joinToString("\n")}")
-    }
-
-    @Test
-    fun `언어 변형 루트에는 색 변수를 두지 않는다`() {
-        // 언어 변형은 다크 재정의 대상이 아니다 — 색을 두면 다크 계약 검사를 우회한다
-        val colored = blocks.filter { langScope.matchEntire(it.first) != null }
-            .flatMap { (sel, body) -> declaredVars(body).filterValues { isColor.containsMatchIn(it) }.keys.map { "$sel $it" } }
-        assertTrue(colored.isEmpty(), "언어 변형 루트의 색 변수: $colored")
     }
 
     @Test
