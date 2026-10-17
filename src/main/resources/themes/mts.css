@@ -533,10 +533,46 @@ html[data-mts-lang="ko"][data-mts-theme] body td {
   word-break: keep-all;
 }
 html[data-mts-theme] body th {
-  text-align: left;
   font-weight: 600;
   color: var(--mts-fg);
   white-space: nowrap;
+}
+/* 머리글 정렬은 테마 기본이 왼쪽(UA 기본은 가운데)이고, 작성자가 정한 정렬은 따른다(#62). GFM 열 정렬 `:---:`·`---:`는
+   셀의 align 표현 속성으로 렌더된다(`:---`는 속성이 없어 지정 없음과 같은 DOM — 2025.1·2026.2·2026.3 실측). 맨 th
+   { text-align: left }가 importantify로 align을 이겨 머리글만 왼쪽에 남고 열 내용과 어긋났다. 셀의 인라인 text-align은
+   작성자 값이라 제외한다 */
+html[data-mts-theme] body th:where(:not([align], [style*="text-align" i])) {
+  text-align: left;
+}
+/* raw HTML의 행·행 그룹 align·text-align과 표의 인라인 text-align은 셀이 물려받는다(th는 UA 규칙이 부모 정렬을 따른다).
+   inherit를 명시해 클린 렌더와 같게 두고 사용자 CSS의 th·td { text-align }도 이긴다 — 위 규칙과 특이도가 같아 순서로
+   이긴다. table[align]은 넣지 않는다: Blink는 표의 align을 여백(표 위치)으로 옮긴다 */
+html[data-mts-theme] body th:where(:not([align], [style*="text-align" i])):where(
+  :is([align], [style*="text-align" i]) > *, :is([align], [style*="text-align" i]) > * > *,
+  table[style*="text-align" i] > * > * > *),
+html[data-mts-theme] body td:where(:not([align], [style*="text-align" i])):where(
+  :is([align], [style*="text-align" i]) > *, :is([align], [style*="text-align" i]) > * > *,
+  table[style*="text-align" i] > * > * > *) {
+  text-align: inherit;
+}
+/* 셀 align은 특이도 0인 표현 속성이라 사용자 CSS에 진다 — 실제 Typora 이식 스니펫의 th { text-align: left !important }로
+   머리글이 다시 어긋난다. Chromium이 align을 옮기는 값(-webkit-*)을 그대로 명시해 클린 렌더의 계산값은 그대로 두고 커스텀
+   CSS만 이긴다. td도 함께 — 머리글만 이기면 th, td { text-align } 류 스니펫에서 반대로 어긋난다 */
+html[data-mts-theme] body th:where([align="left" i]:not([style*="text-align" i])),
+html[data-mts-theme] body td:where([align="left" i]:not([style*="text-align" i])) {
+  text-align: -webkit-left;
+}
+html[data-mts-theme] body th:where(:is([align="center" i], [align="middle" i]):not([style*="text-align" i])),
+html[data-mts-theme] body td:where(:is([align="center" i], [align="middle" i]):not([style*="text-align" i])) {
+  text-align: -webkit-center;
+}
+html[data-mts-theme] body th:where([align="right" i]:not([style*="text-align" i])),
+html[data-mts-theme] body td:where([align="right" i]:not([style*="text-align" i])) {
+  text-align: -webkit-right;
+}
+html[data-mts-theme] body th:where([align="justify" i]:not([style*="text-align" i])),
+html[data-mts-theme] body td:where([align="justify" i]:not([style*="text-align" i])) {
+  text-align: justify;
 }
 /* 셀 모서리는 Docs 표의 네 귀퉁이 셀만 둥글린다(뒤 테마 규칙, 특이도가 더 높다) */
 html[data-mts-theme] body th:where(:not([style*="radius" i])),

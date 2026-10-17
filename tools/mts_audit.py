@@ -59,6 +59,12 @@ for theme in ["gh", "nt", "dc", "rd"]:
             violations.append(f"[{combo}] Mermaid 동물원 라벨 {mm['zoo']}개 (기대 3) — 렌더 실패?")
         for d in mm["diffs"]:
             violations.append(f"[{combo}] Mermaid 라벨: {d}")
+        # 표 셀 정렬(#62) — 셀·행 정렬이 기본 preview 그대로인지(기대값은 mts_audit.js가 테마 off로 잰다). 지정 없는 머리글은 왼쪽
+        align = data["_align"]
+        if align["cells"] < 11:
+            violations.append(f"[{combo}] 표 정렬: 동물원 셀 {align['cells']}개 (기대 11개)")
+        for v in align["bad"]:
+            violations.append(f"[{combo}] 표 정렬: {v}")
 
         lay = data["_layout"]
         if lay["bodyHScroll"] > 2:
