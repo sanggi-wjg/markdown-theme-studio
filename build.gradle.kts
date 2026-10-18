@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "1.1.2"
+version = "1.2.0"
 
 repositories {
     mavenCentral()
@@ -110,16 +110,51 @@ intellijPlatform {
         name = "Markdown Theme Studio"
         version = project.version.toString()
         description = """
-            Readable Markdown preview themes for JetBrains IDEs.
-            Replaces the default Markdown preview styling with four polished themes
-            (GitHub, Soft, Docs, Reader) tuned for typography, code blocks and tables.
-            Switch themes from a floating picker at the top-right corner of
-            the preview panel, adjust the font size (A-/A+), or pick Default to keep
-            the stock preview styling; your choices are remembered. Light and dark
-            variants follow the IDE theme automatically.
+            <p>Readable themes for the bundled Markdown preview in JetBrains IDEs.
+            Markdown Theme Studio restyles the preview with four carefully tuned themes —
+            <b>GitHub</b>, <b>Soft</b>, <b>Docs</b> and <b>Reader</b> — and leaves parsing,
+            scroll sync and syntax highlighting to the bundled Markdown plugin.</p>
+            <ul>
+                <li><b>Four themes plus Default</b> — switch from the <b>Aa</b> button at the top-right
+                of the preview; Default restores the stock preview styling.</li>
+                <li><b>Text size and content width</b> — adjust step by step with the current value shown;
+                Reset all brings everything back to the defaults.</li>
+                <li><b>Light and dark</b> — follows the IDE theme automatically, or pin Light or Dark.
+                Code blocks keep the IDE color scheme, so syntax colors stay readable either way.</li>
+                <li><b>Settings follow you</b> — your choices are stored in the IDE, shared by every preview
+                and project window, and synced to your other installations by Backup and Sync (UI settings).
+                Switch themes from anywhere with Find Action → <b>Switch Markdown Theme</b>.</li>
+                <li><b>Works alongside your custom CSS</b> — themes stay consistent even when a project
+                already has its own Markdown stylesheet (for example snippets ported from Typora).</li>
+                <li><b>Styled end to end</b> — tables (including column alignment), code blocks, task lists and
+                math, plus GitHub alerts, front matter and Mermaid diagrams in IDE versions that render them.</li>
+                <li><b>Keyboard and screen-reader friendly</b> — open with Enter, move with the arrow keys,
+                close with Esc.</li>
+                <li><b>Korean line breaking</b> — Korean documents wrap at word boundaries; other languages
+                keep the default wrapping.</li>
+            </ul>
+            <p>Works with the Chromium (JCEF) Markdown preview in IntelliJ-based IDEs 2025.1 and newer.
+            The experimental Compose preview renderer is not supported.</p>
         """.trimIndent()
 
         changeNotes = """
+            <h3>1.2.0</h3>
+            <ul>
+                <li>Settings now live in the IDE: theme, appearance, text size and width are shared by every preview and project window, survive restarts, and sync with Backup and Sync. Choices saved by earlier versions are imported the first time you open a preview after updating; if one doesn't come across, set it once more</li>
+                <li>New Find Action command: <b>Switch Markdown Theme</b></li>
+                <li>Redesigned switcher: the <b>Aa</b> button opens a settings panel with theme swatches, text size and width controls showing the current value, Appearance, and Reset all — works with the keyboard and is labeled for screen readers</li>
+                <li>The content column now matches each theme's intended width (GitHub 860, Soft 760, Docs 820, Reader 640px) in every project — previously it was 64px wider unless the project's custom CSS happened to change it</li>
+                <li>A project's custom Markdown CSS (for example Typora snippets) no longer overrides theme line height, list spacing, bold weight, inline code borders and similar details</li>
+                <li>Tables: header cells now follow column alignment (<code>:---:</code>, <code>---:</code>)</li>
+                <li>Strikethrough text is now slightly dimmed as designed (previously only raw HTML &lt;del&gt; was)</li>
+                <li>Mermaid diagrams: labels no longer get extra paragraph spacing that made nodes taller and shifted their text, and wrapped Korean labels no longer leave a blank line</li>
+                <li>Korean documents are detected automatically: body text now wraps at word boundaries as table cells already did, and the page is marked as Korean for screen readers</li>
+                <li>Long block math formulas scroll on their own instead of widening the whole page</li>
+                <li>Front matter stays readable when Light is forced in a dark IDE</li>
+                <li>2026.1 and newer: run icons inside inline code are hidden</li>
+                <li>2026.2 and newer: GitHub alerts get per-type colors and task-list checkboxes use the theme color again; 2026.3: front matter tables are styled as a quiet metadata block</li>
+                <li>No upper IDE version limit — new IDE releases can install the plugin without waiting for an update</li>
+            </ul>
             <h3>1.1.2</h3>
             <ul>
                 <li>Emoji with a text fallback (⚠️ and similar) now render in color instead of monochrome on macOS</li>
