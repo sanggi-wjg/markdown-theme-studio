@@ -33,5 +33,9 @@
       "Bash(gh issue view*)",
       "Bash(gh issue list*)"
     ]
+  },
+  "teammateMode": "auto",
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   }
 }
