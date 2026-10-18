@@ -62,72 +62,75 @@ html[data-mts-theme] {
   --mts-alert-caution: #d1242f;
 }
 
-html[data-mts-theme] body h1,
-html[data-mts-theme] body h2,
-html[data-mts-theme] body h3,
-html[data-mts-theme] body h4,
-html[data-mts-theme] body h5,
-html[data-mts-theme] body h6 {
-  color: var(--mts-fg);
-  font-weight: 700;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  border: none;
-  padding-bottom: 0;
-}
-html[data-mts-theme] body h1 { font-size: 2em;    margin: 0.2em 0 0.7em; letter-spacing: -0.015em; }
-html[data-mts-theme] body h2 { font-size: 1.5em;  margin: 1.9em 0 0.8em; }
-html[data-mts-theme] body h3 { font-size: 1.2em;  margin: 1.7em 0 0.6em; }
-html[data-mts-theme] body h4 { font-size: 1.05em; margin: 1.5em 0 0.5em; }
-html[data-mts-theme] body h5 { font-size: 1em;    margin: 1.4em 0 0.5em; }
-html[data-mts-theme] body h6 { font-size: 0.92em; margin: 1.4em 0 0.5em; color: var(--mts-muted); }
+/* 작성자 인라인 style 존중(#54, #63 단계적 존중) — 이 파일의 선언은 서빙 때 전부 !important가 돼(importantify) 프로젝트
+   커스텀 CSS(시트)를 이기지만, 같은 이유로 문서 raw HTML의 비-important 인라인 style·표현 속성까지 이긴다. 이기려는 대상은
+   커스텀 CSS이지 작성자가 요소에 직접 단 스타일이 아니다. 본문 요소에 거는 선언은 그 속성을 작성자가 정한 요소를
+   :where(:not(…))로 뺀다 — :where는 특이도 0이라 공용 → 테마 순서와 특이도 계산은 그대로다. style·표현 속성이 없는 요소
+   (Markdown 문법만 쓴 문서 전부)의 렌더는 그대로다.
+   - 배치·조판(여백·안쪽 여백·테두리·모서리·정렬·글꼴·크기·굵기·줄 간격·자간·줄바꿈·폭·높이·표시 방식·밑줄·흐림): 작성자가
+     인라인으로 정하면 그 요소에서 테마 선언이 빠진다. 글자 대비와 무관하다 — 테두리·밑줄·구분선 색은 장식이라 다크에서
+     흐려져도 글자는 읽히고, 흐림(opacity)은 외관과 무관하게 작성자가 쓸 때 본 대비 그대로다. 단축 속성 계열(margin·padding·
+     border·font)은 계열 단위로 뺀다: 한 변만 정해도 그 계열의 나머지는 기본 preview(default.css·colors.css)나 커스텀 CSS 몫이다.
+   - 글자색·배경: 둘 다 정한 요소에서만 뺀다. 한쪽만 정한 값은 라이트 배경을 전제해 다크에서 대비가 1.05~1.5까지 떨어진다 —
+     그대로 테마가 준다. 배경은 색(background·background-color)만 친다 — transparent·none·이미지(url — 못 불러오거나 투명할 수
+     있다)·inherit·initial·unset·revert가 들어 있으면 글자 뒤 바탕을 보장하지 못해 배경으로 치지 않는다. 둘 다 정한 요소 안(작성자 색 영역)의 테마
+     글자색·칩 배경은 파일 끝 규칙이 작성자 색에 맞춘다.
+   - 표현 속성은 기본 preview(테마 off)가 따르는 것만 따른다: align(정렬·표 위치), table border·frame·rules, hr width.
+     default.css가 덮어 기본 preview에서도 안 보이는 cellpadding·cellspacing·table width·셀 bgcolor는 테마도 덮는다.
+   판정 셀렉터는 부분 문자열이 다른 속성에 걸리지 않는 형태로 쓴다(CssContractTest가 정본과 대조한다):
+     글자색 — 선언 머리(맨 앞·; ·공백·탭·줄바꿈 뒤)의 color: — [style*="color"]는 background-color·border-color에도 걸린다
+     배경   — background 단축·background-color(구분선만 background-image도 — 장식)
+     폭·높이 — 선언 머리의 width·height — max-width·border-width·line-height에 걸리지 않게
+     글꼴   — font-family·font-size·font-weight·line-height 각각 + font 단축(font:)
+     테두리 — border 단축·변·width/style/color(논리 속성 포함). border-radius·border-collapse·border-spacing은 따로 */
 
-/* 작성자 인라인 style 존중 — 이 파일의 선언은 서빙 때 전부 !important가 돼(importantify) 프로젝트 커스텀
-   CSS(시트)를 이기지만, 같은 이유로 문서 raw HTML의 비-important 인라인 style·표현 속성(<table border>)까지
-   이긴다. 클린 렌더에 없던 값을 새로 고정하는 선언(상속·default.css 값을 명시로 바꾼 것)은 그 속성을 인라인으로
-   지정한 요소를 :where(:not([style*="<속성>" i]))로 뺀다. :where는 특이도 0이라 공용 → 테마 순서와 특이도
-   계산은 그대로다. 이기려는 대상은 프로젝트 커스텀 CSS이지 작성자가 요소에 직접 단 스타일이 아니다 */
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 700; }
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) { line-height: 1.35; }
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="letter-spacing" i])) { letter-spacing: -0.01em; }
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="padding" i])) { padding-bottom: 0; }
+html[data-mts-theme] body h1:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 2em; }
+html[data-mts-theme] body h1:where(:not([style*="margin" i])) { margin: 0.2em 0 0.7em; }
+html[data-mts-theme] body h1:where(:not([style*="letter-spacing" i])) { letter-spacing: -0.015em; }
+html[data-mts-theme] body h2:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1.5em; }
+html[data-mts-theme] body h2:where(:not([style*="margin" i])) { margin: 1.9em 0 0.8em; }
+html[data-mts-theme] body h3:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1.2em; }
+html[data-mts-theme] body h3:where(:not([style*="margin" i])) { margin: 1.7em 0 0.6em; }
+html[data-mts-theme] body h4:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1.05em; }
+html[data-mts-theme] body h4:where(:not([style*="margin" i])) { margin: 1.5em 0 0.5em; }
+html[data-mts-theme] body h5:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1em; }
+html[data-mts-theme] body h5:where(:not([style*="margin" i])) { margin: 1.4em 0 0.5em; }
+html[data-mts-theme] body h6:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
+html[data-mts-theme] body h6:where(:not([style*="margin" i])) { margin: 1.4em 0 0.5em; }
+html[data-mts-theme] body h6:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 
 /* 제목 글꼴은 body 상속(Reader h1~h4만 세리프, 뒤 테마 규칙) — 상속에만 기대면 사용자 CSS의
    h1 { font-family }가 이긴다 */
-html[data-mts-theme] body h1:where(:not([style*="font" i])),
-html[data-mts-theme] body h2:where(:not([style*="font" i])),
-html[data-mts-theme] body h3:where(:not([style*="font" i])),
-html[data-mts-theme] body h4:where(:not([style*="font" i])),
-html[data-mts-theme] body h5:where(:not([style*="font" i])),
-html[data-mts-theme] body h6:where(:not([style*="font" i])) {
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) {
   font-family: inherit;
 }
 
 /* 기본 colors.css가 p, ul, table, tr 등에 요소 셀렉터로 색을 직접 지정해
-   body 상속을 이기므로, 전부 상속으로 되돌린다 (테마 색이 이겨야 함) */
-html[data-mts-theme] body p,
-html[data-mts-theme] body ul,
-html[data-mts-theme] body ol,
-html[data-mts-theme] body dl,
-html[data-mts-theme] body li,
-html[data-mts-theme] body dd,
-html[data-mts-theme] body dt,
-html[data-mts-theme] body table,
-html[data-mts-theme] body tr,
-html[data-mts-theme] body td,
-html[data-mts-theme] body blockquote,
-html[data-mts-theme] body strong,
-html[data-mts-theme] body b,
-html[data-mts-theme] body em,
-html[data-mts-theme] body i,
-html[data-mts-theme] body del,
-html[data-mts-theme] body span.user-del:where(:not([style*="color" i])),
-html[data-mts-theme] body ins,
-html[data-mts-theme] body u,
-html[data-mts-theme] body sup,
-html[data-mts-theme] body sub,
-html[data-mts-theme] body small {
-  color: inherit;
-}
-/* 행 그룹 색은 셀까지 상속된다 — 사용자 CSS의 tbody { color } 하나로 다크 셀 대비가 1.3까지 떨어졌다 */
-html[data-mts-theme] body thead:where(:not([style*="color" i])),
-html[data-mts-theme] body tbody:where(:not([style*="color" i])) {
+   body 상속을 이기므로, 전부 상속으로 되돌린다 (테마 색이 이겨야 함). 행 그룹(thead·tbody) 색도 셀까지 상속된다 —
+   사용자 CSS의 tbody { color } 하나로 다크 셀 대비가 1.3까지 떨어졌다 */
+html[data-mts-theme] body :is(p, ul, ol, dl, li, dd, dt, table, thead, tbody, tr, td, blockquote, strong, b, em, i, del, ins, u, sup, sub,
+  small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))),
+html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
 }
 
@@ -137,78 +140,71 @@ html[data-mts-theme] body tbody:where(:not([style*="color" i])) {
    선언(inherit)으로 바꿔 importantify로 이긴다. 값이 아니라 inherit라 부모가 다른 값을 주는 자리(표 셀 1.55,
    Soft·Reader 인용 글자 크기, mermaid 라벨)도 클린 렌더 그대로다. 테마별 값은 뒤 규칙(table, 테마 blockquote·th)이
    같은 특이도로 다시 준다. 인라인 서식 요소(strong·sup·code 등)의 조판 지표는 테마가 다루지 않는다.
-   인라인 style 제외는 속성별(font 단축은 줄 간격도 준다) */
-html[data-mts-theme] body p:where(:not([style*="font" i])),
-html[data-mts-theme] body ul:where(:not([style*="font" i])),
-html[data-mts-theme] body ol:where(:not([style*="font" i])),
-html[data-mts-theme] body dl:where(:not([style*="font" i])),
-html[data-mts-theme] body li:where(:not([style*="font" i])),
-html[data-mts-theme] body dt:where(:not([style*="font" i])),
-html[data-mts-theme] body dd:where(:not([style*="font" i])),
-html[data-mts-theme] body blockquote:where(:not([style*="font" i])),
-html[data-mts-theme] body table:where(:not([style*="font" i])),
-html[data-mts-theme] body thead:where(:not([style*="font" i])),
-html[data-mts-theme] body tbody:where(:not([style*="font" i])),
-html[data-mts-theme] body tr:where(:not([style*="font" i])),
-html[data-mts-theme] body th:where(:not([style*="font" i])),
-html[data-mts-theme] body td:where(:not([style*="font" i])) {
+   인라인 style 제외는 속성별(font 단축은 셋 다, 줄 간격도 준다) */
+html[data-mts-theme] body :is(p, ul, ol, dl, li, dt, dd, blockquote, table, thead, tbody, tr, th, td):where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) {
   font-family: inherit;
+}
+html[data-mts-theme] body :is(p, ul, ol, dl, li, dt, dd, blockquote, table, thead, tbody, tr, th, td):where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) {
   font-size: inherit;
 }
-html[data-mts-theme] body p:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body ul:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body ol:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body dl:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body li:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body dt:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body dd:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body blockquote:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body table:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body thead:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body tbody:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body tr:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body th:where(:not([style*="line-height" i]):not([style*="font:" i])),
-html[data-mts-theme] body td:where(:not([style*="line-height" i]):not([style*="font:" i])) {
+html[data-mts-theme] body :is(p, ul, ol, dl, li, dt, dd, blockquote, table, thead, tbody, tr, th, td):where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) {
   line-height: inherit;
 }
 
-html[data-mts-theme] body tr { border: none; }
+html[data-mts-theme] body tr:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
 /* 표 구조 테두리는 셀(테마별)과 표(Docs)에만 그린다. border-collapse: collapse에선 행 그룹 테두리도
    그려지므로 thead·tbody도 비운다 — style만: border 단축은 UA의 border-color(gray·inherit)까지 바꾼다 */
-html[data-mts-theme] body thead:where(:not(table[rules] > *):not([style*="border" i])),
-html[data-mts-theme] body tbody:where(:not(table[rules] > *):not([style*="border" i])) { border-style: none; }
+html[data-mts-theme] body :is(thead, tbody):where(:not(table[rules] > *, [style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-style: none; }
 
 /* mark/kbd는 UA·기본 preview 스타일에 의존하던 요소 — 커스텀 CSS 경쟁에서
    무방비였고(리셋·명시 어디에도 없음), 특히 mark의 UA 노랑 배경은 다크에서
    임의 커스텀 색과 조합되면 깨진다. 명시 선언으로 테마 도메인에 편입한다 */
-html[data-mts-theme] body mark {
+html[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: #f2df66;
   color: #24261f;
-  padding: 0.05em 0.2em;
-  border-radius: 3px;
 }
-html.mts-dark[data-mts-theme] body mark {
+html[data-mts-theme] body mark:where(:not([style*="padding" i])) { padding: 0.05em 0.2em; }
+html[data-mts-theme] body mark:where(:not([style*="radius" i])) { border-radius: 3px; }
+html.mts-dark[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: #b89f34;
   color: #16170f;
 }
-html[data-mts-theme] body kbd {
-  font-family: var(--mts-mono);
-  font-size: 0.82em;
+html[data-mts-theme] body kbd:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
+html[data-mts-theme] body kbd:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.82em; }
+html[data-mts-theme] body kbd:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-fg);
+}
+html[data-mts-theme] body kbd:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) {
   border: 1px solid var(--mts-border);
   border-bottom-width: 2px;
-  border-radius: 4px;
-  padding: 0.1em 0.4em;
 }
+html[data-mts-theme] body kbd:where(:not([style*="radius" i])) { border-radius: 4px; }
+html[data-mts-theme] body kbd:where(:not([style*="padding" i])) { padding: 0.1em 0.4em; }
 
 /* 작업 목록 체크박스: native 렌더는 다크에서 시인성이 낮다 — 테마 링크색으로 통일 */
 html[data-mts-theme] body input[type="checkbox"] {
   accent-color: var(--mts-link);
 }
 /* 2026.2+ 빈 칸 테두리는 currentColor다(default.css input { color: inherit }와 같은 값을 명시) — 사용자 CSS의
-   input 색이 다크에서 빈 칸 테두리를 배경에 묻었다 */
-html[data-mts-theme] body input[type="checkbox"]:where(:not([style*="color" i])) {
+   input 색이 다크에서 빈 칸 테두리를 배경에 묻었다. 글자가 아니라 컨트롤 테두리 색이라(장식) 작성자 color만으로 뺀다 */
+html[data-mts-theme] body input[type="checkbox"]:where(:not([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i])) {
   color: inherit;
 }
 /* preview의 체크박스는 disabled라 accent-color가 먹지 않고 color-scheme을 따른다.
@@ -238,57 +234,42 @@ html[data-mts-theme] body input[type="checkbox"]:checked::after {
 
 /* 커스텀 CSS가 표 행/인용구에 밝은 배경을 깔면 다크 모드가 깨지므로
    배경을 투명으로 고정한다 — 테마별 지브라/헤더 채움은 뒤에서 다시 지정됨 */
-html[data-mts-theme] body table,
-html[data-mts-theme] body thead,
-html[data-mts-theme] body tbody,
-html[data-mts-theme] body tr,
-html[data-mts-theme] body th,
-html[data-mts-theme] body td,
-html[data-mts-theme] body blockquote {
+html[data-mts-theme] body :is(table, thead, tbody, tr, th, td, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 /* 글자색을 테마가 주는 요소는 배경도 테마가 준다 — 위 color: inherit 리셋 요소 전부와 색을 직접 주는 제목·a
    (자체 배경을 주는 code·kbd·mark·pre는 제외). 글자색만 테마로 돌리고 배경을 남기면 다크에서 밝은 칸 위에 밝은
-   글자가 된다. mermaid 간선 라벨은 p에 자체 배경을 깔므로 SVG 안 p는 뺀다 */
-html[data-mts-theme] body h1:where(:not([style*="background" i])),
-html[data-mts-theme] body h2:where(:not([style*="background" i])),
-html[data-mts-theme] body h3:where(:not([style*="background" i])),
-html[data-mts-theme] body h4:where(:not([style*="background" i])),
-html[data-mts-theme] body h5:where(:not([style*="background" i])),
-html[data-mts-theme] body h6:where(:not([style*="background" i])),
-html[data-mts-theme] body a:where(:not([style*="background" i])),
-html[data-mts-theme] body p:not(svg p):where(:not([style*="background" i])),
-html[data-mts-theme] body ul:where(:not([style*="background" i])),
-html[data-mts-theme] body ol:where(:not([style*="background" i])),
-html[data-mts-theme] body dl:where(:not([style*="background" i])),
-html[data-mts-theme] body li:where(:not([style*="background" i])),
-html[data-mts-theme] body dd:where(:not([style*="background" i])),
-html[data-mts-theme] body dt:where(:not([style*="background" i])),
-html[data-mts-theme] body strong:where(:not([style*="background" i])),
-html[data-mts-theme] body b:where(:not([style*="background" i])),
-html[data-mts-theme] body em:where(:not([style*="background" i])),
-html[data-mts-theme] body i:where(:not([style*="background" i])),
-html[data-mts-theme] body del:where(:not([style*="background" i])),
-html[data-mts-theme] body span.user-del:where(:not([style*="background" i])),
-html[data-mts-theme] body ins:where(:not([style*="background" i])),
-html[data-mts-theme] body u:where(:not([style*="background" i])),
-html[data-mts-theme] body sup:where(:not([style*="background" i])),
-html[data-mts-theme] body sub:where(:not([style*="background" i])),
-html[data-mts-theme] body small:where(:not([style*="background" i])) {
+   글자가 된다 — 작성자 배경만 정한 요소(<p style="background:…">)도 같다(#63: 글자색과 둘 다 정했을 때만 작성자 몫).
+   mermaid 간선 라벨은 p에 자체 배경을 깔므로 SVG 안 p는 뺀다 */
+html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6, a, ul, ol, dl, li, dd, dt, strong, b, em, i, del, ins, u, sup, sub, small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))),
+html[data-mts-theme] body p:not(svg p):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))),
+html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 
 /* SVG 안 HTML 문단(mermaid 라벨 foreignObject > div > span > p)은 본문 문단이 아니다 — mermaid는 렌더할 때 잰 라벨
    박스로 노드·간선을 배치하는데, 본문 여백이 자체 #<id> p { margin: 0 }을 덮어 라벨마다 1em(16px)이 커졌다(#59:
    노드가 높아지고 글자·간선 라벨 배경이 위로 쏠린다). :where라 본문 p의 특이도는 그대로다 */
-html[data-mts-theme] body p:where(:not(svg p)) { margin: 0 0 1em; }
+html[data-mts-theme] body p:where(:not(svg p, [style*="margin" i])) { margin: 0 0 1em; }
 /* mermaid의 0은 비-important라 사용자 CSS(Typora 스니펫 p { margin-bottom: 12px !important })에 다시 덮인다 — 같은
    값을 명시한다. .mermaid가 아니라 svg id로 거는 이유: 라벨을 재는 곳은 mermaid.render가 body 직속에 만드는 임시
    div 안의 svg#mermaid-generated-…다(번들 2026.2, .mermaid 밖). 라벨의 글꼴·크기·줄 간격·색은 위 상속 리셋이
    mermaid 값(svg·라벨 div·span)을 그대로 내려받게 한다 */
 html[data-mts-theme] body svg[id^="mermaid"] p:where(:not([style*="margin" i])) { margin: 0; }
-html[data-mts-theme] body ul,
-html[data-mts-theme] body ol { margin: 0 0 1em; padding-left: 1.55em; }
+html[data-mts-theme] body :is(ul, ol):where(:not([style*="margin" i])) { margin: 0 0 1em; }
+html[data-mts-theme] body :is(ul, ol):where(:not([style*="padding" i])) { padding-left: 1.55em; }
 /* 왼쪽만 쓰는 들여쓰기도 나머지 변을 선언한다 — padding-left만 두면 나머지 변은 사용자 CSS 몫이 된다 */
 html[data-mts-theme] body ul:where(:not([style*="padding" i])),
 html[data-mts-theme] body ol:where(:not([style*="padding" i])) {
@@ -296,9 +277,8 @@ html[data-mts-theme] body ol:where(:not([style*="padding" i])) {
   padding-right: 0;
   padding-bottom: 0;
 }
-html[data-mts-theme] body li { margin: 0.4em 0; }
-html[data-mts-theme] body li > ul,
-html[data-mts-theme] body li > ol { margin: 0.4em 0 0; }
+html[data-mts-theme] body li:where(:not([style*="margin" i])) { margin: 0.4em 0; }
+html[data-mts-theme] body li > :is(ul, ol):where(:not([style*="margin" i])) { margin: 0.4em 0 0; }
 /* 정의 목록: 테마가 여백을 선언하지 않아 번들 default.css 값(dt 위 16px, dd 아래 16px·안쪽 0 16px —
    2025.1~2026.3 동일)으로 보이던 요소라 사용자 CSS(p, li, dd, dt { margin-top: 0; margin-bottom: 12px })가
    그대로 넘어왔다. 같은 값을 명시한다. dl 자체는 default.css의 맥락 규칙(blockquote > :first-child,
@@ -310,70 +290,90 @@ html[data-mts-theme] body dd:where(:not([style*="padding" i])) { padding: 0 16px
 /* 굵기도 명시 — 사용자 CSS의 strong { font-weight: 600 }이 강조를 바꿨다. default.css(bold = 700)와 같은 값.
    b는 두지 않는다: UA 값이 JCEF 버전마다 다르다(2025.1 Chromium 122 bold = 700, 2026.2 Chromium 144 bolder —
    600인 th·제목 안에서 900) — 하나로 고정하면 한쪽의 클린 렌더가 바뀐다 */
-html[data-mts-theme] body strong:where(:not([style*="font" i])) { font-weight: 700; }
+html[data-mts-theme] body strong:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 700; }
 
-html[data-mts-theme] body a { color: var(--mts-link); text-decoration: none; }
+html[data-mts-theme] body a:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-link); }
+html[data-mts-theme] body a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) { text-decoration: none; }
 /* Docs만 500을 준다(뒤 테마 규칙). 나머지 테마는 상속 그대로 */
-html[data-mts-theme] body a:where(:not([style*="font" i])) { font-weight: inherit; }
-html[data-mts-theme] body a:hover { text-decoration: underline; }
+html[data-mts-theme] body a:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: inherit; }
+html[data-mts-theme] body a:hover:where(:not([style*="text-decoration" i], [style*="text-underline" i])) { text-decoration: underline; }
 /* 취소선 흐림. 마크다운 ~~ ~~는 GFM 라이브러리가 <span class="user-del">로 그린다(2025.1~2026.3 동일, 줄은
    default.css span.user-del의 line-through). del 요소는 문서 raw HTML <del>뿐이라 del만 겨냥하던 때는 마크다운
    취소선에 테마 표현이 빠졌다(#58). 위 색·배경 리셋도 두 형태를 같이 겨냥한다.
    0.75 근거: opacity는 글자를 배경과 섞어 실제 대비를 곱셈보다 훨씬 크게 깎는다. 0.62에서는 평문 최저가 3.62였고,
    흐린 색을 쓰는 맥락(표 머리글·h6·인용·인라인 코드·링크)은 2.45~2.66까지 떨어졌다. 0.75면 평문 최저 5.16, 그런
    맥락 최저 3.08이다(2026.2 실측, 그룹 합성 — 감사 기준 FAIL 3.0은 tools/mts_audit.py STRIKE_FAIL) */
-html[data-mts-theme] body del,
+html[data-mts-theme] body del:where(:not([style*="opacity" i])),
 html[data-mts-theme] body span.user-del:where(:not([style*="opacity" i])) { opacity: 0.75; }
-html[data-mts-theme] body hr {
-  height: 1px;
-  background: var(--mts-border);
-  border: none;
-  margin: 2.2em 0;
-}
+/* 구분선은 글자가 없어 배경(선 색)도 장식이다 — 작성자 배경은 한쪽만 정해도 따른다 */
+html[data-mts-theme] body hr:where(:not([style^="height" i], [style*=";height" i], [style*=" height" i], [style*="\9 height" i], [style*="\a height" i])) { height: 1px; }
+html[data-mts-theme] body hr:where(:not([style*="background:" i], [style*="background :" i], [style*="background-color" i],
+  [style*="background-image" i])) { background: var(--mts-border); }
+html[data-mts-theme] body hr:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
+html[data-mts-theme] body hr:where(:not([style*="margin" i])) { margin: 2.2em 0; }
 /* GitHub만 2px(뒤 테마 규칙) */
 html[data-mts-theme] body hr:where(:not([style*="radius" i])) { border-radius: 0; }
-html[data-mts-theme] body img { max-width: 100%; }
+html[data-mts-theme] body img:where(:not([style*="max-width" i])) { max-width: 100%; }
 /* box-sizing은 default.css(border-box)와 같은 값 — 사용자 CSS(img { box-sizing: content-box })가 바꾸던 것.
    모서리는 Soft만 8px(뒤 테마 규칙) */
 html[data-mts-theme] body img:where(:not([style*="box-sizing" i])) { box-sizing: border-box; }
 html[data-mts-theme] body img:where(:not([style*="radius" i])) { border-radius: 0; }
 
-html[data-mts-theme] body code {
-  font-family: var(--mts-mono);
-  font-size: 0.86em;
+html[data-mts-theme] body code:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
+html[data-mts-theme] body code:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.86em; }
+html[data-mts-theme] body code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-icode-fg);
-  /* 명시 필수 — 커스텀 CSS(Typora 스니펫의 code { border: 1px solid #e8e8e8 })가 다크
-     칩에 밝은 윤곽선을 그렸다 */
-  border: none;
-  padding: 0.14em 0.38em;
-  border-radius: 4px;
 }
+/* 명시 필수 — 커스텀 CSS(Typora 스니펫의 code { border: 1px solid #e8e8e8 })가 다크
+   칩에 밝은 윤곽선을 그렸다 */
+html[data-mts-theme] body code:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
+html[data-mts-theme] body code:where(:not([style*="padding" i])) { padding: 0.14em 0.38em; }
+html[data-mts-theme] body code:where(:not([style*="radius" i])) { border-radius: 4px; }
 
 /* 코드펜스는 외관(mts-dark)이 아니라 LaF(mts-laf-dark)를 따른다 — 토큰 색이
    IDE 렉서(=LaF의 에디터 스킴)에서 인라인으로 오므로, 외관을 강제해도 배경과
-   기본 글자색은 토큰과 같은 도메인에 있어야 대비가 유지된다 */
-html[data-mts-theme] body pre {
+   기본 글자색은 토큰과 같은 도메인에 있어야 대비가 유지된다. 토큰 span의 인라인 color는
+   테마가 겨냥하지 않는 요소라 판정과 무관하다 */
+html[data-mts-theme] body pre:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-code-bg);
   color: var(--mts-pre-fg);
-  border: none;
-  border-radius: var(--mts-code-radius);
-  padding: 15px 18px;
-  overflow-x: auto;
-  margin: 0 0 1.15em;
-  line-height: 1.6;
-  font-family: var(--mts-mono);
-  font-size: 0.845em;
 }
-html[data-mts-theme] body pre code {
+html[data-mts-theme] body pre:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
+html[data-mts-theme] body pre:where(:not([style*="radius" i])) { border-radius: var(--mts-code-radius); }
+html[data-mts-theme] body pre:where(:not([style*="padding" i])) { padding: 15px 18px; }
+html[data-mts-theme] body pre:where(:not([style*="overflow:" i], [style*="overflow :" i], [style*="overflow-x" i])) { overflow-x: auto; }
+html[data-mts-theme] body pre:where(:not([style*="margin" i])) { margin: 0 0 1.15em; }
+html[data-mts-theme] body pre:where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) { line-height: 1.6; }
+html[data-mts-theme] body pre:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
+html[data-mts-theme] body pre:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.845em; }
+html[data-mts-theme] body pre code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: none;
   color: inherit;
-  padding: 0;
-  border-radius: 0;
-  font-size: 1em;
 }
+html[data-mts-theme] body pre code:where(:not([style*="padding" i])) { padding: 0; }
+html[data-mts-theme] body pre code:where(:not([style*="radius" i])) { border-radius: 0; }
+html[data-mts-theme] body pre code:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1em; }
 /* pre의 1.6 — default.css도 inherit */
-html[data-mts-theme] body pre code:where(:not([style*="line-height" i]):not([style*="font:" i])) {
+html[data-mts-theme] body pre code:where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) {
   line-height: inherit;
 }
 /* frontmatter 헤더는 코드 박스처럼 보이지 않게 기본 렌더를 유지한다
@@ -491,31 +491,42 @@ html[data-mts-theme] body a[data-command] {
   display: none;
 }
 
-html[data-mts-theme] body blockquote {
+html[data-mts-theme] body blockquote:where(:not([style*="margin" i])) {
   margin: 0 0 1.15em;
 }
 /* 테두리는 테마별로 왼쪽만 그리므로(border-left) 나머지 변을 먼저 비운다. 모서리는 default.css와 같은
    0 3px 3px 0(Docs만 8px, 뒤 테마 규칙) — 선언이 없으면 사용자 CSS의 border-radius가 넘어왔다 */
-html[data-mts-theme] body blockquote:where(:not([border]):not([style*="border" i])) { border: none; }
+html[data-mts-theme] body blockquote:where(:not([border], [style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: none; }
 html[data-mts-theme] body blockquote:where(:not([style*="radius" i])) { border-radius: 0 3px 3px 0; }
-html[data-mts-theme] body blockquote > :last-child { margin-bottom: 0; }
+html[data-mts-theme] body blockquote > :last-child:where(:not([style*="margin" i])) { margin-bottom: 0; }
 
-html[data-mts-theme] body table {
-  border-collapse: collapse;
-  font-size: 0.88em;
-  line-height: 1.55;
-  margin: 0 0 1.25em;
-  display: block;
-  overflow-x: auto;
-  /* display:block이면 블록 박스가 본문 전폭으로 늘어 셀보다 넓어진다 — 테두리를
-     table에 그리는 테마(Docs)에서 빈 박스가 오른쪽에 남는다. 내용 폭에 맞추되
-     넓은 표는 max-width에서 잘려 위 overflow-x 스크롤을 탄다 */
-  width: fit-content;
-  max-width: 100%;
+html[data-mts-theme] body table:where(:not([style*="border-collapse" i])) { border-collapse: collapse; }
+html[data-mts-theme] body table:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.88em; }
+html[data-mts-theme] body table:where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) { line-height: 1.55; }
+/* raw HTML <table align>은 Blink가 좌우 여백(auto·float)으로 옮긴다 — 표 위치는 작성자 몫이라 좌우만 뺀다 */
+html[data-mts-theme] body table:where(:not([style*="margin" i])) {
+  margin-top: 0;
+  margin-bottom: 1.25em;
 }
+html[data-mts-theme] body table:where(:not([align], [style*="margin" i])) {
+  margin-left: 0;
+  margin-right: 0;
+}
+html[data-mts-theme] body table:where(:not([style*="display" i])) { display: block; }
+html[data-mts-theme] body table:where(:not([style*="overflow:" i], [style*="overflow :" i], [style*="overflow-x" i])) { overflow-x: auto; }
+/* display:block이면 블록 박스가 본문 전폭으로 늘어 셀보다 넓어진다 — 테두리를
+   table에 그리는 테마(Docs)에서 빈 박스가 오른쪽에 남는다. 내용 폭에 맞추되
+   넓은 표는 max-width에서 잘려 위 overflow-x 스크롤을 탄다. 표현 속성 width는 default.css(width: 100%)가
+   덮어 기본 preview에서도 안 보이므로 테마도 덮는다 — 인라인 style의 width만 작성자 몫 */
+html[data-mts-theme] body table:where(:not([style^="width" i], [style*=";width" i], [style*=" width" i], [style*="\9 width" i], [style*="\a width" i])) { width: fit-content; }
+html[data-mts-theme] body table:where(:not([style*="max-width" i])) { max-width: 100%; }
 /* 표 테두리·모서리는 Docs만 표에 그린다(뒤 테마 규칙) — 나머지 테마는 없음을 명시. border-style만: border
    단축은 UA의 table border-color(gray)까지 바꾼다. raw HTML <table border>의 표현 속성 테두리는 작성자 몫 */
-html[data-mts-theme] body table:where(:not([border]):not([frame]):not([style*="border" i])) { border-style: none; }
+html[data-mts-theme] body table:where(:not([border], [frame], [style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-style: none; }
 html[data-mts-theme] body table:where(:not([style*="radius" i])) { border-radius: 0; }
 
 /* ---------- 한국어 (mts.js가 본문으로 판정해 <html>에 표식을 단다) ----------
@@ -546,11 +557,12 @@ html[data-mts-hangul][data-mts-theme] body th,
 html[data-mts-hangul][data-mts-theme] body td {
   word-break: keep-all;
 }
-html[data-mts-theme] body th {
-  font-weight: 600;
-  color: var(--mts-fg);
-  white-space: nowrap;
-}
+html[data-mts-theme] body th:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 600; }
+html[data-mts-theme] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
+html[data-mts-theme] body th:where(:not([style*="white-space" i])) { white-space: nowrap; }
 /* 머리글 정렬은 테마 기본이 왼쪽(UA 기본은 가운데)이고, 작성자가 정한 정렬은 따른다(#62). GFM 열 정렬 `:---:`·`---:`는
    셀의 align 표현 속성으로 렌더된다(`:---`는 속성이 없어 지정 없음과 같은 DOM — 2025.1·2026.2·2026.3 실측). 맨 th
    { text-align: left }가 importantify로 align을 이겨 머리글만 왼쪽에 남고 열 내용과 어긋났다. 셀의 인라인 text-align은
@@ -595,8 +607,7 @@ html[data-mts-theme] body td:where(:not([style*="radius" i])) {
 }
 /* 셀 안 긴 식별자·URL은 반대로 깨지지 않는 한 덩어리라 열 폭을 독식한다 —
    필요할 때 임의 지점 줄바꿈을 허용해 다른 열(주로 한글 설명)에 폭을 돌려준다 */
-html[data-mts-theme] body td code,
-html[data-mts-theme] body td a {
+html[data-mts-theme] body td :is(code, a):where(:not([style*="overflow-wrap" i], [style*="word-wrap" i])) {
   overflow-wrap: anywhere;
 }
 /* anywhere는 min-content를 1글자로 만들어, 장문 열이 폭을 가져가면 String·Boolean
@@ -604,8 +615,9 @@ html[data-mts-theme] body td a {
    토큰은 통째로 남기고, 긴 식별자만 그 폭 안에서 접히게 한다(칩 자체에 min-width를
    주면 짧은 칩이 빈 공간까지 넓어져 셀에 둔다). 합이 넘치면 overflow-x 스크롤.
    8em: 표 글자가 가장 작고(0.88×15.5px) 셀 패딩이 가장 큰 Docs에서도 9자 mono
-   토큰(LocalDate)까지 한 줄로 남는 값 — 4테마×896/427px 실측. 10자 이상은 접힘 */
-html[data-mts-theme] body td:has(code) {
+   토큰(LocalDate)까지 한 줄로 남는 값 — 4테마×896/427px 실측. 10자 이상은 접힘.
+   작성자가 셀 폭(width 속성·인라인 width·min-width)을 정했으면 그 폭을 이기지 않는다 */
+html[data-mts-theme] body td:has(code):where(:not([width], [style^="width" i], [style*=";width" i], [style*=" width" i], [style*="\9 width" i], [style*="\a width" i], [style*="min-width" i])) {
   min-width: 8em;
 }
 
@@ -718,35 +730,39 @@ html.mts-laf-dark[data-mts-theme="gh"] {
   --mts-code-bg: #161b22;
   --mts-pre-fg: #e6edf3;
 }
-html[data-mts-theme="gh"] body h1,
-html[data-mts-theme="gh"] body h2,
-html[data-mts-theme="gh"] body h3,
-html[data-mts-theme="gh"] body h4,
-html[data-mts-theme="gh"] body h5,
-html[data-mts-theme="gh"] body h6 {
+html[data-mts-theme="gh"] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) {
   font-weight: 600;
 }
-html[data-mts-theme="gh"] body h1,
-html[data-mts-theme="gh"] body h2 {
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid var(--mts-border);
-}
-html[data-mts-theme="gh"] body hr {
-  height: 4px;
-  border-radius: 2px;
-}
-html[data-mts-theme="gh"] body blockquote {
-  border-left: 4px solid var(--mts-border);
-  padding: 0 1em;
-  color: var(--mts-muted);
-}
-html[data-mts-theme="gh"] body th,
-html[data-mts-theme="gh"] body td {
-  border: 1px solid var(--mts-border);
-  padding: 6px 13px;
-}
-html[data-mts-theme="gh"] body th { background: var(--mts-th-bg); }
-html[data-mts-theme="gh"] body tbody tr:nth-child(even) { background: var(--mts-zebra); }
+html[data-mts-theme="gh"] body :is(h1, h2):where(:not([style*="padding" i])) { padding-bottom: 0.3em; }
+html[data-mts-theme="gh"] body :is(h1, h2):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-bottom: 1px solid var(--mts-border); }
+html[data-mts-theme="gh"] body hr:where(:not([style^="height" i], [style*=";height" i], [style*=" height" i], [style*="\9 height" i], [style*="\a height" i])) { height: 4px; }
+html[data-mts-theme="gh"] body hr:where(:not([style*="radius" i])) { border-radius: 2px; }
+html[data-mts-theme="gh"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 4px solid var(--mts-border); }
+html[data-mts-theme="gh"] body blockquote:where(:not([style*="padding" i])) { padding: 0 1em; }
+html[data-mts-theme="gh"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
+html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="padding" i])) { padding: 6px 13px; }
+html[data-mts-theme="gh"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { background: var(--mts-th-bg); }
+/* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
+html[data-mts-theme="gh"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 html[data-mts-theme="gh"] body blockquote.markdown-alert { padding: 0.5em 1em; }
 
@@ -783,33 +799,40 @@ html.mts-laf-dark[data-mts-theme="nt"] {
   --mts-pre-fg: #d6d4ce;
 }
 /* 밝아진 코드 배경이 페이지 배경(#faf6ef)과 비슷해져 경계는 보더로 구분한다 */
-html[data-mts-theme="nt"] body pre { border: 1px solid var(--mts-border); }
-html[data-mts-theme="nt"] body h1 { font-size: 2.5em; margin-bottom: 0.8em; }
-html[data-mts-theme="nt"] body h2 { margin-top: 2.2em; }
-html[data-mts-theme="nt"] body img { border-radius: 8px; }
+html[data-mts-theme="nt"] body pre:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
+html[data-mts-theme="nt"] body h1:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 2.5em; }
+html[data-mts-theme="nt"] body h1:where(:not([style*="margin" i])) { margin-bottom: 0.8em; }
+html[data-mts-theme="nt"] body h2:where(:not([style*="margin" i])) { margin-top: 2.2em; }
+html[data-mts-theme="nt"] body img:where(:not([style*="radius" i])) { border-radius: 8px; }
 html[data-mts-theme="nt"] body ::selection { background: rgba(194, 85, 74, 0.18); }
 html.mts-dark[data-mts-theme="nt"] body ::selection { background: rgba(227, 140, 127, 0.28); }
-html[data-mts-theme="nt"] body a {
+html[data-mts-theme="nt"] body a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
   text-decoration: underline;
   text-decoration-color: var(--mts-muted);
   text-underline-offset: 3px;
 }
-html[data-mts-theme="nt"] body blockquote {
-  border-left: 3px solid var(--mts-fg);
-  padding: 0.15em 0 0.15em 1em;
-  font-size: 1.05em;
-}
-html[data-mts-theme="nt"] body th,
-html[data-mts-theme="nt"] body td {
+html[data-mts-theme="nt"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 3px solid var(--mts-fg); }
+html[data-mts-theme="nt"] body blockquote:where(:not([style*="padding" i])) { padding: 0.15em 0 0.15em 1em; }
+html[data-mts-theme="nt"] body blockquote:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1.05em; }
+html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) {
   border: none;
   border-bottom: 1px solid var(--mts-border);
-  padding: 8px 14px;
 }
-html[data-mts-theme="nt"] body th {
-  color: var(--mts-muted);
-  font-size: 0.92em;
-  border-bottom-width: 2px;
-}
+html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="padding" i])) { padding: 8px 14px; }
+html[data-mts-theme="nt"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+html[data-mts-theme="nt"] body th:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
+html[data-mts-theme="nt"] body th:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-bottom-width: 2px; }
 
 /* ---------- Ⓒ Docs (VitePress풍) ----------
    시안과 달리 코드 블록을 "항상 다크"로 고정하지 않는다: 토큰 색은 IDE 에디터
@@ -851,11 +874,11 @@ html.mts-laf-dark[data-mts-theme="dc"] {
   --mts-code-bg: #202127;
   --mts-pre-fg: #d0d0d4;
 }
-html[data-mts-theme="dc"] body h2 {
-  margin-top: 2.2em;
-  padding-top: 1.1em;
-  border-top: 1px solid var(--mts-border);
-}
+html[data-mts-theme="dc"] body h2:where(:not([style*="margin" i])) { margin-top: 2.2em; }
+html[data-mts-theme="dc"] body h2:where(:not([style*="padding" i])) { padding-top: 1.1em; }
+html[data-mts-theme="dc"] body h2:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-top: 1px solid var(--mts-border); }
 html[data-mts-theme="dc"] body h2::before {
   content: "";
   display: inline-block;
@@ -865,44 +888,62 @@ html[data-mts-theme="dc"] body h2::before {
   background: var(--mts-quote-border);
   margin-right: 10px;
 }
-html[data-mts-theme="dc"] body pre {
-  border-left: 3px solid var(--mts-quote-border);
-  border-radius: 0 8px 8px 0;
-}
-html[data-mts-theme="dc"] body a { font-weight: 500; }
-html[data-mts-theme="dc"] body blockquote {
-  background: var(--mts-quote-bg);
-  border-left: 4px solid var(--mts-quote-border);
-  border-radius: 8px;
-  padding: 13px 17px;
-}
+html[data-mts-theme="dc"] body pre:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 3px solid var(--mts-quote-border); }
+html[data-mts-theme="dc"] body pre:where(:not([style*="radius" i])) { border-radius: 0 8px 8px 0; }
+html[data-mts-theme="dc"] body a:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 500; }
+html[data-mts-theme="dc"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { background: var(--mts-quote-bg); }
+html[data-mts-theme="dc"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 4px solid var(--mts-quote-border); }
+html[data-mts-theme="dc"] body blockquote:where(:not([style*="radius" i])) { border-radius: 8px; }
+html[data-mts-theme="dc"] body blockquote:where(:not([style*="padding" i])) { padding: 13px 17px; }
 /* border-collapse: collapse에서는 radius가 무시되므로 separate로 전환.
-   셀 경계는 bottom/right 단방향이라 separate에서도 겹선이 생기지 않는다 */
-html[data-mts-theme="dc"] body table {
-  border: 1px solid var(--mts-border);
-  border-radius: 8px;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-html[data-mts-theme="dc"] body thead th:first-child { border-top-left-radius: 7px; }
-html[data-mts-theme="dc"] body thead th:last-child { border-top-right-radius: 7px; }
-html[data-mts-theme="dc"] body tbody tr:last-child td:first-child { border-bottom-left-radius: 7px; }
-html[data-mts-theme="dc"] body tbody tr:last-child td:last-child { border-bottom-right-radius: 7px; }
-html[data-mts-theme="dc"] body th,
-html[data-mts-theme="dc"] body td {
+   셀 경계는 bottom/right 단방향이라 separate에서도 겹선이 생기지 않는다.
+   raw HTML <table border>·frame의 표현 속성 테두리는 작성자 몫(공용 규칙과 같다) */
+html[data-mts-theme="dc"] body table:where(:not([border], [frame], [style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
+html[data-mts-theme="dc"] body table:where(:not([style*="radius" i])) { border-radius: 8px; }
+html[data-mts-theme="dc"] body table:where(:not([style*="border-collapse" i])) { border-collapse: separate; }
+html[data-mts-theme="dc"] body table:where(:not([style*="border-spacing" i])) { border-spacing: 0; }
+html[data-mts-theme="dc"] body thead th:first-child:where(:not([style*="radius" i])) { border-top-left-radius: 7px; }
+html[data-mts-theme="dc"] body thead th:last-child:where(:not([style*="radius" i])) { border-top-right-radius: 7px; }
+html[data-mts-theme="dc"] body tbody tr:last-child td:first-child:where(:not([style*="radius" i])) { border-bottom-left-radius: 7px; }
+html[data-mts-theme="dc"] body tbody tr:last-child td:last-child:where(:not([style*="radius" i])) { border-bottom-right-radius: 7px; }
+html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) {
   border: none;
   border-bottom: 1px solid var(--mts-border);
   border-right: 1px solid var(--mts-border);
-  padding: 7px 14px;
 }
-html[data-mts-theme="dc"] body th {
+html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="padding" i])) { padding: 7px 14px; }
+html[data-mts-theme="dc"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-th-bg);
   color: var(--mts-link);
 }
-html[data-mts-theme="dc"] body th:last-child,
-html[data-mts-theme="dc"] body td:last-child { border-right: none; }
-html[data-mts-theme="dc"] body tbody tr:last-child td { border-bottom: none; }
-html[data-mts-theme="dc"] body tbody tr:nth-child(even) { background: var(--mts-zebra); }
+html[data-mts-theme="dc"] body :is(th, td):last-child:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-right: none; }
+html[data-mts-theme="dc"] body tbody tr:last-child td:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-bottom: none; }
+/* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
+html[data-mts-theme="dc"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 /* 알림: VitePress 커스텀 블록처럼 유형 색 틴트 배경 (color-mix 미지원 시 인용 배경).
    7%: 틴트 위 유형 색 제목이 라이트·다크 모두 4.6 이상 남는 상한 */
@@ -946,52 +987,91 @@ html.mts-laf-dark[data-mts-theme="rd"] {
   --mts-code-bg: #1c1f24;
   --mts-pre-fg: #c9cdd3;
 }
-html[data-mts-theme="rd"] body h1,
-html[data-mts-theme="rd"] body h2,
-html[data-mts-theme="rd"] body h3,
-html[data-mts-theme="rd"] body h4 {
-  font-family: var(--mts-serif);
-  letter-spacing: 0;
-}
-html[data-mts-theme="rd"] body h1 {
-  font-size: 2em;
-  margin-bottom: 1.2em;
-  text-align: center;
-}
-html[data-mts-theme="rd"] body h2 { font-size: 1.45em; margin-top: 2.4em; }
-html[data-mts-theme="rd"] body h3 { margin-top: 2em; }
+html[data-mts-theme="rd"] body :is(h1, h2, h3, h4):where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-serif); }
+html[data-mts-theme="rd"] body :is(h1, h2, h3, h4):where(:not([style*="letter-spacing" i])) { letter-spacing: 0; }
+html[data-mts-theme="rd"] body h1:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 2em; }
+html[data-mts-theme="rd"] body h1:where(:not([style*="margin" i])) { margin-bottom: 1.2em; }
+html[data-mts-theme="rd"] body h1:where(:not([align], [style*="text-align" i])) { text-align: center; }
+html[data-mts-theme="rd"] body h2:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 1.45em; }
+html[data-mts-theme="rd"] body h2:where(:not([style*="margin" i])) { margin-top: 2.4em; }
+html[data-mts-theme="rd"] body h3:where(:not([style*="margin" i])) { margin-top: 2em; }
 /* 양쪽정렬은 쓰지 않는다 — Chromium의 한글 justify는 어간뿐 아니라 자간까지 벌려,
    인라인 코드·URL이 든 줄에서 한글이 띄엄띄엄 보인다(text-justify는 Blink 미지원) */
-html[data-mts-theme="rd"] body p {
+html[data-mts-theme="rd"] body p:where(:not([style*="overflow-wrap" i], [style*="word-wrap" i])) {
   overflow-wrap: break-word;
 }
-html[data-mts-theme="rd"] body hr {
-  width: 140px;
-  margin: 2.8em auto;
-}
-html[data-mts-theme="rd"] body a {
+html[data-mts-theme="rd"] body hr:where(:not([width], [style^="width" i], [style*=";width" i], [style*=" width" i], [style*="\9 width" i], [style*="\a width" i])) { width: 140px; }
+html[data-mts-theme="rd"] body hr:where(:not([style*="margin" i])) { margin: 2.8em auto; }
+html[data-mts-theme="rd"] body a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
   text-decoration: underline;
   text-decoration-color: var(--mts-muted);
   text-underline-offset: 3px;
 }
 /* 인용구는 본문 sans를 그대로 쓴다 — 본문 크기·muted 색의 세리프 한글은 폴백
    품질에 좌우돼 가장 읽기 힘든 지점이었다. 세리프는 헤딩에만 */
-html[data-mts-theme="rd"] body blockquote {
-  border-left: 2px solid var(--mts-border);
-  padding: 0 0 0 1.1em;
-  color: var(--mts-muted);
-  font-size: 0.96em;
-}
-html[data-mts-theme="rd"] body table { font-size: 0.8em; }
-html[data-mts-theme="rd"] body th,
-html[data-mts-theme="rd"] body td {
-  border: 1px solid var(--mts-border);
-  padding: 6px 11px;
-}
+html[data-mts-theme="rd"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 2px solid var(--mts-border); }
+html[data-mts-theme="rd"] body blockquote:where(:not([style*="padding" i])) { padding: 0 0 0 1.1em; }
+html[data-mts-theme="rd"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+html[data-mts-theme="rd"] body blockquote:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.96em; }
+html[data-mts-theme="rd"] body table:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.8em; }
+html[data-mts-theme="rd"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
+html[data-mts-theme="rd"] body :is(th, td):where(:not([style*="padding" i])) { padding: 6px 11px; }
 /* 밝아진 코드 배경이 페이지 배경(#f6f5f1)보다 밝아져 경계는 보더로 구분한다 */
-html[data-mts-theme="rd"] body pre {
-  font-size: 0.92em;
-  border: 1px solid var(--mts-border);
+html[data-mts-theme="rd"] body pre:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
+html[data-mts-theme="rd"] body pre:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
+  [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
+  [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
+
+/* ---------- 작성자 색 영역 (글자색과 배경을 둘 다 정한 요소의 자손, #63) ----------
+   작성자가 글자색과 배경을 함께 정한 요소는 그 쌍이 글자 대비를 보장하지만, 자손에 테마가 직접 주는 글자색(제목·링크·
+   머리글·인용 muted)과 반투명·불투명 칩 배경(인라인 코드·키, 머리글 채움, 지브라)은 테마 배경을 전제한 값이다 — 다크 외관에서
+   작성자의 밝은 배경 위에 남으면 테마의 밝은 글자가 안 보인다. 영역 안에서는 그런 자손이 작성자 글자색을 물려받고, 머리글
+   채움은 걷고, 칩은 물려받은 글자색을 옅게 섞은 배경으로 바꾼다(어느 배경 위든 칩이 보이고 글자는 작성자 쌍의 대비 그대로).
+   글자색만으로는 링크가 구분되지 않아 밑줄을 준다. 자체 불투명 배경·글자색 쌍을 주는 mark·pre는 그대로 둔다.
+   대상은 영역 자신이 아닌 자손이고, 자손이 다시 둘 다 정했으면 그 값이 이긴다. :where라 특이도 0 + 1요소 — 같은 특이도의
+   공용·테마 규칙을 파일 뒤라서 이긴다(특이도가 더 높은 지브라는 그 규칙에서 영역을 뺀다). 판정은 위 공용 규칙의 글자색·배경
+   판정과 같은 셀렉터다 */
+html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i])) :is(h1, h2, h3, h4, h5, h6, a, th, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
+  color: inherit;
+}
+html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i])) th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
+  background: transparent;
+}
+html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i])) :is(code, kbd):where(:not(pre code)):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i]))) {
+  color: inherit;
+  background: transparent;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
+  [style*="unset" i], [style*="revert" i])) a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
+  text-decoration: underline;
 }
 
 /* ---------- theme switcher widget ----------
