@@ -26,7 +26,12 @@
 //   - 불변식: 테마가 관여하는 계산 스타일(INVARIANT_PROPS)은 사용자 Custom CSS가 있어도 clean과 같아야 한다 —
 //     같은 조합의 clean·custom을 본문·동물원 요소마다 비교한다(대비가 멀쩡해도 테마 줄 간격·여백·굵기가
 //     사용자 값으로 바뀌는 누수, #54)
-//   - 작성자 스타일: 문서 raw HTML의 인라인 style·표현 속성은 테마가 새로 고정한 선언보다 우선한다(checkAuthorStyles)
+//   - 작성자 스타일: 문서 raw HTML의 인라인 style·표현 속성 존중(#54, #63 단계적 존중 — checkAuthorStyles). 배치·조판 속성은
+//     작성자 값, 글자색·배경은 둘 다 정했을 때만 작성자 값(한쪽만이면 테마), 둘 다 정한 요소 안(작성자 색 영역)의 테마 글자색·칩은
+//     작성자 색에 맞춘다. elements@900의 테마 4 × 외관 2 × LaF 2에서 값(clean)과 프로브 글자 대비(clean·custom)를, innerHTML
+//     그대로와 IDE처럼 CSSOM 직렬화한 style 두 형태로 본다
+//   - 체크박스: 빈 작업 목록 체크박스 테두리의 실제 픽셀이 계산값과 같은지(checkCheckboxPaint — 계산 스타일 비교로는 안 잡히는
+//     Chromium 그림 회귀)
 // 한계 — 회귀 조기 검출용이고 최종 판정은 CDP 하네스(verify-preview)다:
 //   - Linux headless Chromium + Playwright 기본 폰트다. macOS JCEF의 폰트 폴백에 좌우되는 문제(이모지
 //     글리프, 한글 폴백 폰트, 427px 패널의 실제 줄바꿈 폭)는 재현하지 않는다. JCEF와 Chromium 버전도 다르다
@@ -301,95 +306,335 @@ function judgeInvariant(combo, clean, custom) {
   }
 }
 
-/** 작성자 인라인 style·표현 속성 존중(#54) — 테마가 새로 고정한 선언(상속·default.css 값의 명시)은 문서 raw HTML이
- *  요소에 직접 단 값을 덮지 않아야 한다(mts.css의 :where(:not([style*=…])) 제외). 프로브 요소를 주입해 계산값이
- *  작성자 값인지 보고 바로 걷어낸다. Reader에서 본다 — 아래 속성을 Reader 테마 규칙이 따로 덮지 않는다(제목 세리프는
- *  h1~h4라 h5로). 다른 테마의 테마별 규칙(Soft 이미지 모서리 등)은 원래 작성자 값을 이기는 설계라 대상이 아니다 */
-async function checkAuthorStyles(page, combo) {
-  const html =
-    '<p id="ap-p" style="line-height: 3; font-size: 22px; font-family: monospace">p</p>' +
-    '<p id="ap-pfont" style="font: 20px/2 serif">p font</p>' +
-    '<p id="ap-pbg" style="background: rgb(255, 243, 176)">p bg</p>' +
-    '<h5 id="ap-h5" style="font-family: monospace">h5</h5>' +
-    '<h3 id="ap-h3" style="background-color: rgb(224, 240, 255)">h3</h3>' +
-    '<p><img id="ap-img" width="20" height="20" style="border-radius: 50%; box-sizing: content-box; padding: 2px"></p>' +
-    '<table id="ap-t" style="border: 2px solid; border-radius: 6px">' +
-    '<thead id="ap-thead" style="border: 2px solid; color: rgb(200, 0, 0)"><tr><th id="ap-th" style="font-size: 20px; border-radius: 4px">h</th></tr></thead>' +
-    '<tbody id="ap-tbody" style="color: rgb(0, 128, 0)"><tr>' +
-    '<td id="ap-td" style="font-size: 20px; line-height: 2; font-family: monospace; border-radius: 4px">c</td></tr></tbody></table>' +
-    '<table id="ap-tb" border="1"><tbody><tr><td>c</td></tr></tbody></table>' +
-    // HTML4 표현 속성 frame(바깥 테두리)·rules(행 그룹 테두리)도 작성자 값이다
-    '<table id="ap-tf" frame="box"><tbody><tr><td>c</td></tr></tbody></table>' +
-    '<table border="1" rules="groups"><thead id="ap-trh"><tr><th>h</th></tr></thead><tbody id="ap-trb"><tr><td>c</td></tr></tbody></table>' +
-    // 머리글·셀 정렬(#62): 인라인 text-align, 행 align(UA th 규칙이 물려받는다), align보다 우선하는 인라인 style,
-    // 표의 인라인 text-align(셀이 물려받는다)
-    '<table><thead><tr><th id="ap-thta" style="text-align: right">h</th></tr></thead><tbody><tr align="right">' +
-    '<th id="ap-trath">h</th><td id="ap-tdta" align="center" style="text-align: right">c</td></tr></tbody></table>' +
-    '<table style="text-align: right"><thead><tr><th id="ap-tsth">h</th></tr></thead><tbody><tr><td id="ap-tstd">c</td></tr></tbody></table>' +
-    '<ul id="ap-ul" style="padding: 10px 20px"><li id="ap-li" style="line-height: 3; font-size: 20px">li</li></ul>' +
-    '<blockquote id="ap-bq" style="border: 1px solid; border-radius: 10px">bq</blockquote>' +
-    '<p><a id="ap-a" href="#" style="font-weight: 900">a</a> <strong id="ap-strong" style="font-weight: 400">s</strong></p>' +
-    // 마크다운 취소선 클래스를 raw HTML로 단 경우 — [style*="color"]는 background-color에도 걸려 배경은 따로 둔다
-    '<p><span id="ap-del" class="user-del" style="opacity: 0.3; color: rgb(200, 0, 0)">d</span> ' +
-    '<span id="ap-delbg" class="user-del" style="background: rgb(255, 243, 176)">d</span></p>' +
-    '<dl><dt id="ap-dt" style="margin: 0; padding: 5px">dt</dt><dd id="ap-dd" style="margin: 0; padding: 0">dd</dd></dl>' +
-    '<pre><code id="ap-code" style="line-height: 30px">x</code></pre>' +
-    '<p><input id="ap-cb" type="checkbox" disabled style="color: rgb(200, 0, 0)"></p>' +
-    '<hr id="ap-hr" style="border-radius: 3px">';
-  const expect = [
-    ["ap-p", "line-height", "66px"], ["ap-p", "font-size", "22px"], ["ap-p", "font-family", "monospace"],
-    ["ap-pfont", "line-height", "40px"], ["ap-pfont", "font-family", "serif"],
-    ["ap-pbg", "background-color", "rgb(255, 243, 176)"],
-    ["ap-h5", "font-family", "monospace"], ["ap-h3", "background-color", "rgb(224, 240, 255)"],
-    ["ap-img", "border-top-left-radius", "50%"], ["ap-img", "box-sizing", "content-box"],
-    ["ap-t", "border-top-style", "solid"], ["ap-t", "border-top-left-radius", "6px"],
-    ["ap-thead", "border-top-style", "solid"], ["ap-thead", "color", "rgb(200, 0, 0)"],
-    ["ap-th", "font-size", "20px"], ["ap-th", "border-top-left-radius", "4px"],
-    ["ap-tbody", "color", "rgb(0, 128, 0)"],
-    ["ap-td", "font-size", "20px"], ["ap-td", "line-height", "40px"], ["ap-td", "font-family", "monospace"],
-    ["ap-td", "border-top-left-radius", "4px"],
-    ["ap-tb", "border-top-style", "outset"], ["ap-tf", "border-top-style", "solid"],
-    ["ap-trh", "border-bottom-style", "solid"], ["ap-trb", "border-top-style", "solid"],
-    // 기대값 null = 기본 preview(테마 off)에서 잰 값 — 물려받는 정렬은 Blink 매핑(-webkit-*)을 하드코딩하지 않는다
-    ["ap-thta", "text-align", "right"], ["ap-trath", "text-align", null], ["ap-tdta", "text-align", "right"],
-    ["ap-tsth", "text-align", null], ["ap-tstd", "text-align", null],
-    ["ap-ul", "padding-top", "10px"], ["ap-ul", "padding-right", "20px"],
-    ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"],
-    ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-top-right-radius", "10px"],
-    ["ap-a", "font-weight", "900"], ["ap-strong", "font-weight", "400"],
-    ["ap-del", "opacity", "0.3"], ["ap-del", "color", "rgb(200, 0, 0)"], ["ap-delbg", "background-color", "rgb(255, 243, 176)"],
-    ["ap-dt", "margin-top", "0px"], ["ap-dt", "padding-left", "5px"],
-    ["ap-dd", "margin-bottom", "0px"], ["ap-dd", "padding-left", "0px"],
-    ["ap-code", "line-height", "30px"], ["ap-cb", "color", "rgb(200, 0, 0)"], ["ap-hr", "border-top-left-radius", "3px"],
-  ];
-  // 주입·측정·제거를 한 evaluate에서 끝낸다 — mts.js 언어 재판정(400ms 디바운스)은 걷어낸 뒤의 본문을 본다
-  const bad = await page.evaluate(([h, ex]) => {
+/** 작성자 인라인 style·표현 속성 존중(#54, #63 단계적 존중) — 테마 선언은 문서 raw HTML이 요소에 직접 단 값을 덮지 않아야
+ *  한다(mts.css의 :where(:not(…)) 제외). 프로브 요소를 주입해 계산값을 보고 바로 걷어낸다. 기대값:
+ *    문자열 = 작성자 값 / null = 기본 preview(테마 off)에서 잰 값(표현 속성 — Blink 매핑을 하드코딩하지 않는다) /
+ *    "=<id>" = 같은 테마의 기준 요소(style 없음)와 같은 값(테마가 맡는 자리 — 글자색·배경을 한쪽만 정한 요소) /
+ *    "centered" = 부모 안에서 좌우 여백이 같다(표 align — 표 폭이 테마·off에서 달라 px로 비교할 수 없다)
+ *  배치·조판 속성은 작성자 값, 글자색·배경은 둘 다 정했을 때만 작성자 값이고 한쪽만이면 테마 값이다. 둘 다 정한 요소 안
+ *  (작성자 색 영역)의 테마 글자색·칩은 작성자 색에 맞춘다. 판정 셀렉터의 부분 문자열 충돌(background-color 단독·border-color +
+ *  background·transparent·대소문자·줄바꿈)도 여기서 본다. 값 판정은 clean 조합에서만(custom은 사용자 CSS !important가 인라인
+ *  style을 이기는 게 정상), 대비 판정(프로브 글자 전부 FAIL 3.0 / WARN 4.5 — 작성자 값을 따르는 자리에서 안 보이는 글자가 생기지
+ *  않는지)은 clean·custom 둘 다 */
+const PROBE_HTML = [
+  // 기준 요소(style 없음) — "=<id>" 기대값의 출처
+  '<p id="rf-p">p</p><h3 id="rf-h3">h3</h3><p><a id="rf-a" href="#">a</a> <mark id="rf-mark">m</mark> <code id="rf-code">c</code>',
+  ' <span id="rf-del" class="user-del">d</span></p><blockquote id="rf-bq"><p>q</p></blockquote>',
+  '<table><thead id="rf-thead"><tr><th id="rf-th">h</th></tr></thead><tbody><tr><td id="rf-td">c</td></tr></tbody></table>',
+  // ── 배치·조판 (#54에서 넘어온 것 포함) ──
+  '<p id="ap-p" style="line-height: 3; font-size: 22px; font-family: monospace">p</p>',
+  '<p id="ap-pfont" style="font: italic 20px/2 serif">p font</p>',
+  '<p id="ap-pm" style="margin-top: 0">p</p><p id="ap-pal" align="center">p</p><p id="ap-pta" style="text-align: right">p</p>',
+  '<h1 id="ap-h1" style="font-size: 20px; margin: 0; letter-spacing: 2px">h1</h1><h1 id="ap-h1al" align="right">h1</h1>',
+  '<h2 id="ap-h2" style="border-bottom: none; font-family: monospace; padding-top: 2px">h2</h2>',
+  '<h3 id="ap-h3l" style="line-height: 50px; font-weight: 300; padding-bottom: 5px">h3</h3>',
+  '<h5 id="ap-h5" style="font-family: monospace">h5</h5>',
+  '<p><img id="ap-img" width="20" height="20" style="border-radius: 50%; box-sizing: content-box; padding: 2px; max-width: 10px"></p>',
+  '<table id="ap-t" style="border: 2px solid; border-radius: 6px; font-size: 19px; line-height: 30px; display: table; ' +
+    'width: 300px; max-width: none; border-collapse: separate; border-spacing: 4px 6px; margin: 7px; overflow-x: visible">',
+  '<thead id="ap-thead" style="border: 2px solid"><tr id="ap-tr" style="border-top: 2px solid">',
+  '<th id="ap-th" style="font-size: 20px; border-radius: 4px; border: 3px dotted; padding: 1px; font-weight: 400; ' +
+    'white-space: normal">h</th></tr></thead>',
+  '<tbody><tr><td id="ap-td" style="font-size: 20px; line-height: 2; font-family: monospace; border-radius: 4px; ' +
+    'border: 3px dotted; padding: 1px">c</td></tr></tbody></table>',
+  '<table id="ap-tb" border="1"><tbody><tr><td>c</td></tr></tbody></table>',
+  // HTML4 표현 속성 frame(바깥 테두리)·rules(행 그룹 테두리)도 작성자 값이다
+  '<table id="ap-tf" frame="box"><tbody><tr><td>c</td></tr></tbody></table>',
+  '<table border="1" rules="groups"><thead id="ap-trh"><tr><th>h</th></tr></thead><tbody id="ap-trb"><tr><td>c</td></tr></tbody></table>',
+  '<table id="ap-talign" align="center"><tbody><tr><td>가운데 표</td></tr></tbody></table>',
+  // 머리글·셀 정렬(#62): 인라인 text-align, 행 align(UA th 규칙이 물려받는다), align보다 우선하는 인라인 style,
+  // 표의 인라인 text-align(셀이 물려받는다)
+  '<table><thead><tr><th id="ap-thta" style="text-align: right">h</th></tr></thead><tbody><tr align="right">',
+  '<th id="ap-trath">h</th><td id="ap-tdta" align="center" style="text-align: right">c</td></tr></tbody></table>',
+  '<table style="text-align: right"><thead><tr><th id="ap-tsth">h</th></tr></thead><tbody><tr><td id="ap-tstd">c</td></tr></tbody></table>',
+  // 셀 폭: 코드 셀 바닥 폭(min-width 8em)은 작성자 폭 지정을 이기지 않는다
+  '<table><tbody><tr><td id="ap-tdw" width="40"><code>x</code></td><td id="ap-tdmw" style="min-width: 0"><code>y</code></td>',
+  '<td><code id="ap-tdcode" style="overflow-wrap: normal">z</code></td><td id="ap-tdwb" style="word-break: break-all">한국어 셀</td></tr></tbody></table>',
+  '<ul id="ap-ul" style="padding: 10px 20px; margin: 3px"><li id="ap-li" style="line-height: 3; font-size: 20px; margin: 9px 0">li</li></ul>',
+  '<blockquote id="ap-bq" style="border: 1px solid; border-left: 6px double; border-radius: 10px; padding: 0; margin: 4px; ' +
+    'font-size: 20px">bq</blockquote>',
+  '<p><a id="ap-a" href="#" style="font-weight: 900; text-decoration: underline wavy">a</a> ',
+  '<strong id="ap-strong" style="font-weight: 400">s</strong></p>',
+  '<p data-ap-faint><span id="ap-del" class="user-del" style="opacity: 0.3">d</span> <del id="ap-rdel" style="opacity: 0.4">d</del></p>',
+  '<dl><dt id="ap-dt" style="margin: 0; padding: 5px">dt</dt><dd id="ap-dd" style="margin: 0; padding: 0">dd</dd></dl>',
+  '<p><code id="ap-icode" style="font-size: 20px; padding: 0; border: 1px solid; border-radius: 0; font-family: serif">c</code> ',
+  '<kbd id="ap-kbd" style="border: none; padding: 0; font-size: 20px">k</kbd> <mark id="ap-mark" style="padding: 0; border-radius: 0">m</mark></p>',
+  '<pre id="ap-pre" style="border: 2px dashed; border-radius: 0; padding: 0; margin: 0; line-height: 30px; font-size: 20px; ' +
+    'overflow-x: hidden"><code id="ap-code" style="line-height: 30px; font-size: 20px">x</code></pre>',
+  '<p><input id="ap-cb" type="checkbox" disabled style="color: rgb(200, 0, 0)"></p>',
+  '<hr id="ap-hr" style="border-radius: 3px; height: 3px; border-top: 1px dashed; margin: 5px 0; background: none">',
+  '<hr id="ap-hrw" width="120"><hr id="ap-hrws" style="width: 200px">',
+  // ── 글자색·배경: 둘 다 정했을 때만 작성자 값 ──
+  '<p id="cb-both" style="color: rgb(0, 0, 0); background: rgb(255, 243, 176)">both</p>',
+  '<p id="cb-rev" style="background: rgb(255, 243, 176); color: rgb(0, 0, 0)">reversed</p>',
+  '<p id="cb-case" style="COLOR : rgb(0, 0, 0) ; BACKGROUND : rgb(255, 243, 176)">upper</p>',
+  '<p id="cb-nl" style="background: rgb(255, 243, 176);\ncolor: rgb(0, 0, 0)">newline</p>',
+  '<p id="cb-img" style="color: rgb(0, 0, 0); background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255))">img</p>',
+  // 이미지·상속 배경은 글자 뒤 바탕을 보장하지 못한다(못 불러오거나 투명) — 배경으로 치지 않는다
+  '<p id="cb-url" style="color: rgb(0, 0, 0); background: url(missing-mts-probe.png)">url</p>',
+  '<p id="cb-inherit" style="color: rgb(0, 0, 0); background: inherit">inherit</p>',
+  '<p id="cb-color" style="color: rgb(51, 51, 51)">color only</p>',
+  '<p id="cb-bg" style="background: rgb(255, 243, 176)">bg only</p>',
+  '<p id="cb-bgc" style="background-color: rgb(255, 255, 255)">bg-color only</p>',
+  '<p id="cb-border" style="border-color: rgb(255, 0, 0); background: rgb(255, 255, 255)">border-color + bg</p>',
+  '<p id="cb-tdc" style="text-decoration-color: rgb(255, 0, 0); background: rgb(255, 255, 255)">decoration-color + bg</p>',
+  '<p id="cb-tr" style="color: rgb(0, 0, 0); background: transparent">transparent</p>',
+  '<p id="cb-none" style="color: rgb(0, 0, 0); background: none">none</p>',
+  // Google Docs·Word 붙여넣기 HTML의 실제 형태 — 글자색 + 투명 배경
+  '<p id="cb-gdocs" style="font-size:11pt;font-family:Arial;color:#000000;background-color:transparent;font-weight:400">gdocs</p>',
+  // 반투명·투명 알파 배경은 바탕이 아니다(#63 리뷰) — 다크 페이지 위 거의 투명한 칸에 작성자 어두운 글자가 남으면 대비 1.35~1.66.
+  // IDE는 알파 색을 rgba()로 직렬화한다. #RRGGBBAA·#RGBA는 직렬화 전엔 부분 문자열로 못 가려 cssom 단계에서만 본다
+  '<p id="cb-rgba" style="color: rgb(51, 51, 51); background: rgba(0, 0, 0, 0.05)">rgba</p>',
+  '<p id="cb-rgba0" style="color: rgb(51, 51, 51); background-color: rgba(255, 255, 255, 0)">rgba 0</p>',
+  '<p id="cb-slash" style="color: rgb(51, 51, 51); background: rgb(0 0 0 / 4%)">slash</p>',
+  '<p id="cb-hsl" style="color: rgb(51, 51, 51); background: hsl(0 0% 100% / 0)">hsl</p>',
+  '<p id="cb-hsla" style="color: rgb(51, 51, 51); background: hsla(0, 0%, 100%, 0.1)">hsla</p>',
+  '<p id="cb-hex8" data-ap-cssom style="color: #333; background: #0000000d">hex8</p>',
+  '<p id="cb-hex4" data-ap-cssom style="color: #333; background: #0001">hex4</p>',
+  '<table><tbody><tr><td id="cb-tdrgba" style="color: rgb(51, 51, 51); background: rgba(0, 0, 0, 0.05)">td rgba</td></tr></tbody></table>',
+  // 그라데이션(형광펜 — 글자 위쪽이 투명)·color-mix·시스템 색(다크 color-scheme에서 Canvas = 거의 검정)도 바탕이 아니다
+  '<p id="cb-grad" style="color: rgb(51, 51, 51); background: linear-gradient(transparent 60%, #ffe066 60%)">gradient</p>',
+  '<p id="cb-mix" style="color: rgb(51, 51, 51); background-color: color-mix(in srgb, #fff 10%, transparent)">mix</p>',
+  '<p id="cb-grad2" style="color: rgb(0, 0, 0); background: linear-gradient(rgb(255, 255, 255), rgb(255, 224, 102))">gradient 2</p>',
+  '<p id="cb-mix2" style="color: rgb(0, 0, 0); background-color: color-mix(in srgb, rgb(255, 243, 176) 50%, rgb(255, 255, 255))">mix 2</p>',
+  '<p id="cb-canvas" style="color: rgb(0, 0, 0); background-color: Canvas">canvas</p>',
+  '<p id="cb-field" style="color: rgb(0, 0, 0); background: Field">field</p>',
+  // 판정 부분 문자열 — 색 이름의 url(burlywood)은 배경 판정을 막지 않는다. 글꼴 이름의 transparent는 막는다(보수적 — 테마로
+  // 돌아가 읽힘 쪽). 탭 + 콜론 앞 공백
+  '<p id="cb-tsans" style="font-family: \'Transparent Sans\', sans-serif; color: rgb(0, 0, 0); background: rgb(255, 243, 176)">tsans</p>',
+  '<p id="cb-burly" style="color: rgb(0, 0, 0); background: burlywood">burly</p>',
+  '<p id="cb-tabsp" style="background: rgb(255, 243, 176);\tcolor : rgb(0, 0, 0)">tab</p>',
+  '<h3 id="cb-h3" style="background-color: rgb(224, 240, 255)">h3 bg only</h3>',
+  '<h3 id="cb-h3b" style="color: rgb(0, 0, 0); background-color: rgb(224, 240, 255)">h3 both</h3>',
+  '<p><a id="cb-a" href="#" style="color: rgb(200, 0, 0)">a color</a> ',
+  '<a id="cb-ab" href="#" style="color: rgb(0, 0, 255); background: rgb(255, 255, 255)">a both</a> ',
+  '<span id="cb-del" class="user-del" style="color: rgb(200, 0, 0)">d</span> ',
+  '<span id="cb-delbg" class="user-del" style="background: rgb(255, 243, 176)">d</span> ',
+  '<span id="cb-delb" class="user-del" style="color: rgb(0, 0, 0); background: rgb(255, 243, 176)">d</span> ',
+  '<mark id="cb-markbg" style="background: rgb(150, 220, 255)">m</mark> ',
+  '<mark id="cb-markb" style="color: rgb(0, 0, 0); background: rgb(150, 220, 255)">m</mark> ',
+  '<code id="cb-codec" style="color: rgb(200, 0, 0)">c</code> ',
+  '<code id="cb-codeb" style="color: rgb(0, 0, 0); background: rgb(230, 230, 230)">c</code></p>',
+  '<pre id="cb-pre" style="background: rgb(39, 40, 34); color: rgb(248, 248, 242)">pre</pre>',
+  '<blockquote id="cb-bq" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)">bq</blockquote>',
+  '<table><thead id="cb-thead" style="color: rgb(200, 0, 0)"><tr><th id="cb-th" style="background: rgb(255, 243, 176)">h</th>',
+  '<th id="cb-thb" style="color: rgb(0, 0, 0); background: rgb(255, 243, 176)">h</th></tr></thead>',
+  '<tbody id="cb-tbody" style="color: rgb(0, 128, 0)"><tr><td id="cb-td" style="background: rgb(255, 204, 204)">c</td>',
+  '<td id="cb-tdb" style="color: rgb(0, 0, 0); background: rgb(255, 204, 204)">c</td></tr></tbody></table>',
+  // ── 작성자 색 영역 — 둘 다 정한 요소 안의 테마 글자색·칩 ──
+  '<p id="ad-p" style="color: rgb(0, 0, 0); background: rgb(255, 243, 176)">영역 <a id="ad-a" href="#">링크</a> ',
+  '<code id="ad-code">코드</code> <kbd id="ad-kbd">키</kbd> <mark id="ad-mark">마크</mark> <strong id="ad-strong">굵게</strong> ',
+  '<a id="ad-anone" href="#" style="text-decoration: none">밑줄 없음</a> <a id="ad-ac" href="#" style="color: rgb(200, 0, 0)">색만</a> ',
+  '<a id="ad-ab" href="#" style="color: rgb(0, 0, 255); background: rgb(255, 255, 255)">자체 쌍</a></p>',
+  '<table id="ad-t" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)"><thead><tr><th id="ad-th">머리글</th></tr></thead>',
+  '<tbody><tr><td>첫 행</td></tr><tr id="ad-tr2"><td id="ad-td2">둘째 행 <code>칩</code> <a href="#">링크</a></td></tr></tbody></table>',
+  '<table><tbody><tr id="ad-trow" style="color: rgb(0, 0, 0); background: rgb(255, 255, 204)"><td id="ad-trtd">행 영역</td></tr>',
+  '<tr><td>둘째</td></tr></tbody></table>',
+  '<div id="ad-div" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)"><h3 id="ad-h3">영역 제목</h3><h6>작은 제목</h6>',
+  '<blockquote id="ad-bq"><p>영역 인용</p></blockquote><ul><li><a href="#">목록 링크</a></li></ul>',
+  '<pre id="ad-pre"><code>pre 쌍은 테마 그대로</code></pre></div>',
+  // 작성자 색 영역 안의 GitHub Alert — 닫지 않은 <blockquote style> 뒤 > [!NOTE]가 그 안에 렌더된다(알림 규칙은 특이도가 높다)
+  '<blockquote id="ad-alq" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)"><blockquote class="markdown-alert markdown-alert-note">',
+  '<p class="markdown-alert-title" id="ad-alt">Note</p><p id="ad-alb">영역 안 알림 본문</p></blockquote></blockquote>',
+  '<div style="color: rgb(240, 240, 240); background: rgb(34, 34, 34)"><h3>어두운 영역</h3><p><a href="#">링크</a> <code>칩</code></p>',
+  '<table><thead><tr><th>머리글</th></tr></thead><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></div>',
+].join("");
+const AUTHOR_BLACK = "rgb(0, 0, 0)";
+const PROBE_EXPECT = [
+  ["ap-p", "line-height", "66px"], ["ap-p", "font-size", "22px"], ["ap-p", "font-family", "monospace"],
+  ["ap-pfont", "line-height", "40px"], ["ap-pfont", "font-family", "serif"], ["ap-pfont", "font-style", "italic"],
+  ["ap-pm", "margin-top", "0px"], ["ap-pal", "text-align", null], ["ap-pta", "text-align", "right"],
+  ["ap-h1", "font-size", "20px"], ["ap-h1", "margin-top", "0px"], ["ap-h1", "margin-bottom", "0px"],
+  ["ap-h1", "letter-spacing", "2px"], ["ap-h1al", "text-align", null],
+  ["ap-h2", "border-bottom-style", "none"], ["ap-h2", "font-family", "monospace"], ["ap-h2", "padding-top", "2px"],
+  ["ap-h3l", "line-height", "50px"], ["ap-h3l", "font-weight", "300"], ["ap-h3l", "padding-bottom", "5px"],
+  ["ap-h5", "font-family", "monospace"],
+  ["ap-img", "border-top-left-radius", "50%"], ["ap-img", "box-sizing", "content-box"], ["ap-img", "max-width", "10px"],
+  ["ap-t", "border-top-style", "solid"], ["ap-t", "border-top-width", "2px"], ["ap-t", "border-top-left-radius", "6px"],
+  ["ap-t", "font-size", "19px"], ["ap-t", "line-height", "30px"], ["ap-t", "display", "table"], ["ap-t", "width", "300px"],
+  ["ap-t", "max-width", "none"], ["ap-t", "border-collapse", "separate"], ["ap-t", "border-spacing", "4px 6px"],
+  ["ap-t", "margin-left", "7px"], ["ap-t", "margin-top", "7px"], ["ap-t", "overflow-x", "visible"],
+  ["ap-thead", "border-top-style", "solid"], ["ap-tr", "border-top-style", "solid"],
+  ["ap-th", "font-size", "20px"], ["ap-th", "border-top-left-radius", "4px"], ["ap-th", "border-left-style", "dotted"],
+  ["ap-th", "padding-left", "1px"], ["ap-th", "font-weight", "400"], ["ap-th", "white-space", "normal"],
+  ["ap-td", "font-size", "20px"], ["ap-td", "line-height", "40px"], ["ap-td", "font-family", "monospace"],
+  ["ap-td", "border-top-left-radius", "4px"], ["ap-td", "border-bottom-style", "dotted"], ["ap-td", "padding-left", "1px"],
+  ["ap-tb", "border-top-style", "outset"], ["ap-tf", "border-top-style", "solid"],
+  ["ap-trh", "border-bottom-style", "solid"], ["ap-trb", "border-top-style", "solid"],
+  ["ap-talign", "centered"],
+  ["ap-thta", "text-align", "right"], ["ap-trath", "text-align", null], ["ap-tdta", "text-align", "right"],
+  ["ap-tsth", "text-align", null], ["ap-tstd", "text-align", null],
+  ["ap-tdw", "min-width", null], ["ap-tdmw", "min-width", "0px"], ["ap-tdcode", "overflow-wrap", "normal"], ["ap-tdwb", "word-break", "break-all"],
+  ["ap-ul", "padding-top", "10px"], ["ap-ul", "padding-left", "20px"], ["ap-ul", "margin-top", "3px"],
+  ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"], ["ap-li", "margin-top", "9px"],
+  ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-left-style", "double"], ["ap-bq", "border-left-width", "6px"],
+  ["ap-bq", "border-top-right-radius", "10px"], ["ap-bq", "padding-left", "0px"], ["ap-bq", "margin-top", "4px"],
+  ["ap-bq", "font-size", "20px"],
+  ["ap-a", "font-weight", "900"], ["ap-a", "text-decoration-line", "underline"], ["ap-a", "text-decoration-style", "wavy"],
+  ["ap-strong", "font-weight", "400"],
+  ["ap-del", "opacity", "0.3"], ["ap-rdel", "opacity", "0.4"],
+  ["ap-dt", "margin-top", "0px"], ["ap-dt", "padding-left", "5px"], ["ap-dd", "margin-bottom", "0px"], ["ap-dd", "padding-left", "0px"],
+  ["ap-icode", "font-size", "20px"], ["ap-icode", "padding-left", "0px"], ["ap-icode", "border-top-style", "solid"],
+  ["ap-icode", "border-top-left-radius", "0px"], ["ap-icode", "font-family", "serif"],
+  ["ap-kbd", "border-bottom-style", "none"], ["ap-kbd", "padding-left", "0px"], ["ap-kbd", "font-size", "20px"],
+  ["ap-mark", "padding-left", "0px"], ["ap-mark", "border-top-left-radius", "0px"],
+  ["ap-pre", "border-left-style", "dashed"], ["ap-pre", "border-top-style", "dashed"], ["ap-pre", "border-top-left-radius", "0px"],
+  ["ap-pre", "padding-left", "0px"], ["ap-pre", "margin-bottom", "0px"], ["ap-pre", "line-height", "30px"],
+  ["ap-pre", "font-size", "20px"], ["ap-pre", "overflow-x", "hidden"],
+  ["ap-code", "line-height", "30px"], ["ap-code", "font-size", "20px"],
+  ["ap-cb", "color", "rgb(200, 0, 0)"],
+  ["ap-hr", "border-top-left-radius", "3px"], ["ap-hr", "height", "3px"], ["ap-hr", "border-top-style", "dashed"],
+  ["ap-hr", "margin-top", "5px"], ["ap-hr", "background-image", "none"], ["ap-hr", "background-color", "rgba(0, 0, 0, 0)"],
+  ["ap-hrw", "width", "120px"], ["ap-hrws", "width", "200px"],
+  // 글자색·배경
+  ...["cb-both", "cb-rev", "cb-case", "cb-nl"].flatMap((id) => [
+    [id, "color", AUTHOR_BLACK], [id, "background-color", "rgb(255, 243, 176)"]]),
+  ["cb-img", "color", "=rf-p"], ["cb-url", "color", "=rf-p"], ["cb-inherit", "color", "=rf-p"],
+  ["cb-color", "color", "=rf-p"], ["cb-bg", "background-color", "=rf-p"], ["cb-bgc", "background-color", "=rf-p"],
+  ["cb-border", "background-color", "=rf-p"], ["cb-tdc", "background-color", "=rf-p"],
+  ["cb-tr", "color", "=rf-p"], ["cb-none", "color", "=rf-p"], ["cb-gdocs", "color", "=rf-p"],
+  ...["cb-rgba", "cb-rgba0", "cb-slash", "cb-hsl", "cb-hsla", "cb-tdrgba"].map((id) => [id, "color", id === "cb-tdrgba" ? "=rf-td" : "=rf-p"]),
+  ["cb-hex8", "color", "=rf-p", "cssom"], ["cb-hex4", "color", "=rf-p", "cssom"],
+  ...["cb-grad", "cb-grad2", "cb-mix", "cb-mix2", "cb-canvas", "cb-field", "cb-tsans"].map((id) => [id, "color", "=rf-p"]),
+  ...["cb-burly", "cb-tabsp"].map((id) => [id, "color", AUTHOR_BLACK]),
+  ["cb-h3", "background-color", "=rf-h3"], ["cb-h3b", "color", AUTHOR_BLACK], ["cb-h3b", "background-color", "rgb(224, 240, 255)"],
+  ["cb-a", "color", "=rf-a"], ["cb-ab", "color", "rgb(0, 0, 255)"], ["cb-ab", "background-color", "rgb(255, 255, 255)"],
+  ["cb-del", "color", "=rf-del"], ["cb-delbg", "background-color", "=rf-del"],
+  ["cb-delb", "color", AUTHOR_BLACK], ["cb-delb", "background-color", "rgb(255, 243, 176)"],
+  ["cb-markbg", "background-color", "=rf-mark"], ["cb-markbg", "color", "=rf-mark"],
+  ["cb-markb", "color", AUTHOR_BLACK], ["cb-markb", "background-color", "rgb(150, 220, 255)"],
+  ["cb-codec", "color", "=rf-code"], ["cb-codeb", "color", AUTHOR_BLACK], ["cb-codeb", "background-color", "rgb(230, 230, 230)"],
+  ["cb-pre", "color", "rgb(248, 248, 242)"], ["cb-pre", "background-color", "rgb(39, 40, 34)"],
+  ["cb-bq", "color", AUTHOR_BLACK], ["cb-bq", "background-color", "rgb(255, 255, 255)"],
+  ["cb-thead", "color", "=rf-thead"], ["cb-th", "background-color", "=rf-th"],
+  ["cb-thb", "color", AUTHOR_BLACK], ["cb-thb", "background-color", "rgb(255, 243, 176)"],
+  ["cb-tbody", "color", "=rf-thead"], ["cb-td", "background-color", "=rf-td"],
+  ["cb-tdb", "color", AUTHOR_BLACK], ["cb-tdb", "background-color", "rgb(255, 204, 204)"],
+  // 작성자 색 영역
+  ["ad-a", "color", AUTHOR_BLACK], ["ad-a", "text-decoration-line", "underline"],
+  ["ad-code", "color", AUTHOR_BLACK], ["ad-code", "background-color", "color(srgb 0 0 0 / 0.12)"],
+  ["ad-kbd", "color", AUTHOR_BLACK], ["ad-kbd", "background-color", "color(srgb 0 0 0 / 0.12)"],
+  ["ad-mark", "color", "=rf-mark"], ["ad-mark", "background-color", "=rf-mark"], ["ad-strong", "color", AUTHOR_BLACK],
+  ["ad-anone", "text-decoration-line", "none"], ["ad-ac", "color", AUTHOR_BLACK],
+  ["ad-ab", "color", "rgb(0, 0, 255)"], ["ad-ab", "background-color", "rgb(255, 255, 255)"],
+  ["ad-th", "color", AUTHOR_BLACK], ["ad-th", "background-color", "rgba(0, 0, 0, 0)"],
+  ["ad-tr2", "background-color", "rgba(0, 0, 0, 0)"], ["ad-td2", "color", AUTHOR_BLACK],
+  ["ad-trow", "background-color", "rgb(255, 255, 204)"], ["ad-trtd", "color", AUTHOR_BLACK],
+  ["ad-h3", "color", AUTHOR_BLACK], ["ad-bq", "color", AUTHOR_BLACK],
+  ["ad-pre", "background-color", "=rf-pre-bg"],
+  ["ad-alt", "color", AUTHOR_BLACK], ["ad-alb", "color", AUTHOR_BLACK],
+];
+
+/** checkAuthorStyles — 값 판정(values=true, clean 조합)과 프로브 글자 대비. 주입·측정·제거를 한 evaluate에서 끝낸다(mts.js
+ *  언어 재판정(400ms 디바운스)은 걷어낸 뒤의 본문을 본다) */
+async function checkAuthorStyles(page, combo, values) {
+  const res = await page.evaluate(([h, ex, scanSrc, wantValues]) => {
     const host = document.createElement("div");
-    host.innerHTML = h;
+    host.id = "mts-author-probe";
+    host.innerHTML = h + '<pre id="rf-pre"><code>x</code></pre>';
     document.body.appendChild(host);
     const read = (id, prop) => {
       const el = document.getElementById(id);
-      return el ? getComputedStyle(el).getPropertyValue(prop) : "(요소 없음)";
+      if (!el) return "(요소 없음)";
+      if (prop === "centered") {
+        const r = el.getBoundingClientRect();
+        const p = el.parentElement.getBoundingClientRect();
+        const l = r.left - p.left, rt = p.right - r.right;
+        return l > 4 && Math.abs(l - rt) < 2 ? "centered" : `좌 ${l.toFixed(1)} / 우 ${rt.toFixed(1)}`;
+      }
+      return getComputedStyle(el).getPropertyValue(prop);
     };
-    // 기본 preview 값은 같은 동기 구간에서 테마를 잠깐 떼고 잰다(clean 조합이라 사용자 CSS 없음). 측정이 헛돌면 기대값이
-    // 곧 테마 값이라 조용히 통과한다 — 정렬 없는 머리글(ap-th)이 테마 left ↔ UA 가운데로 갈리는지로 확인한다
+    const ref = (want, prop) => (want === "=rf-pre-bg" ? read("rf-pre", "background-color") : read(want.slice(1), prop));
+    // 기본 preview 값(표현 속성)은 같은 동기 구간에서 테마를 잠깐 떼고 한 번 잰다(clean 조합이라 사용자 CSS 없음). 측정이 헛돌면
+    // 기대값이 곧 테마 값이라 조용히 통과한다 — 정렬 없는 머리글(rf-th)이 테마 left ↔ UA 가운데로 갈리는지로 확인한다
     const root = document.documentElement;
     const theme = root.getAttribute("data-mts-theme");
-    const themedRef = read("ap-th", "text-align");
+    const themedRef = read("rf-th", "text-align");
     root.removeAttribute("data-mts-theme");
-    const offRef = read("ap-th", "text-align");
+    const offRef = read("rf-th", "text-align");
     const offVals = ex.map(([id, prop, want]) => (want === null ? read(id, prop) : null));
     root.setAttribute("data-mts-theme", theme);
-    const out = ex.map(([id, prop, want], i) => {
-      const got = read(id, prop);
-      const w = want === null ? offVals[i] : want;
-      return got === w ? null : `${id} ${prop}=${got} (${want === null ? "기본 preview" : "작성자"} 값 ${w})`;
-    }).filter(Boolean);
-    if (offRef === themedRef) out.push(`기본 preview 측정 실패: ap-th text-align이 테마 off에서도 ${offRef}`);
+    const scan = (0, eval)(scanSrc);
+    // 두 번 잰다 — raw: innerHTML 그대로(작성자가 쓴 형태), cssom: IDE preview가 갖는 형태. IDE는 raw HTML의 style을 CSSOM으로
+    // 직렬화해 단다(#333 → color: rgb(51, 51, 51);, 알파 색 → rgba(), 소문자·"; " 구분 — 2025.1·2026.2 실측) — 판정 셀렉터가
+    // 두 형태 모두에서 같아야 한다. 직렬화 전에는 부분 문자열로 가릴 수 없는 형태(#RRGGBBAA·#RGBA 알파)의 프로브(data-ap-cssom)는
+    // cssom 단계에서만 본다
+    const passes = {};
+    for (const pass of ["raw", "cssom"]) {
+      const cssomOnly = [...host.querySelectorAll("[data-ap-cssom]")];
+      if (pass === "raw") cssomOnly.forEach((e) => e.setAttribute("data-ap-faint", ""));
+      else {
+        cssomOnly.forEach((e) => e.removeAttribute("data-ap-faint"));
+        host.querySelectorAll("[style]").forEach((e) => { e.style.cssText = e.getAttribute("style"); });
+      }
+      const out = [];
+      if (wantValues) {
+        ex.forEach(([id, prop, want, only], i) => {
+          if (only === "cssom" && pass === "raw") return;
+          const got = read(id, prop);
+          if (prop === "centered") {
+            if (got !== "centered") out.push(`${id} 가운데 정렬 아님(${got}) — 표 align 표현 속성`);
+            return;
+          }
+          const w = want === null ? offVals[i] : typeof want === "string" && want.startsWith("=") ? ref(want, prop) : want;
+          const kind = want === null ? "기본 preview" : typeof want === "string" && want.startsWith("=") ? `테마(${want.slice(1)})` : "작성자";
+          if (got !== w) {
+            const st = document.getElementById(id)?.getAttribute("style");
+            out.push(`${id} ${prop}=${got} (${kind} 값 ${w})${pass === "cssom" ? ` [CSSOM style="${st}"]` : ""}`);
+          }
+        });
+        if (offRef === themedRef) out.push(`기본 preview 측정 실패: rf-th text-align이 테마 off에서도 ${offRef}`);
+      }
+      passes[pass] = { bad: out, ...JSON.parse(scan("probe")) };
+    }
     host.remove();
-    return out;
-  }, [html, expect]);
-  for (const b of bad) flag("작성자 스타일", `[${combo}] 인라인 style·표현 속성을 테마가 덮음: ${b}`);
+    return passes;
+  }, [PROBE_HTML, PROBE_EXPECT, SCAN_JS, values]);
+  for (const [pass, r] of Object.entries(res)) {
+    const tag = `${combo}${pass === "cssom" ? " CSSOM" : ""}`;
+    for (const b of r.bad) flag("작성자 스타일", `[${tag}] 작성자 style 판정 어긋남: ${b}`);
+    // 프로브 글자가 다 잡혔는지(주입 실패·스캔 대상 오류로 대비 판정이 조용히 비지 않게) — 프로브 글자 노드 약 120개
+    if (r.scanned < 100) flag("작성자 스타일", `[${tag}] 프로브 글자 노드 ${r.scanned}개 — 주입 실패?`);
+    // custom 조합은 안 보이는 글자(FAIL)만 — 작성자 값을 따르는 자리는 사용자 CSS의 !important가 인라인 style을 이겨 그 CSS가 고른
+    // 색 쌍(테마 off와 같다 — 적대적 CSS의 Typora 코드색 3.05·인용 4.29)이 나오는 게 정상이다
+    judgeLow("작성자 스타일", tag, values ? r.low : r.low.filter((x) => x.level === "FAIL"));
+    if (r.unparsed.length) flag("작성자 스타일", `[${tag}] 프로브 색 파싱 실패 ${r.unparsed.join(" | ")}`);
+  }
+  return { low: [...res.raw.low, ...res.cssom.low], scanned: res.raw.scanned };
+}
+
+/** 작업 목록 빈 체크박스 테두리의 실제 그림 = 계산값인지. main의 [style*="color" i] 제외 규칙은 Chromium에서 계산값(테마
+ *  글자색)과 달리 사용자 CSS의 input 색(#333)으로 그리게 했다 — 다크에서 빈 칸이 사라진다(#63 리뷰, 계산 스타일 비교로는
+ *  안 잡힌다). 같은 체크박스를 인라인 style로 계산값 그대로 칠한 그림과 픽셀 단위로 견준다(인라인은 그 판정을 거치지 않는다).
+ *  색만 바꾸므로 배치가 같아 결정적이다 */
+async function checkCheckboxPaint(page, combo) {
+  // 요소 스크린샷(locator)은 안정화 대기로 조합마다 수 초가 걸려 뷰포트 clip으로 찍는다
+  const rects = await page.evaluate(() => [...document.querySelectorAll("body input[type=checkbox]:not(:checked)")]
+    .map((e, i) => { e.dataset.mtsCb = i; return e; })
+    .filter((e) => !e.closest("#mts-audit") && e.checkVisibility()).map((e) => e.dataset.mtsCb));
+  for (const i of rects) {
+    const clip = await page.evaluate((i) => {
+      const e = document.querySelector(`[data-mts-cb="${i}"]`);
+      e.scrollIntoView({ block: "center" });
+      const r = e.getBoundingClientRect();
+      return { x: Math.floor(r.left) - 1, y: Math.floor(r.top) - 1, width: Math.ceil(r.width) + 3, height: Math.ceil(r.height) + 3 };
+    }, i);
+    const painted = await page.screenshot({ clip });
+    const color = await page.evaluate((i) => {
+      const e = document.querySelector(`[data-mts-cb="${i}"]`);
+      const c = getComputedStyle(e).color;
+      e.setAttribute("style", `color: ${c} !important`);
+      return c;
+    }, i);
+    const reference = await page.screenshot({ clip });
+    await page.evaluate((i) => document.querySelector(`[data-mts-cb="${i}"]`).removeAttribute("style"), i);
+    if (!painted.equals(reference)) flag("체크박스", `[${combo}] 빈 체크박스 테두리가 계산값(${color})과 다르게 그려짐`);
+  }
+  await page.evaluate(() => {
+    document.querySelectorAll("[data-mts-cb]").forEach((e) => e.removeAttribute("data-mts-cb"));
+    window.scrollTo(0, 0);
+  });
+  if (!rects.length) flag("체크박스", `[${combo}] 스냅샷에 빈 체크박스 없음 — 그림 검사 불가`);
 }
 
 function reportInvariant() {
@@ -744,10 +989,10 @@ for (const laf of APPEARANCES) {
             const styleKey = `${fixture}@${vp.width}/${theme}/${ap}`;
             if (mode === "clean") cleanStyles.set(styleKey, styles);
             else judgeInvariant(combo, cleanStyles.get(styleKey), styles);
-            if (mode === "clean" && laf === "light" && fixture === "elements" && vp.width === WIDE && theme === "rd" && ap === "light") {
-              await checkAuthorStyles(page, combo);
-            }
-            report[combo] = { ...data, _body: body };
+            // 작성자 style 프로브 — 테마 4 × 외관 2 × LaF 2, 값 판정은 clean만(custom은 대비만)
+            const author = fixture === "elements" && vp.width === WIDE ? await checkAuthorStyles(page, combo, mode === "clean") : undefined;
+            report[combo] = { ...data, _body: body, ...(author && { _author: { low: author.low, scanned: author.scanned } }) };
+            await checkCheckboxPaint(page, combo);
             combos++;
             // 클린은 전 조합, 커스텀(최악 조건)은 깨지기 쉬운 다크 외관만 남긴다
             if (vp.width === WIDE && (mode === "clean" || ap === "dark")) {

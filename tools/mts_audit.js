@@ -204,10 +204,10 @@
   }
   // 취소선 흐림(opacity) — 테마 활성 시 두 형태(del·span.user-del)가 문서·동물원 모두 동물원 del과 같은 값이어야 한다.
   // 대비는 흐림이 빠져도 오히려 오르므로 대비 판정으로는 셀렉터 누락을 못 잡는다. 작성자가 인라인으로 흐림을 준
-  // span.user-del은 작성자 값이 이기는 게 맞아(mts.css :where 제외) 뺀다
+  // 취소선(raw HTML <del style="opacity:…">·span.user-del)은 작성자 값이 이기는 게 맞아(mts.css :where 제외, #63) 뺀다
   var strikeOp = getComputedStyle(document.querySelector('#mts-audit .z-inline del')).opacity;
   var strikes = Array.prototype.slice.call(document.querySelectorAll('body del, body span.user-del'))
-    .filter(function (e) { return !(e.matches('span') && /opacity/i.test(e.getAttribute('style') || '')); });
+    .filter(function (e) { return !/opacity/i.test(e.getAttribute('style') || ''); });
   out._strike = {
     opacity: strikeOp,
     doc: strikes.filter(function (e) { return !e.closest('#mts-audit'); }).length,

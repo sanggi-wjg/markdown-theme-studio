@@ -2,6 +2,7 @@
 // 대상 'body': 실제 스냅샷 본문의 글자 노드 전부(감사 동물원·코드펜스 등 제외) + 본문 단 폭.
 // 대상 'widget': #mts-root(테마 스위처)의 보이는 글자 노드 전부 — axe color-contrast는 fixed 위젯 위에서
 //   전부 incomplete(판정 불가)로 끝나 직접 잰다.
+// 대상 'probe': 작성자 인라인 style 프로브(#mts-author-probe, run.mjs checkAuthorStyles)의 보이는 글자 노드 전부.
 // 색 파싱·휘도·대비·합성(finalColors)은 tools/mts_audit.js와 같은 식이다(복사했으니 바꾸면 함께). opacity 그룹은
 // 실제 합성식으로 배경 위에 섞는다. 대비에 opacity를 곱하는 근사는 휴지 상태 Aa 버튼(opacity 0.7)처럼 불투명
 // 배경째 반투명한 요소나 취소선 흐림에서 대비를 2배 가까이 높게 잡는다(#58에서 mts_audit.js도 이 식으로 바꿈).
@@ -100,7 +101,16 @@
   }
 
   var out;
-  if (target === 'widget') {
+  if (target === 'probe') {
+    // 작성자 스타일 프로브(run.mjs checkAuthorStyles가 주입한 #mts-author-probe) — 작성자 값을 따르는 자리에서도 글자가
+    // 안 보이는 경우가 생기지 않는지(#63). 작성자가 직접 흐림(opacity)을 준 프로브는 작성자가 고른 대비라 뺀다. pre도
+    // 작성자 마크업이라 본다(본문 스캔의 pre 제외는 IDE 렉서 토큰 색 때문)
+    var probe = document.getElementById('mts-author-probe');
+    if (!probe) return JSON.stringify({ missing: true });
+    out = scan(probe, '[data-ap-faint]', function (el) {
+      return el.closest('small, del, span.user-del') ? { fail: 3.0, warn: 3.0 } : { fail: 3.0, warn: 4.5 };
+    });
+  } else if (target === 'widget') {
     var host = document.getElementById('mts-root');
     if (!host) return JSON.stringify({ missing: true });
     // 비활성 컨트롤(끝값의 스테퍼)은 WCAG 1.4.3 예외

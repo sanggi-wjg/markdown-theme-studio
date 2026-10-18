@@ -45,12 +45,34 @@ class CssContractTest {
     private fun rootLike(part: String) = !part.trim().contains(' ') &&
         listOf("data-mts-theme", "mts-dark", "mts-laf-dark").any { it in part }
 
+    /** 셀렉터 목록을 최상위 쉼표로만 나눈다 — :is()·:not() 인자 목록과 문자열 안 쉼표는 파트 경계가 아니다
+     *  (그대로 쪼개면 테마 규칙의 :is(th, td) 뒤 조각이 테마 id 없는 공용 규칙으로 잡힌다) */
+    private fun parts(sel: String): List<String> {
+        val out = mutableListOf<String>()
+        var depth = 0
+        var quote: Char? = null
+        var start = 0
+        var i = 0
+        while (i < sel.length) {
+            val c = sel[i]
+            when {
+                quote != null -> if (c == '\\') i++ else if (c == quote) quote = null
+                c == '"' || c == '\'' -> quote = c
+                c == '(' -> depth++
+                c == ')' -> depth--
+                c == ',' && depth == 0 -> { out += sel.substring(start, i).trim(); start = i + 1 }
+            }
+            i++
+        }
+        out += sel.substring(start).trim()
+        return out
+    }
+
     @Test
     fun `테마 루트 블록은 모두 인식 가능한 형식이다`() {
         val unknown = blocks.filter { (sel, body) ->
             declaredVars(body).isNotEmpty() &&
-                (sel.contains(',') && sel.split(',').any { rootLike(it) } ||
-                    !sel.contains(',') && rootLike(sel) && scope.matchEntire(sel) == null)
+                parts(sel).let { p -> p.size > 1 && p.any { rootLike(it) } || p.size == 1 && rootLike(sel) && scope.matchEntire(sel) == null }
         }.map { it.first }
         assertTrue(unknown.isEmpty(), "변수를 선언하는 루트 셀렉터를 인식 못함(목록·작은따옴표·순서 변형) — 계약 검사가 건너뛴다: $unknown")
     }
@@ -64,7 +86,7 @@ class CssContractTest {
         for ((sel, body) in blocks) {
             val vars = declaredVars(body).keys
             if (vars.isEmpty()) continue
-            for (part in sel.split(',').map { it.trim() }) {
+            for (part in parts(sel)) {
                 // 다크 루트는 정의 출처로 치지 않는다 — 라이트에 없는 변수가 다크에만 있으면 라이트에서 미정의다
                 if (scope.matchEntire(part)?.groupValues?.get(1)?.isNotEmpty() == true) continue
                 val id = themeIdInSelector.find(part)?.groupValues?.get(1)
@@ -73,7 +95,7 @@ class CssContractTest {
         }
         val problems = blocks.flatMap { (sel, body) ->
             val used = usedWithoutFallback(body)
-            sel.split(',').map { it.trim() }.flatMap { part ->
+            parts(sel).flatMap { part ->
                 val id = themeIdInSelector.find(part)?.groupValues?.get(1)
                 used.mapNotNull { v ->
                     when {
@@ -148,5 +170,60 @@ class CssContractTest {
             }
         }
         assertTrue(problems.isEmpty(), "견본 색 불일치:\n${problems.joinToString("\n")}")
+    }
+
+    // 작성자 인라인 style 판정 셀렉터 정본(#63) — 부분 문자열이 다른 속성에 걸리지 않는 형태. mts.css에 수십 번 반복되므로
+    // 한 곳만 틀려도(오타·변형) 그 규칙만 조용히 다르게 판정한다. 의미(어떤 style 값이 걸리는지)는 정적 하네스 checkAuthorStyles가 본다
+    private val authorColor = """[style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i], """ +
+        """[style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i], """ +
+        """[style*="\9 color :" i], [style*="\a color :" i]"""
+    private val authorBackground = """[style*="background:" i], [style*="background :" i], [style*="background-color" i]"""
+    // 반투명(rgba·hsla·"/" 알파 — Chromium CSSOM이 알파 색을 rgba()로 직렬화)·투명·그라데이션·color-mix·시스템 색·이미지·상속
+    // 키워드 배경은 글자 뒤 바탕이 아니다. 배경 값에 묶지 않는다(gradient(transparent …)를 놓친다) — 오탐은 테마 쪽이라 안전
+    // url(은 CSS 이스케이프 url\28 — 리터럴 괄호는 CssTransformsTest 괄호 짝 검사를 깬다
+    private val noBackground = """[style*="transparent" i], [style*="background:none" i], [style*="background: none" i], """ +
+        """[style*="rgba" i], [style*="hsla" i], [style*="/" i], [style*="gradient" i], [style*="color-mix" i], """ +
+        """[style*="canvas" i], [style*="field" i], [style*="buttonface" i], """ +
+        """[style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]"""
+    private val canonical = listOf(
+        authorColor,
+        authorBackground,
+        noBackground,
+        """[style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i], """ +
+            """[style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i], """ +
+            """[style*="border-color" i], [style*="border-block" i], [style*="border-inline" i]""",
+        """[style^="width" i], [style*=";width" i], [style*=" width" i], [style*="\9 width" i], [style*="\a width" i]""",
+        """[style^="height" i], [style*=";height" i], [style*=" height" i], [style*="\9 height" i], [style*="\a height" i]""",
+    )
+
+    /** 접두 충돌 형태 — color는 background-color·border-color, background는 background-position, width는 max-width·
+     *  border-width, height는 line-height, font는 font-weight 하나로 글꼴·크기·줄 간격까지, border는 border-radius에도 걸린다 */
+    // 따옴표 종류·i 플래그 유무·공백과 무관하게 잡는다
+    private val coarse = Regex("""\[\s*style\s*\*=\s*(["']?)(color|background|width|height|font|border)\1(\s+[is])?\s*]""", RegexOption.IGNORE_CASE)
+
+    @Test
+    fun `작성자 인라인 style 판정 셀렉터는 정본 형태다`() {
+        val authorColors = ":is($authorColor):is($authorBackground):not($noBackground)"
+        val problems = blocks.map { it.first }.flatMap { sel ->
+            val found = mutableListOf<String>()
+            coarse.findAll(sel).forEach { found += "접두 충돌 판정 ${it.value}: ${sel.take(120)}" }
+            for (canon in canonical) {
+                val head = canon.substringBefore(", ")
+                var at = sel.indexOf(head)
+                while (at >= 0) {
+                    if (!sel.startsWith(canon, at)) found += "정본과 다른 판정 목록($head…): ${sel.substring(at).take(200)}"
+                    // 글자색은 배경과 짝(작성자 색 영역)으로만 판정한다 — 한쪽만 정한 색은 테마가 준다. 예외: 체크박스 빈 칸
+                    // 테두리색(글자가 아닌 장식)
+                    if (canon == authorColor && !sel.startsWith(authorColors, at - ":is(".length) &&
+                        "input[type=\"checkbox\"]" !in sel
+                    ) {
+                        found += "글자색 판정이 배경 판정과 짝이 아님: ${sel.take(160)}"
+                    }
+                    at = sel.indexOf(head, at + 1)
+                }
+            }
+            found
+        }.distinct()
+        assertTrue(problems.isEmpty(), "작성자 style 판정 셀렉터 위반:\n${problems.joinToString("\n")}")
     }
 }
