@@ -83,7 +83,13 @@
 <tr><td style="color:#333; background:rgba(0,0,0,.05)">반투명 셀 배경 + 글자 — 테마</td><td style="color:#000; background:burlywood">burlywood 배경 + 글자 — 작성자</td></tr>
 </table>
 
-<p style="font-family:'Transparent Sans', sans-serif; color:#000; background:#fff3b0">글꼴 이름 "Transparent Sans" + 배경 + 글자 — 작성자</p>
+<p style="font-family:'Transparent Sans', sans-serif; color:#000; background:#fff3b0">글꼴 이름 "Transparent Sans" + 배경 + 글자 — 보수적 판정이라 테마</p>
+
+<p style="color:#333; background:linear-gradient(transparent 60%, #ffe066 60%)">형광펜 그라데이션(transparent 60%) + 글자 — 바탕이 아니라 테마</p>
+
+<p style="color:#333; background-color:color-mix(in srgb, #fff 10%, transparent)">color-mix 반투명 배경 + 글자 — 테마</p>
+
+<p style="color:#000; background-color:Canvas">시스템 색 Canvas 배경 + 글자 — 다크 color-scheme에서 어두워져 테마</p>
 
 <div style="background:#272822; color:#f8f8f2; padding:8px 12px">
 <h3>어두운 작성자 블록</h3>

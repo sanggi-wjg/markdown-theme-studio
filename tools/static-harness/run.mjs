@@ -392,7 +392,15 @@ const PROBE_HTML = [
   '<p id="cb-hex8" data-ap-cssom style="color: #333; background: #0000000d">hex8</p>',
   '<p id="cb-hex4" data-ap-cssom style="color: #333; background: #0001">hex4</p>',
   '<table><tbody><tr><td id="cb-tdrgba" style="color: rgb(51, 51, 51); background: rgba(0, 0, 0, 0.05)">td rgba</td></tr></tbody></table>',
-  // 판정 부분 문자열의 오탐 — 글꼴 이름의 transparent, 색 이름의 url(burlywood)은 배경 판정을 막지 않는다. 탭 + 콜론 앞 공백
+  // 그라데이션(형광펜 — 글자 위쪽이 투명)·color-mix·시스템 색(다크 color-scheme에서 Canvas = 거의 검정)도 바탕이 아니다
+  '<p id="cb-grad" style="color: rgb(51, 51, 51); background: linear-gradient(transparent 60%, #ffe066 60%)">gradient</p>',
+  '<p id="cb-mix" style="color: rgb(51, 51, 51); background-color: color-mix(in srgb, #fff 10%, transparent)">mix</p>',
+  '<p id="cb-grad2" style="color: rgb(0, 0, 0); background: linear-gradient(rgb(255, 255, 255), rgb(255, 224, 102))">gradient 2</p>',
+  '<p id="cb-mix2" style="color: rgb(0, 0, 0); background-color: color-mix(in srgb, rgb(255, 243, 176) 50%, rgb(255, 255, 255))">mix 2</p>',
+  '<p id="cb-canvas" style="color: rgb(0, 0, 0); background-color: Canvas">canvas</p>',
+  '<p id="cb-field" style="color: rgb(0, 0, 0); background: Field">field</p>',
+  // 판정 부분 문자열 — 색 이름의 url(burlywood)은 배경 판정을 막지 않는다. 글꼴 이름의 transparent는 막는다(보수적 — 테마로
+  // 돌아가 읽힘 쪽). 탭 + 콜론 앞 공백
   '<p id="cb-tsans" style="font-family: \'Transparent Sans\', sans-serif; color: rgb(0, 0, 0); background: rgb(255, 243, 176)">tsans</p>',
   '<p id="cb-burly" style="color: rgb(0, 0, 0); background: burlywood">burly</p>',
   '<p id="cb-tabsp" style="background: rgb(255, 243, 176);\tcolor : rgb(0, 0, 0)">tab</p>',
@@ -487,7 +495,8 @@ const PROBE_EXPECT = [
   ["cb-tr", "color", "=rf-p"], ["cb-none", "color", "=rf-p"], ["cb-gdocs", "color", "=rf-p"],
   ...["cb-rgba", "cb-rgba0", "cb-slash", "cb-hsl", "cb-hsla", "cb-tdrgba"].map((id) => [id, "color", id === "cb-tdrgba" ? "=rf-td" : "=rf-p"]),
   ["cb-hex8", "color", "=rf-p", "cssom"], ["cb-hex4", "color", "=rf-p", "cssom"],
-  ...["cb-tsans", "cb-burly", "cb-tabsp"].map((id) => [id, "color", AUTHOR_BLACK]),
+  ...["cb-grad", "cb-grad2", "cb-mix", "cb-mix2", "cb-canvas", "cb-field", "cb-tsans"].map((id) => [id, "color", "=rf-p"]),
+  ...["cb-burly", "cb-tabsp"].map((id) => [id, "color", AUTHOR_BLACK]),
   ["cb-h3", "background-color", "=rf-h3"], ["cb-h3b", "color", AUTHOR_BLACK], ["cb-h3b", "background-color", "rgb(224, 240, 255)"],
   ["cb-a", "color", "=rf-a"], ["cb-ab", "color", "rgb(0, 0, 255)"], ["cb-ab", "background-color", "rgb(255, 255, 255)"],
   ["cb-del", "color", "=rf-del"], ["cb-delbg", "background-color", "=rf-del"],

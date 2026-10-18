@@ -178,11 +178,12 @@ class CssContractTest {
         """[style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i], """ +
         """[style*="\9 color :" i], [style*="\a color :" i]"""
     private val authorBackground = """[style*="background:" i], [style*="background :" i], [style*="background-color" i]"""
-    // 반투명(rgba·hsla·"/" 알파 — Chromium CSSOM이 알파 색을 rgba()로 직렬화)·투명·이미지·상속 키워드 배경은 글자 뒤 바탕이 아니다.
+    // 반투명(rgba·hsla·"/" 알파 — Chromium CSSOM이 알파 색을 rgba()로 직렬화)·투명·그라데이션·color-mix·시스템 색·이미지·상속
+    // 키워드 배경은 글자 뒤 바탕이 아니다. 배경 값에 묶지 않는다(gradient(transparent …)를 놓친다) — 오탐은 테마 쪽이라 안전
     // url(은 CSS 이스케이프 url\28 — 리터럴 괄호는 CssTransformsTest 괄호 짝 검사를 깬다
-    private val noBackground = """[style*="background:transparent" i], [style*="background: transparent" i], """ +
-        """[style*="background-color:transparent" i], [style*="background-color: transparent" i], """ +
-        """[style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i], """ +
+    private val noBackground = """[style*="transparent" i], [style*="background:none" i], [style*="background: none" i], """ +
+        """[style*="rgba" i], [style*="hsla" i], [style*="/" i], [style*="gradient" i], [style*="color-mix" i], """ +
+        """[style*="canvas" i], [style*="field" i], [style*="buttonface" i], """ +
         """[style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]"""
     private val canonical = listOf(
         authorColor,

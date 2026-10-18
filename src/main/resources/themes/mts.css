@@ -72,28 +72,30 @@ html[data-mts-theme] {
      흐려져도 글자는 읽히고, 흐림(opacity)은 외관과 무관하게 작성자가 쓸 때 본 대비 그대로다. 단축 속성 계열(margin·padding·
      border·font)은 계열 단위로 뺀다: 한 변만 정해도 그 계열의 나머지는 기본 preview(default.css·colors.css)나 커스텀 CSS 몫이다.
    - 글자색·배경: 둘 다 정한 요소에서만 뺀다. 한쪽만 정한 값은 라이트 배경을 전제해 다크에서 대비가 1.05~1.5까지 떨어진다 —
-     그대로 테마가 준다. 배경은 불투명한 색(background·background-color)만 친다 — 배경 값 transparent·none, 반투명 색(rgba·
-     hsla·"/" 알파 — Chromium CSSOM은 알파 색을 rgba()로 직렬화하고 IDE preview의 style 속성은 그 직렬화 형태다), 이미지
-     (url( — 못 불러오거나 투명할 수 있다), inherit·initial·unset·revert가 있으면 글자 뒤 바탕을 보장하지 못해 배경으로 치지
-     않는다. rgba·hsla·"/"·키워드는 어느 선언에 있든 걸리는 보수적 판정이다(글자색 rgba나 font 단축의 "/"도 테마로 돌아간다 —
-     읽힘 쪽으로 틀린다). 직렬화 전 #RRGGBBAA·#RGBA는 부분 문자열로 못 가리지만 IDE에서는 rgba()로 바뀌어 온다. 둘 다 정한 요소 안(작성자 색 영역)의 테마
+     그대로 테마가 준다. 배경은 단순한 불투명 색(background·background-color)만 친다 — transparent·none, 반투명 색(rgba·hsla·
+     "/" 알파 — Chromium CSSOM은 알파 색을 rgba()로 직렬화하고 IDE preview의 style 속성은 그 직렬화 형태다), 그라데이션(형광펜
+     linear-gradient(transparent 60%, …) — 글자 위쪽이 투명)·color-mix, 시스템 색(Canvas·Field·ButtonFace — 다크 color-scheme
+     에서 어두워진다), 이미지(url( — 못 불러오거나 투명할 수 있다), inherit·initial·unset·revert가 있으면 글자 뒤 바탕을
+     보장하지 못해 배경으로 치지 않는다. 배경 값에 묶지 않고 어느 선언에 있든 걸리는 보수적 판정이다(글꼴 이름 "Transparent
+     Sans"·글자색 rgba·font 단축의 "/"도 테마로 돌아간다 — 늘 읽힘 쪽으로 틀린다). 직렬화 전 #RRGGBBAA·#RGBA는 부분 문자열로
+     못 가리지만 IDE에서는 rgba()로 바뀌어 온다. 둘 다 정한 요소 안(작성자 색 영역)의 테마
      글자색·칩 배경은 파일 끝 규칙이 작성자 색에 맞춘다.
    - 표현 속성은 기본 preview(테마 off)가 따르는 것만 따른다: align(정렬·표 위치), table border·frame·rules, hr width.
      default.css가 덮어 기본 preview에서도 안 보이는 cellpadding·cellspacing·table width·셀 bgcolor는 테마도 덮는다.
    판정 셀렉터는 부분 문자열이 다른 속성에 걸리지 않는 형태로 쓴다(CssContractTest가 정본과 대조한다):
      글자색 — 선언 머리(맨 앞·; ·공백·탭·줄바꿈 뒤)의 color:(콜론 앞 공백 포함) — [style*="color"]는 background-color·
               border-color에도 걸린다
-     배경   — background 단축·background-color(구분선만 background-image도 — 장식). transparent·none은 배경 선언 값에
-              묶는다(font-family "Transparent Sans"에 걸리지 않게). url(은 CSS 이스케이프 url\28로 쓴다(괄호 짝 검사)
+     배경   — background 단축·background-color(구분선만 background-image도 — 장식). url(은 CSS 이스케이프 url\28로
+              쓴다(괄호 짝 검사)
      폭·높이 — 선언 머리의 width·height — max-width·border-width·line-height에 걸리지 않게
      글꼴   — font-family·font-size·font-weight·line-height 각각 + font 단축(font:)
      테두리 — border 단축·변·width/style/color(논리 속성 포함). border-radius·border-collapse·border-spacing은 따로 */
 
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 700; }
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) { line-height: 1.35; }
@@ -117,9 +119,9 @@ html[data-mts-theme] body h6:where(:not([style*="font-size" i], [style*="font:" 
 html[data-mts-theme] body h6:where(:not([style*="margin" i])) { margin: 1.4em 0 0.5em; }
 html[data-mts-theme] body h6:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 
 /* 제목 글꼴은 body 상속(Reader h1~h4만 세리프, 뒤 테마 규칙) — 상속에만 기대면 사용자 CSS의
@@ -134,15 +136,15 @@ html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-f
 html[data-mts-theme] body :is(p, ul, ol, dl, li, dd, dt, table, thead, tbody, tr, td, blockquote, strong, b, em, i, del, ins, u, sup, sub,
   small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
 }
@@ -178,9 +180,9 @@ html[data-mts-theme] body :is(thead, tbody):where(:not(table[rules] > *, [style*
    임의 커스텀 색과 조합되면 깨진다. 명시 선언으로 테마 도메인에 편입한다 */
 html[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: #f2df66;
   color: #24261f;
@@ -189,9 +191,9 @@ html[data-mts-theme] body mark:where(:not([style*="padding" i])) { padding: 0.05
 html[data-mts-theme] body mark:where(:not([style*="radius" i])) { border-radius: 3px; }
 html.mts-dark[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: #b89f34;
   color: #16170f;
@@ -200,9 +202,9 @@ html[data-mts-theme] body kbd:where(:not([style*="font-family" i], [style*="font
 html[data-mts-theme] body kbd:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.82em; }
 html[data-mts-theme] body kbd:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-fg);
@@ -256,9 +258,9 @@ html[data-mts-theme] body input[type="checkbox"]:checked::after {
    배경을 투명으로 고정한다 — 테마별 지브라/헤더 채움은 뒤에서 다시 지정됨 */
 html[data-mts-theme] body :is(table, thead, tbody, tr, th, td, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
@@ -268,21 +270,21 @@ html[data-mts-theme] body :is(table, thead, tbody, tr, th, td, blockquote):where
    mermaid 간선 라벨은 p에 자체 배경을 깔므로 SVG 안 p는 뺀다 */
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6, a, ul, ol, dl, li, dd, dt, strong, b, em, i, del, ins, u, sup, sub, small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body p:not(svg p):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
@@ -322,9 +324,9 @@ html[data-mts-theme] body strong:where(:not([style*="font-weight" i], [style*="f
 
 html[data-mts-theme] body a:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-link); }
 html[data-mts-theme] body a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) { text-decoration: none; }
 /* Docs만 500을 준다(뒤 테마 규칙). 나머지 테마는 상속 그대로 */
@@ -358,9 +360,9 @@ html[data-mts-theme] body code:where(:not([style*="font-family" i], [style*="fon
 html[data-mts-theme] body code:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.86em; }
 html[data-mts-theme] body code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-icode-fg);
@@ -379,9 +381,9 @@ html[data-mts-theme] body code:where(:not([style*="radius" i])) { border-radius:
    테마가 겨냥하지 않는 요소라 판정과 무관하다 */
 html[data-mts-theme] body pre:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-code-bg);
   color: var(--mts-pre-fg);
@@ -398,9 +400,9 @@ html[data-mts-theme] body pre:where(:not([style*="font-family" i], [style*="font
 html[data-mts-theme] body pre:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.845em; }
 html[data-mts-theme] body pre code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: none;
   color: inherit;
@@ -597,9 +599,9 @@ html[data-mts-hangul][data-mts-theme] body td:where(:not([style*="word-break" i]
 html[data-mts-theme] body th:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 600; }
 html[data-mts-theme] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
 html[data-mts-theme] body th:where(:not([style*="white-space" i])) { white-space: nowrap; }
 /* 머리글 정렬은 테마 기본이 왼쪽(UA 기본은 가운데)이고, 작성자가 정한 정렬은 따른다(#62). GFM 열 정렬 `:---:`·`---:`는
@@ -692,9 +694,9 @@ html[data-mts-theme] body blockquote.markdown-alert {
    (대비 1.18). 빼면 공용 리셋(blockquote·p color: inherit)과 영역 규칙으로 작성자 글자색을 물려받는다 */
 html[data-mts-theme] body blockquote.markdown-alert:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) {
   color: var(--mts-fg);
 }
@@ -706,9 +708,9 @@ html[data-mts-theme] body blockquote.markdown-alert .markdown-alert-title {
 }
 html[data-mts-theme] body blockquote.markdown-alert .markdown-alert-title:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) {
   color: var(--mts-alert);
 }
@@ -801,9 +803,9 @@ html[data-mts-theme="gh"] body blockquote:where(:not([style*="border:" i], [styl
 html[data-mts-theme="gh"] body blockquote:where(:not([style*="padding" i])) { padding: 0 1em; }
 html[data-mts-theme="gh"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
   [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
@@ -811,21 +813,21 @@ html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="border:" i], [sty
 html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="padding" i])) { padding: 6px 13px; }
 html[data-mts-theme="gh"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { background: var(--mts-th-bg); }
 /* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
 html[data-mts-theme="gh"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 html[data-mts-theme="gh"] body blockquote.markdown-alert { padding: 0.5em 1em; }
@@ -891,9 +893,9 @@ html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="border:" i], [sty
 html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="padding" i])) { padding: 8px 14px; }
 html[data-mts-theme="nt"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="nt"] body th:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
 html[data-mts-theme="nt"] body th:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
@@ -961,9 +963,9 @@ html[data-mts-theme="dc"] body pre:where(:not([style*="radius" i])) { border-rad
 html[data-mts-theme="dc"] body a:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 500; }
 html[data-mts-theme="dc"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { background: var(--mts-quote-bg); }
 html[data-mts-theme="dc"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
   [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
@@ -993,9 +995,9 @@ html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="border:" i], [sty
 html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="padding" i])) { padding: 7px 14px; }
 html[data-mts-theme="dc"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-th-bg);
   color: var(--mts-link);
@@ -1009,14 +1011,14 @@ html[data-mts-theme="dc"] body tbody tr:last-child td:where(:not([style*="border
 /* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
 html[data-mts-theme="dc"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 /* 알림: VitePress 커스텀 블록처럼 유형 색 틴트 배경 (color-mix 미지원 시 인용 배경).
@@ -1089,9 +1091,9 @@ html[data-mts-theme="rd"] body blockquote:where(:not([style*="border:" i], [styl
 html[data-mts-theme="rd"] body blockquote:where(:not([style*="padding" i])) { padding: 0 0 0 1.1em; }
 html[data-mts-theme="rd"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="rd"] body blockquote:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.96em; }
 html[data-mts-theme="rd"] body table:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.8em; }
@@ -1116,40 +1118,40 @@ html[data-mts-theme="rd"] body pre:where(:not([style*="border:" i], [style*="bor
    판정과 같은 셀렉터다 */
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) :is(h1, h2, h3, h4, h5, h6, a, th, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) :is(code, kbd):where(:not(pre code)):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
   background: transparent;
@@ -1157,9 +1159,9 @@ html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], 
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
   [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
-  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
-  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
   [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="gradient" i], [style*="color-mix" i], [style*="canvas" i], [style*="field" i], [style*="buttonface" i],
   [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
   text-decoration: underline;
 }
