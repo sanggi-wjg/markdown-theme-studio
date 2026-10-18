@@ -167,6 +167,9 @@ dt, dd { padding: 3px !important; }
 blockquote { border: 1px solid #e0e0e0 !important; border-radius: 8px !important; }
 table { border: 1px solid #dfe2e5 !important; border-radius: 6px !important; }
 th, td { border-radius: 4px !important; }
+/* 표 셀 align(#62) — th는 위 Typora 패턴(text-align: left)이 겨냥한다. td는 정렬 리셋: 지정 없는 셀의 클린 값(상속 start)과
+   같아 그 셀은 그대로고, align 셀은 mts.css의 명시 선언이 빠지면 바뀐다 */
+td { text-align: start !important; }
 img, hr { border-radius: 6px !important; }
 ul, ol { padding: 4px 8px !important; }
 a { font-weight: bold !important; }

@@ -44,6 +44,13 @@
       '<blockquote><p class="z-qqp">중첩 인용문</p></blockquote></blockquote>' +
       '<table><thead><tr><th class="z-th">헤더</th></tr></thead>' +
       '<tbody><tr><td class="z-td1">첫 행</td></tr><tr><td class="z-td2">둘째 행</td></tr></tbody></table>' +
+      // GFM 열 정렬(#62) — 번들 렌더는 :---:·---:만 셀 align으로 단다(:---는 속성 없음). align="left"는 raw HTML
+      '<table class="z-align"><thead><tr><th>키</th><th align="center">상태</th><th align="right">요청 수</th>' +
+      '<th align="left">왼쪽</th></tr></thead><tbody><tr><td>catalog</td><td align="center">정상 운영</td>' +
+      '<td align="right">1,204,882</td><td align="left">기본 TTL</td></tr></tbody></table>' +
+      // raw HTML 행·행 그룹 align — 셀 자신은 align이 없고 행 정렬을 물려받는다(th는 UA 규칙이 부모 정렬을 따른다)
+      '<table class="z-align-row"><thead align="center"><tr><th>그룹 머리</th></tr></thead>' +
+      '<tbody><tr align="right"><th>행 머리</th><td>행 셀 내용</td></tr></tbody></table>' +
       '<pre class="z-pre"><code>val x = veryLongFunctionCallExample(argumentOne, argumentTwo, argumentThree, argumentFour)</code></pre>' +
       '<p class="z-code-holder"><code class="z-code">인라인코드칩</code></p>' +
       // commandRunner 실행 링크 (CommandRunnerExtension 템플릿 그대로) — 테마 활성 시 전부 숨어야 한다.
@@ -222,6 +229,38 @@
     zoo: labels.filter(function (el) { return el.closest('#mts-audit'); }).length,
     doc: labels.filter(function (el) { return !el.closest('#mts-audit'); }).length,
     diffs: diffs
+  };
+  // 표 셀 정렬(#62) — 작성자 정렬(셀 align, 행·행 그룹 align)은 기본 preview 그대로여야 하고, 정렬이 없는 머리글만 테마
+  // 기본 왼쪽이다. 기대값은 같은 셀을 테마 off + 사용자 CSS(inline.css) off로 잰 계산값 — Blink의 align 매핑(-webkit-*)을
+  // 하드코딩하지 않는다. 같은 동기 구간에서 되돌린다. custom 조합에선 사용자 CSS의 th·td { text-align }도 이겨야 한다
+  var cells = Array.prototype.slice.call(document.querySelectorAll(
+    '#mts-audit .z-align th, #mts-audit .z-align td, #mts-audit .z-align-row th, #mts-audit .z-align-row td'));
+  var root = document.documentElement;
+  var themeAttr = root.getAttribute('data-mts-theme');
+  // 시트 객체(CSSStyleSheet.disabled)로 끈다 — link.disabled는 시트를 버리고 다시 켤 때 비동기로 다시 받아, 뒤 측정이
+  // 사용자 CSS 없이 돈다(실측)
+  var userCss = Array.prototype.slice.call(document.styleSheets).filter(function (s) {
+    return /\/inline\.css(\?|$)/.test(s.href || '');
+  });
+  var userCssOff = userCss.map(function (s) { return s.disabled; });
+  root.removeAttribute('data-mts-theme');
+  userCss.forEach(function (s) { s.disabled = true; });
+  var cleanAlign = cells.map(function (c) { return getComputedStyle(c).textAlign; });
+  userCss.forEach(function (s, i) { s.disabled = userCssOff[i]; });
+  if (themeAttr !== null) root.setAttribute('data-mts-theme', themeAttr);
+  // 기대값 측정이 헛돌면(테마·사용자 CSS가 안 꺼짐) 기대값이 곧 테마 값이라 조용히 통과한다 — 지정 없는 첫 머리글은
+  // 기본 preview에서 UA 가운데여야 한다
+  var offFailed = cleanAlign[0] === 'left' ? ['기본 preview 측정 실패: 지정 없는 th가 테마·사용자 CSS off에서도 left'] : [];
+  out._align = {
+    cells: cells.length,
+    bad: offFailed.concat(cells.map(function (c, i) {
+      var a = c.getAttribute('align');
+      var themeDefault = c.tagName === 'TH' && a === null && !c.closest('.z-align-row');
+      var want = themeDefault ? 'left' : cleanAlign[i];
+      var got = getComputedStyle(c).textAlign;
+      return got === want ? null : c.tagName.toLowerCase() + '[align=' + (a === null ? '없음' : a) + '] "' +
+        c.textContent + '" text-align=' + got + ' (기대 ' + want + (themeDefault ? ', 테마 기본' : ', 기본 preview') + ')';
+    }).filter(Boolean))
   };
   var body = document.body;
   var pre = document.querySelector('#mts-audit .z-pre');

@@ -180,6 +180,13 @@ function judgeZoo(combo, data) {
     const want = EXPECTED_MERMAID_LABELS[combo.split("/")[2].split("@")[0]] ?? 0;
     if (mm.doc < want) flag("Mermaid", `[${combo}] 스냅샷 Mermaid 라벨 ${mm.doc}개 (기대 ${want}개 이상) — 캡처 확인`);
   }
+  // 표 셀 정렬(#62) — mts_audit.py와 같은 판정. custom 모드에선 적대적 CSS의 th·td text-align도 이겨야 한다
+  const align = data._align;
+  if (!align) flag("표 정렬", `[${combo}] mts_audit.js가 _align을 내지 않음`);
+  else {
+    if (align.cells < 11) flag("표 정렬", `[${combo}] 동물원 셀 ${align.cells}개 (기대 11개)`);
+    for (const v of align.bad) flag("표 정렬", `[${combo}] 표 정렬: ${v}`);
+  }
   const lay = data._layout;
   if (lay.bodyHScroll > 2) flag("레이아웃", `[${combo}] body 가로 오버플로 ${lay.bodyHScroll}px`);
   if (!["auto", "scroll"].includes(lay.preOverflowX)) flag("레이아웃", `[${combo}] pre overflow-x=${lay.preOverflowX}`);
@@ -288,6 +295,11 @@ async function checkAuthorStyles(page, combo) {
     // HTML4 표현 속성 frame(바깥 테두리)·rules(행 그룹 테두리)도 작성자 값이다
     '<table id="ap-tf" frame="box"><tbody><tr><td>c</td></tr></tbody></table>' +
     '<table border="1" rules="groups"><thead id="ap-trh"><tr><th>h</th></tr></thead><tbody id="ap-trb"><tr><td>c</td></tr></tbody></table>' +
+    // 머리글·셀 정렬(#62): 인라인 text-align, 행 align(UA th 규칙이 물려받는다), align보다 우선하는 인라인 style,
+    // 표의 인라인 text-align(셀이 물려받는다)
+    '<table><thead><tr><th id="ap-thta" style="text-align: right">h</th></tr></thead><tbody><tr align="right">' +
+    '<th id="ap-trath">h</th><td id="ap-tdta" align="center" style="text-align: right">c</td></tr></tbody></table>' +
+    '<table style="text-align: right"><thead><tr><th id="ap-tsth">h</th></tr></thead><tbody><tr><td id="ap-tstd">c</td></tr></tbody></table>' +
     '<ul id="ap-ul" style="padding: 10px 20px"><li id="ap-li" style="line-height: 3; font-size: 20px">li</li></ul>' +
     '<blockquote id="ap-bq" style="border: 1px solid; border-radius: 10px">bq</blockquote>' +
     '<p><a id="ap-a" href="#" style="font-weight: 900">a</a> <strong id="ap-strong" style="font-weight: 400">s</strong></p>' +
@@ -309,6 +321,9 @@ async function checkAuthorStyles(page, combo) {
     ["ap-td", "border-top-left-radius", "4px"],
     ["ap-tb", "border-top-style", "outset"], ["ap-tf", "border-top-style", "solid"],
     ["ap-trh", "border-bottom-style", "solid"], ["ap-trb", "border-top-style", "solid"],
+    // 기대값 null = 기본 preview(테마 off)에서 잰 값 — 물려받는 정렬은 Blink 매핑(-webkit-*)을 하드코딩하지 않는다
+    ["ap-thta", "text-align", "right"], ["ap-trath", "text-align", null], ["ap-tdta", "text-align", "right"],
+    ["ap-tsth", "text-align", null], ["ap-tstd", "text-align", null],
     ["ap-ul", "padding-top", "10px"], ["ap-ul", "padding-right", "20px"],
     ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"],
     ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-top-right-radius", "10px"],
@@ -322,11 +337,25 @@ async function checkAuthorStyles(page, combo) {
     const host = document.createElement("div");
     host.innerHTML = h;
     document.body.appendChild(host);
-    const out = ex.map(([id, prop, want]) => {
+    const read = (id, prop) => {
       const el = document.getElementById(id);
-      const got = el ? getComputedStyle(el).getPropertyValue(prop) : "(요소 없음)";
-      return got === want ? null : `${id} ${prop}=${got} (작성자 값 ${want})`;
+      return el ? getComputedStyle(el).getPropertyValue(prop) : "(요소 없음)";
+    };
+    // 기본 preview 값은 같은 동기 구간에서 테마를 잠깐 떼고 잰다(clean 조합이라 사용자 CSS 없음). 측정이 헛돌면 기대값이
+    // 곧 테마 값이라 조용히 통과한다 — 정렬 없는 머리글(ap-th)이 테마 left ↔ UA 가운데로 갈리는지로 확인한다
+    const root = document.documentElement;
+    const theme = root.getAttribute("data-mts-theme");
+    const themedRef = read("ap-th", "text-align");
+    root.removeAttribute("data-mts-theme");
+    const offRef = read("ap-th", "text-align");
+    const offVals = ex.map(([id, prop, want]) => (want === null ? read(id, prop) : null));
+    root.setAttribute("data-mts-theme", theme);
+    const out = ex.map(([id, prop, want], i) => {
+      const got = read(id, prop);
+      const w = want === null ? offVals[i] : want;
+      return got === w ? null : `${id} ${prop}=${got} (${want === null ? "기본 preview" : "작성자"} 값 ${w})`;
     }).filter(Boolean);
+    if (offRef === themedRef) out.push(`기본 preview 측정 실패: ap-th text-align이 테마 off에서도 ${offRef}`);
     host.remove();
     return out;
   }, [html, expect]);
