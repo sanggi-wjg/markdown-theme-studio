@@ -552,9 +552,10 @@ html[data-mts-lang="ko"][data-mts-theme] body svg {
    17~19줄 → 100px·7~8줄). 라틴 글자는 keep-all이 줄바꿈을 바꾸지 않아 영어 셀엔 영향이 없다.
    한자·가나 위주(띄어쓰기 없는 문자 체계) 문서는 한글이 한자·가나보다 적어 표식이 없다 — keep-all을
    걸면 문장 전체가 한 덩어리가 돼 표가 넘친다(#48). SVG 상속 차단(위)은 본문 keep-all 몫이다 — 셀 규칙은 mermaid가
-   라벨을 재는 자리(body 직속 임시 div)에도 그리는 자리(pre > code, normal)에도 닿지 않는다 */
-html[data-mts-hangul][data-mts-theme] body th,
-html[data-mts-hangul][data-mts-theme] body td {
+   라벨을 재는 자리(body 직속 임시 div)에도 그리는 자리(pre > code, normal)에도 닿지 않는다.
+   작성자가 셀에 인라인으로 정한 줄바꿈(word-break)은 따른다(#63) */
+html[data-mts-hangul][data-mts-theme] body th:where(:not([style*="word-break" i])),
+html[data-mts-hangul][data-mts-theme] body td:where(:not([style*="word-break" i])) {
   word-break: keep-all;
 }
 html[data-mts-theme] body th:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 600; }

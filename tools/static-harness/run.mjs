@@ -346,7 +346,7 @@ const PROBE_HTML = [
   '<table style="text-align: right"><thead><tr><th id="ap-tsth">h</th></tr></thead><tbody><tr><td id="ap-tstd">c</td></tr></tbody></table>',
   // 셀 폭: 코드 셀 바닥 폭(min-width 8em)은 작성자 폭 지정을 이기지 않는다
   '<table><tbody><tr><td id="ap-tdw" width="40"><code>x</code></td><td id="ap-tdmw" style="min-width: 0"><code>y</code></td>',
-  '<td><code id="ap-tdcode" style="overflow-wrap: normal">z</code></td></tr></tbody></table>',
+  '<td><code id="ap-tdcode" style="overflow-wrap: normal">z</code></td><td id="ap-tdwb" style="word-break: break-all">한국어 셀</td></tr></tbody></table>',
   '<ul id="ap-ul" style="padding: 10px 20px; margin: 3px"><li id="ap-li" style="line-height: 3; font-size: 20px; margin: 9px 0">li</li></ul>',
   '<blockquote id="ap-bq" style="border: 1px solid; border-left: 6px double; border-radius: 10px; padding: 0; margin: 4px; ' +
     'font-size: 20px">bq</blockquote>',
@@ -436,7 +436,7 @@ const PROBE_EXPECT = [
   ["ap-talign", "centered"],
   ["ap-thta", "text-align", "right"], ["ap-trath", "text-align", null], ["ap-tdta", "text-align", "right"],
   ["ap-tsth", "text-align", null], ["ap-tstd", "text-align", null],
-  ["ap-tdw", "min-width", null], ["ap-tdmw", "min-width", "0px"], ["ap-tdcode", "overflow-wrap", "normal"],
+  ["ap-tdw", "min-width", null], ["ap-tdmw", "min-width", "0px"], ["ap-tdcode", "overflow-wrap", "normal"], ["ap-tdwb", "word-break", "break-all"],
   ["ap-ul", "padding-top", "10px"], ["ap-ul", "padding-left", "20px"], ["ap-ul", "margin-top", "3px"],
   ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"], ["ap-li", "margin-top", "9px"],
   ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-left-style", "double"], ["ap-bq", "border-left-width", "6px"],
