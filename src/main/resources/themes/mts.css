@@ -117,6 +117,7 @@ html[data-mts-theme] body b,
 html[data-mts-theme] body em,
 html[data-mts-theme] body i,
 html[data-mts-theme] body del,
+html[data-mts-theme] body span.user-del:where(:not([style*="color" i])),
 html[data-mts-theme] body ins,
 html[data-mts-theme] body u,
 html[data-mts-theme] body sup,
@@ -268,6 +269,7 @@ html[data-mts-theme] body b:where(:not([style*="background" i])),
 html[data-mts-theme] body em:where(:not([style*="background" i])),
 html[data-mts-theme] body i:where(:not([style*="background" i])),
 html[data-mts-theme] body del:where(:not([style*="background" i])),
+html[data-mts-theme] body span.user-del:where(:not([style*="background" i])),
 html[data-mts-theme] body ins:where(:not([style*="background" i])),
 html[data-mts-theme] body u:where(:not([style*="background" i])),
 html[data-mts-theme] body sup:where(:not([style*="background" i])),
@@ -314,7 +316,14 @@ html[data-mts-theme] body a { color: var(--mts-link); text-decoration: none; }
 /* Docs만 500을 준다(뒤 테마 규칙). 나머지 테마는 상속 그대로 */
 html[data-mts-theme] body a:where(:not([style*="font" i])) { font-weight: inherit; }
 html[data-mts-theme] body a:hover { text-decoration: underline; }
-html[data-mts-theme] body del { opacity: 0.62; }
+/* 취소선 흐림. 마크다운 ~~ ~~는 GFM 라이브러리가 <span class="user-del">로 그린다(2025.1~2026.3 동일, 줄은
+   default.css span.user-del의 line-through). del 요소는 문서 raw HTML <del>뿐이라 del만 겨냥하던 때는 마크다운
+   취소선에 테마 표현이 빠졌다(#58). 위 색·배경 리셋도 두 형태를 같이 겨냥한다.
+   0.75 근거: opacity는 글자를 배경과 섞어 실제 대비를 곱셈보다 훨씬 크게 깎는다. 0.62에서는 평문 최저가 3.62였고,
+   흐린 색을 쓰는 맥락(표 머리글·h6·인용·인라인 코드·링크)은 2.45~2.66까지 떨어졌다. 0.75면 평문 최저 5.16, 그런
+   맥락 최저 3.08이다(2026.2 실측, 그룹 합성 — 감사 기준 FAIL 3.0은 tools/mts_audit.py STRIKE_FAIL) */
+html[data-mts-theme] body del,
+html[data-mts-theme] body span.user-del:where(:not([style*="opacity" i])) { opacity: 0.75; }
 html[data-mts-theme] body hr {
   height: 1px;
   background: var(--mts-border);

@@ -4,12 +4,14 @@
 // window.__mtsIde 프리루드 + window.__mtsSync)는 연동 검사 한 조합(auditBridge)에서만 싣는다 — 나머지 조합의
 // 위젯은 localStorage 강등 경로로 동작하고 초기 상태는 기본값이다. 사용자 Custom CSS 자리(inline.css)는 비우거나(clean) 적대적 스니펫
 // (adversarial-custom.css, custom)으로 채운다.
-// 검사(판정 기준은 tools/mts_audit.py와 같다 — FAIL 3.0 / WARN 4.5, small 3.0, del 1.8):
+// 검사(판정 기준은 tools/mts_audit.py와 같다 — FAIL 3.0 / WARN 4.5, small·취소선(del·span.user-del) 안 글자는 FAIL 3.0만.
+// 대비는 opacity를 그룹 합성한 실제 값이다):
 //   - 동물원: tools/mts_audit.js가 주입하는 요소 동물원의 대비·레이아웃(가로 넘침, pre 스크롤, URL 줄바꿈,
-//     본문 크기·정렬)과 commandRunner 실행 아이콘 숨김(동물원 + 스냅샷 본문의 실제 실행 링크)
+//     본문 크기·정렬)과 commandRunner 실행 아이콘 숨김(동물원 + 스냅샷 본문의 실제 실행 링크), 취소선 두 형태의
+//     같은 흐림(동물원 + 스냅샷 본문)과 스냅샷 취소선 개수
 //   - Mermaid: 동물원(측정 문맥)·스냅샷 본문 mermaid의 HTML 라벨 박스가 테마 off·클린(custom CSS 시트 끔)과 같은지,
 //     라벨 글자색이 mermaid 지정색(span)인지(#59)
-//   - 본문: 실제 스냅샷 본문의 보이는 글자 노드 전부의 대비(scan.js — 코드펜스·취소선·SVG·수식·동물원 제외)와
+//   - 본문: 실제 스냅샷 본문의 보이는 글자 노드 전부의 대비(scan.js — 코드펜스·SVG·수식·동물원 제외)와
 //     본문 단 폭(--mts-measure)
 //   - 위젯: 스위처의 보이는 글자 노드 대비를 닫힌 상태(휴지 Aa 버튼)·열린 상태(패널) × 테마 5(off 포함)
 //     × 외관 2로 직접 잰다(clean·custom 둘 다). axe-core는 ARIA·접근 가능한 이름 규칙만 —
@@ -49,9 +51,11 @@ const THEMES = ["gh", "nt", "dc", "rd"];
 const APPEARANCES = ["light", "dark"];
 // tools/mts_audit.py와 같은 기준
 const EXPECTED_FS = { gh: 16.0, nt: 16.5, dc: 15.5, rd: 18.0 };
-const LOW_CONTRAST_OK = { del: 1.8, small: 3.0 };
+const LOW_CONTRAST_OK = { small: 3.0 };
 const FAIL = 3.0;
 const WARN = 4.5;
+// 취소선(del·span.user-del) 안 글자(동물원 strike 표시)는 의도한 흐림이라 FAIL 3.0만(WARN 없음) — scan.js 본문도 같다
+const STRIKE_FAIL = 3.0;
 // 픽스처별 문서 언어 판정 기대값(mts.js detectLang) — 한국어는 ko, 영어는 판정 없음(null = 기본 동작).
 // 스냅샷 목록이기도 하다: snapshots/<laf>/<키>.html이 전부 있어야 한다
 const EXPECTED_LANG = { elements: "ko", sample: "ko", english: null };
@@ -62,6 +66,9 @@ const EXPECTED_RUN_LINKS = { elements: 4, sample: 1 };
 // 스냅샷 본문의 Mermaid HTML 라벨(svg foreignObject 안) 최소 개수 — 캡처가 mermaid 렌더 전이면 라벨 박스 판정이 동물원만
 // 보고 조용히 통과한다. elements.md: flowchart 노드 4 + 간선 3
 const EXPECTED_MERMAID_LABELS = { elements: 7 };
+// 스냅샷 본문의 취소선(del·span.user-del) 최소 개수 — 흐림 판정(_strike)이 실제 번들 마크업에도 걸리는지.
+// 세 픽스처 모두 마크다운 ~~ ~~ 1개(2026.2 = span.user-del)
+const EXPECTED_STRIKES = { elements: 1, sample: 1, english: 1 };
 // 30×30 단색 PNG — 번들 실행 아이콘의 원본 크기(30px) 대역
 const RUN_ICON_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAAK0lEQVR42u3NMQEAAAQAMDVF0ExLYnDs2L3IrrkQYrFYLBaLxWKxWCz+Gy904Xmdae+ZnQAAAABJRU5ErkJggg==",
@@ -153,9 +160,9 @@ function judgeZoo(combo, data) {
     if (v === "MISSING") { flag("동물원", `[${combo}] 동물원 ${k}: 요소 렌더 실패(MISSING)`); continue; }
     const c = v.contrast;
     if (c == null) continue;
-    const limit = LOW_CONTRAST_OK[k] ?? FAIL;
+    const limit = v.strike ? STRIKE_FAIL : (LOW_CONTRAST_OK[k] ?? FAIL);
     if (c < limit) flag("동물원", `[${combo}] 동물원 ${k}: 대비 ${c} (FAIL <${limit}) bg=${v.bg}`);
-    else if (c < WARN && !(k in LOW_CONTRAST_OK)) flag("동물원", `[${combo}] 동물원 ${k}: 대비 ${c} (WARN <4.5) bg=${v.bg}`);
+    else if (c < WARN && !v.strike && !(k in LOW_CONTRAST_OK)) flag("동물원", `[${combo}] 동물원 ${k}: 대비 ${c} (WARN <4.5) bg=${v.bg}`);
   }
   // commandRunner 실행 아이콘은 테마 활성 시 숨는다(CLAUDE.md 계약) — mts_audit.py와 같은 판정
   const run = data._runIcons;
@@ -186,6 +193,15 @@ function judgeZoo(combo, data) {
   else {
     if (align.cells < 11) flag("표 정렬", `[${combo}] 동물원 셀 ${align.cells}개 (기대 11개)`);
     for (const v of align.bad) flag("표 정렬", `[${combo}] 표 정렬: ${v}`);
+  }
+  // 취소선 흐림은 두 형태(del·span.user-del) 모두 같아야 한다(#58) — mts_audit.py와 같은 판정
+  const strike = data._strike;
+  if (!strike) flag("취소선", `[${combo}] mts_audit.js가 _strike를 내지 않음`);
+  else {
+    if (!(parseFloat(strike.opacity) < 1)) flag("취소선", `[${combo}] 취소선 흐림 없음: del opacity=${strike.opacity}`);
+    for (const v of strike.off) flag("취소선", `[${combo}] 취소선 흐림 불일치: ${v} (del ${strike.opacity})`);
+    const want = EXPECTED_STRIKES[combo.split("/")[2].split("@")[0]] ?? 0;
+    if (strike.doc < want) flag("취소선", `[${combo}] 스냅샷 취소선 ${strike.doc}개 (기대 ${want}개 이상) — 캡처 확인`);
   }
   const lay = data._layout;
   if (lay.bodyHScroll > 2) flag("레이아웃", `[${combo}] body 가로 오버플로 ${lay.bodyHScroll}px`);
@@ -303,6 +319,9 @@ async function checkAuthorStyles(page, combo) {
     '<ul id="ap-ul" style="padding: 10px 20px"><li id="ap-li" style="line-height: 3; font-size: 20px">li</li></ul>' +
     '<blockquote id="ap-bq" style="border: 1px solid; border-radius: 10px">bq</blockquote>' +
     '<p><a id="ap-a" href="#" style="font-weight: 900">a</a> <strong id="ap-strong" style="font-weight: 400">s</strong></p>' +
+    // 마크다운 취소선 클래스를 raw HTML로 단 경우 — [style*="color"]는 background-color에도 걸려 배경은 따로 둔다
+    '<p><span id="ap-del" class="user-del" style="opacity: 0.3; color: rgb(200, 0, 0)">d</span> ' +
+    '<span id="ap-delbg" class="user-del" style="background: rgb(255, 243, 176)">d</span></p>' +
     '<dl><dt id="ap-dt" style="margin: 0; padding: 5px">dt</dt><dd id="ap-dd" style="margin: 0; padding: 0">dd</dd></dl>' +
     '<pre><code id="ap-code" style="line-height: 30px">x</code></pre>' +
     '<p><input id="ap-cb" type="checkbox" disabled style="color: rgb(200, 0, 0)"></p>' +
@@ -328,6 +347,7 @@ async function checkAuthorStyles(page, combo) {
     ["ap-li", "line-height", "60px"], ["ap-li", "font-size", "20px"],
     ["ap-bq", "border-top-style", "solid"], ["ap-bq", "border-top-right-radius", "10px"],
     ["ap-a", "font-weight", "900"], ["ap-strong", "font-weight", "400"],
+    ["ap-del", "opacity", "0.3"], ["ap-del", "color", "rgb(200, 0, 0)"], ["ap-delbg", "background-color", "rgb(255, 243, 176)"],
     ["ap-dt", "margin-top", "0px"], ["ap-dt", "padding-left", "5px"],
     ["ap-dd", "margin-bottom", "0px"], ["ap-dd", "padding-left", "0px"],
     ["ap-code", "line-height", "30px"], ["ap-cb", "color", "rgb(200, 0, 0)"], ["ap-hr", "border-top-left-radius", "3px"],
