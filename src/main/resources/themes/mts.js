@@ -166,12 +166,22 @@
   }
 
   // ---------- 문서 언어 ----------
-  // preview <html>에는 lang이 없다. 본문이 한국어면 data-mts-lang="ko"(+ lang)를 단다 — 한국어 어절 단위
-  // 줄바꿈(mts.css)과 스크린리더 발음(WCAG 3.1.1)이 이 값을 쓴다. 영어 등 다른 언어 문서는 아무것도 달지
-  // 않아 기본 동작 그대로다. Default(off)에선 달지 않고(플러그인 완전 비활성), 우리가 단 lang만 관리한다
+  // preview <html>에는 lang이 없다. 판정은 둘이다(본문 순회 한 번):
+  // - 본문이 한국어면 data-mts-lang="ko"(+ lang) — 한국어 어절 단위 본문 줄바꿈(mts.css)과 스크린리더 발음
+  //   (WCAG 3.1.1)이 이 값을 쓴다
+  // - 한국어가 의미 있게 들어 있으면 data-mts-hangul — 표 셀 keep-all만 이 값을 쓴다(#68). 영어 README 안의
+  //   한국어 설명 표처럼 문서는 한국어가 아니어도 한국어 열이 글자 단위로 끊겨 세로 띠로 눌리지 않게 한다.
+  //   한국어 문서는 늘 함께 단다(ko ⊂ hangul)
+  // 영어 등 다른 언어 문서는 아무것도 달지 않아 기본 동작 그대로다(한글 표식이 붙어도 keep-all은 라틴 글자 줄바꿈을
+  // 바꾸지 않는다). Default(off)에선 둘 다 달지 않고(플러그인 완전 비활성), 우리가 단 lang만 관리한다.
+  // 표식은 다른 스코프 표식(data-mts-theme 등)과 같이 <html>에 단다(테마 off 수명도 같다) — body 자손은 패치가 바꾸거나
+  // 새로 만들 수 있어 거기 단 값은 남는다는 보장이 없다
   var LANG_MARK = 'data-mts-lang';
-  var LANG_ENOUGH = 1500; // 한글·한자·가나가 이만큼 모이면 판정에 충분하다
-  var LANG_ENOUGH_WORDS = 1000; // 어절·단어가 이만큼 모여도(영어 등 알파벳 위주 문서) 충분하다
+  var HANGUL_MARK = 'data-mts-hangul';
+  var LANG_ENOUGH = 1500; // 한글·한자·가나가 이만큼 모이면 판정에 충분하다(두 판정 모두)
+  // 어절·단어가 이만큼 모여도(영어 등 알파벳 위주 문서) 한국어 판정에는 충분하다 — 한글 표식은 이 뒤로도 글자를
+  // 센다: 영어 문서의 한국어 표는 흔히 단어 1000개 뒤(README 후반 설정 표)에 있다
+  var LANG_ENOUGH_WORDS = 1000;
   var LANG_SCAN_MAX = 60000; // 글자가 드문(숫자·기호 위주) 긴 문서에서 판정 비용 상한(문자)
   var HANGUL = /[가-힣ᄀ-ᇿ㄰-㆏]/; // 음절·자모·호환 자모
   var ALPHA = /[A-Za-zÀ-ÖØ-öø-ɏͰ-ӿ]/; // 라틴·확장 라틴·그리스·키릴
@@ -182,8 +192,15 @@
   // nodeName이 소문자)
   var LANG_SKIP = /^(pre|code|style|script|mjx-container)$/i;
 
+  // 한글이 20자 미만이면 판정하지 않는다. 한자 병기가 많아도 한글이 절반 이상이면 한국어(한자·가나와는 글자로
+  // 견준다 — 두 판정 공통)
+  function hangulDominates(hangul, han) {
+    return hangul >= 20 && hangul / (hangul + han) >= 0.5;
+  }
+
+  // 반환: { lang: 'ko' | null, hangul: 한글 표식 여부 }
   function detectLang() {
-    if (!document.body) return null;
+    if (!document.body) return { lang: null, hangul: false };
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
       acceptNode: function (n) {
         if (n.nodeType === 3) return NodeFilter.FILTER_ACCEPT;
@@ -195,35 +212,54 @@
     });
     // 글자 수: 한글과, 비율 판단용으로 한자·가나. 단어 수: 한글이 든 어절과 알파벳만 든 단어
     var hangul = 0, han = 0, koWords = 0, alphaWords = 0, scanned = 0, n;
-    while (scanned < LANG_SCAN_MAX && hangul + han < LANG_ENOUGH && koWords + alphaWords < LANG_ENOUGH_WORDS &&
-           (n = walker.nextNode())) {
+    var lang; // 단어 문턱에서 굳은 한국어 판정 — 아직이면 undefined
+    while (scanned < LANG_SCAN_MAX && hangul + han < LANG_ENOUGH && (n = walker.nextNode())) {
       var t = n.nodeValue;
       scanned += t.length;
       hangul += (t.match(/[가-힣ᄀ-ᇿ㄰-㆏]/g) || []).length;
       han += (t.match(/[぀-ヿ㐀-䶿一-鿿]/g) || []).length;
+      if (lang !== undefined) continue; // 이후는 한글 표식용 글자 수만
       var words = t.split(/\s+/);
       for (var i = 0; i < words.length; i++) {
         if (HANGUL.test(words[i])) koWords++;
         else if (ALPHA.test(words[i])) alphaWords++;
       }
+      if (koWords + alphaWords >= LANG_ENOUGH_WORDS) {
+        lang = judgeKo(hangul, han, koWords, alphaWords);
+        if (lang === 'ko') break; // 한국어 문서는 한글 표식도 확정이다 — 더 셀 것이 없다
+      }
     }
-    // 한글이 20자 미만이면 판정하지 않는다. 한자 병기가 많아도 한글이 절반 이상이면 한국어.
-    // 알파벳 문자와는 어절로 견준다 — 한국어 기술 문서는 영문 용어에 조사가 붙어("Bean을") 어절로 세면
-    // 한국어로 남고(글자로 세면 "Spring Boot의 AutoConfiguration은 …" 한 문장이 0.2 언저리까지 떨어진다),
-    // 영어 문서에 섞인 한글 한 줄(번역본 링크 등)은 단어 수에 묻힌다 — lang="ko"를 달면 스크린리더가
-    // 영어 본문을 한국어 발음으로 읽는다. 0.2: 어절 하나가 영어 단어 1.5개 남짓이라 내용상 1/4 남짓.
-    // 실측 어절 비율 — 한국어 fixtures 0.76~0.87, 영문 용어 위주 한국어 0.55~0.75, 반반 이중언어 0.32,
-    // 한글 한 줄 섞인 영어·프랑스어·러시아어 문서 0.02~0.05
-    return hangul >= 20 && hangul / (hangul + han) >= 0.5 && koWords / (koWords + alphaWords) >= 0.2 ? 'ko' : null;
+    if (lang === undefined) lang = judgeKo(hangul, han, koWords, alphaWords);
+    // 한글 표식: 한국어 문서이거나, 한글이 20자 이상이고 한자·가나 이상(한자·가나 위주(띄어쓰기 없는 문자 체계) 문서는
+    // 한글이 한자·가나보다 적어 걸리지 않는다 — 그 셀에 keep-all을 걸면 문장이 한 덩어리가 돼 표가 넘친다, #48).
+    // 표식은 문서 단위다 — 한 표에 한국어 열과 한자·가나 열이 함께 있으면 한쪽이 진다(그 열까지 keep-all로 표가 가로
+    // 스크롤되거나, 한국어 열이 1.2.0처럼 글자 단위로 끊긴다).
+    // 알파벳과는 견주지 않는다 — keep-all은 라틴 글자 줄바꿈을 바꾸지 않아 영어 셀엔 영향이 없다.
+    // 한국어 문서는 늘 함께 단다(ko ⊂ hangul) — 판정이 ko로 굳으면 그 자리에서 멈춰 계수도 ko 판정 때 값이지만, 셀
+    // keep-all이 ko 문서에서 빠지지 않게 명시해 둔다
+    return { lang: lang, hangul: lang === 'ko' || hangulDominates(hangul, han) };
   }
 
-  // CSS는 우리 표식(data-mts-lang)을 키로 쓴다 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다.
+  // 알파벳 문자와는 어절로 견준다 — 한국어 기술 문서는 영문 용어에 조사가 붙어("Bean을") 어절로 세면
+  // 한국어로 남고(글자로 세면 "Spring Boot의 AutoConfiguration은 …" 한 문장이 0.2 언저리까지 떨어진다),
+  // 영어 문서에 섞인 한글 한 줄(번역본 링크 등)은 단어 수에 묻힌다 — lang="ko"를 달면 스크린리더가
+  // 영어 본문을 한국어 발음으로 읽는다. 0.2: 어절 하나가 영어 단어 1.5개 남짓이라 내용상 1/4 남짓.
+  // 실측 어절 비율 — 한국어 fixtures 0.76~0.87, 영문 용어 위주 한국어 0.55~0.75, 반반 이중언어 0.32,
+  // 한글 한 줄 섞인 영어·프랑스어·러시아어 문서 0.02~0.05
+  function judgeKo(hangul, han, koWords, alphaWords) {
+    return hangulDominates(hangul, han) && koWords / (koWords + alphaWords) >= 0.2 ? 'ko' : null;
+  }
+
+  // CSS는 우리 표식(data-mts-lang·data-mts-hangul)을 키로 쓴다 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다.
   // lang 속성은 비어 있거나 우리가 단 값일 때만 관리한다(접근성용)
   // 우리가 단 lang 값 — 속성 값만으로는 플랫폼이 같은 값을 단 경우와 구분할 수 없다(페이지 수명 = 속성 수명)
   var langSetByUs = null;
 
   function applyLang() {
-    var lang = currentTheme === 'off' ? null : detectLang();
+    var found = currentTheme === 'off' ? { lang: null, hangul: false } : detectLang();
+    var lang = found.lang;
+    if (!found.hangul) root.removeAttribute(HANGUL_MARK);
+    else if (!root.hasAttribute(HANGUL_MARK)) root.setAttribute(HANGUL_MARK, '');
     var ownsLang = !root.hasAttribute('lang') ||
       (langSetByUs !== null && root.getAttribute('lang') === langSetByUs);
     if (lang) {

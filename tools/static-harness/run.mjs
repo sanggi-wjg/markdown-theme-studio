@@ -16,7 +16,9 @@
 //   - 위젯: 스위처의 보이는 글자 노드 대비를 닫힌 상태(휴지 Aa 버튼)·열린 상태(패널) × 테마 5(off 포함)
 //     × 외관 2로 직접 잰다(clean·custom 둘 다). axe-core는 ARIA·접근 가능한 이름 규칙만 —
 //     color-contrast는 fixed 위젯에서 전부 incomplete(판정 불가)라 끄고 위 직접 계산으로 대신한다
-//   - 언어: IDE 로드 순서(빈 body에서 mts.js 실행 → 본문 패치)를 재현한 뒤 픽스처별 판정 기대값
+//   - 언어: IDE 로드 순서(빈 body에서 mts.js 실행 → 본문 패치)를 재현한 뒤 픽스처별 판정 기대값(data-mts-lang·lang·
+//     data-mts-hangul). 스냅샷에 없는 언어 조합(영어 문서 안 한국어 표 #68, 띄어쓰기 없는 문자(한자·가나) 대조군 등)은 합성 문서
+//     (lang-probes.mjs)를 같은 순서로 싣고 표식·수명(테마 off, 본문 패치로 표 제거·복원)과 표 셀·본문 word-break를 본다
 //   - 연동: 한 조합(다크 LaF·클린·sample·900px)에서 브리지 → mts.js 순으로 실어 고정 IDE 상태가 위젯 초기 상태·
 //     localStorage 미러로 가는지, rev 0이면 기본값으로 시작하는지, 위젯 변경이 브리지로 넘어가는지(미확인 표시),
 //     같은 저장소로 다시 열면 그 미확인 변경이 이기는지(rev 0이면 마이그레이션 대기로 남는지)와 페이지 에러 없음·
@@ -37,6 +39,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { chromium } from "playwright";
+import { LANG_PROBES } from "./lang-probes.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "../..");
@@ -60,6 +63,13 @@ const STRIKE_FAIL = 3.0;
 // 스냅샷 목록이기도 하다: snapshots/<laf>/<키>.html이 전부 있어야 한다
 const EXPECTED_LANG = { elements: "ko", sample: "ko", english: null };
 const FIXTURES = Object.keys(EXPECTED_LANG).sort();
+// 픽스처별 한글 표식(data-mts-hangul — 표 셀 keep-all, #68) 기대값. 한국어 문서는 늘 함께 달린다(ko ⊂ hangul)
+const EXPECTED_HANGUL = { elements: true, sample: true, english: false };
+// <html>의 언어 표식 [data-mts-lang, lang, data-mts-hangul 유무] — page.evaluate로 넘긴다
+const LANG_ATTRS = () => {
+  const r = document.documentElement;
+  return [r.getAttribute("data-mts-lang"), r.getAttribute("lang"), r.hasAttribute("data-mts-hangul")];
+};
 // 스냅샷 본문의 commandRunner 실행 링크(a[data-command]) 최소 개수 — 숨김 판정이 실제 번들 마크업에도 걸리는지.
 // elements.md: 인라인 1 + 표 셀 1 + shell 펜스(블록 1·줄 1), sample.md: 작업 목록의 인라인 1
 const EXPECTED_RUN_LINKS = { elements: 4, sample: 1 };
@@ -410,7 +420,8 @@ async function openPage(browser, file, vp, servedJs) {
     document.body.append(...window.__mtsBody);
     delete window.__mtsBody;
     await new Promise((r) => setTimeout(r, 0));
-    return ["data-mts-lang", "lang"].map((a) => document.documentElement.getAttribute(a));
+    const r = document.documentElement;
+    return [r.getAttribute("data-mts-lang"), r.getAttribute("lang"), r.hasAttribute("data-mts-hangul")];
   });
   await page.waitForTimeout(LANG_SETTLE_MS);
   return { page, firstLang };
@@ -530,7 +541,8 @@ async function auditBridge(browser) {
       document.body.append(...window.__mtsBody);
       delete window.__mtsBody;
       await new Promise((r) => setTimeout(r, 0));
-      return ["data-mts-lang", "lang"].map((a) => document.documentElement.getAttribute(a));
+      const r = document.documentElement;
+      return [r.getAttribute("data-mts-lang"), r.getAttribute("lang"), r.hasAttribute("data-mts-hangul")];
     });
     await page.waitForTimeout(LANG_SETTLE_MS);
     const read = () => page.evaluate(() => {
@@ -543,12 +555,14 @@ async function auditBridge(browser) {
         theme: r.getAttribute("data-mts-theme"), widgetTheme: picked(".mts-themes"), appearance: picked(".mts-segment"),
         dark: r.classList.contains("mts-dark"), lafDark: r.classList.contains("mts-laf-dark"),
         fs: r.style.getPropertyValue("--mts-fs-offset"), w: r.style.getPropertyValue("--mts-w-offset"),
-        lang: ["data-mts-lang", "lang"].map((a) => r.getAttribute(a)),
+        lang: [r.getAttribute("data-mts-lang"), r.getAttribute("lang"), r.hasAttribute("data-mts-hangul")],
         store: Object.fromEntries(Object.keys(localStorage).sort().map((k) => [k, localStorage.getItem(k)])),
       };
     });
     const got = await read();
-    const want = { ...v.want, store: sorted(v.want.store), widgetTheme: v.want.theme, lang: [wantLang, wantLang] };
+    const want = {
+      ...v.want, store: sorted(v.want.store), widgetTheme: v.want.theme, lang: [wantLang, wantLang, EXPECTED_HANGUL[fixture]],
+    };
     for (const k of Object.keys(want)) {
       if (JSON.stringify(got[k]) !== JSON.stringify(want[k])) {
         flag("연동", `[${label}] 초기 ${k}=${JSON.stringify(got[k])} (기대 ${JSON.stringify(want[k])})`);
@@ -586,6 +600,110 @@ async function auditBridge(browser) {
   }
 }
 
+/** 언어 판정 합성 문서(lang-probes.mjs) — IDE 로드 순서(빈 body → mts.js → 본문 패치)로 싣고 첫 패치 직후·정착 뒤
+ *  <html> 표식, 테마 4종의 표 셀(th·td 전부)·본문(body·p) word-break 계산값을 본다. lifecycle 문서는 수명도 본다: 테마
+ *  off에서 표식이 모두 빠지고 테마를 다시 켜면 돌아오는지(위젯 UI — applyTheme 경로), 본문 패치로 표를 걷어내면 한글
+ *  표식이 빠지고 되돌리면 다시 달리는지(디바운스 재판정). 셸은 라이트 LaF·클린 english 스냅샷(본문만 갈아 끼운다),
+ *  폭은 표가 폭을 다투는 기본 패널 427px — 첫 표의 열 폭·한국어(마지막) 열 줄 수를 report에 남긴다(판정 아님, 폰트 의존) */
+async function auditLangProbes(browser) {
+  const dir = stage("light", "clean");
+  const servedJs = fs.readFileSync(path.join(SERVED, "mts.light.js"), "utf8");
+  const vp = VIEWPORTS[1];
+  const show = (v) => JSON.stringify(v);
+  for (const pr of LANG_PROBES) {
+    const label = `light-laf/clean/합성 ${pr.name}@${vp.width}`;
+    const page = await browser.newPage({ viewport: vp, deviceScaleFactor: 1 });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto("file://" + path.join(dir, "english.html"));
+    await page.evaluate(() => document.body.replaceChildren());
+    await page.addScriptTag({ content: servedJs });
+    // 첫 패치 즉시 판정 — openPage와 같이 macrotask 경계 하나만 넘기고 읽는다
+    const first = await page.evaluate(async (h) => {
+      const d = document.createElement("div");
+      d.innerHTML = h;
+      document.body.append(d);
+      await new Promise((r) => setTimeout(r, 0));
+      const r = document.documentElement;
+      return [r.getAttribute("data-mts-lang"), r.getAttribute("lang"), r.hasAttribute("data-mts-hangul")];
+    }, pr.html);
+    await page.waitForTimeout(LANG_SETTLE_MS);
+    const settled = await page.evaluate(LANG_ATTRS);
+    const want = [pr.lang, pr.lang, pr.hangul];
+    for (const [when, got] of [["첫 패치 직후", first], ["정착 뒤", settled]]) {
+      if (show(got) !== show(want)) flag("언어", `[${label}] 표식(${when}) ${show(got)} (기대 ${show(want)} — data-mts-lang, lang, data-mts-hangul)`);
+    }
+    const styles = await page.evaluate((themes) => {
+      const root = document.documentElement;
+      const before = root.getAttribute("data-mts-theme");
+      const out = themes.map((t) => {
+        root.setAttribute("data-mts-theme", t);
+        const cells = [...document.querySelectorAll("body th, body td")];
+        return {
+          theme: t, cells: cells.length,
+          cell: [...new Set(cells.map((c) => getComputedStyle(c).wordBreak))],
+          body: [...new Set([document.body, ...document.querySelectorAll("body p")].map((e) => getComputedStyle(e).wordBreak))],
+        };
+      });
+      root.setAttribute("data-mts-theme", before);
+      return out;
+    }, THEMES);
+    for (const s of styles) {
+      if (!s.cells) flag("언어", `[${label}/${s.theme}] 표 셀 없음 — 합성 문서 확인`);
+      if (show(s.cell) !== show([pr.cell])) flag("언어", `[${label}/${s.theme}] 표 셀 word-break ${show(s.cell)} (기대 ${pr.cell})`);
+      if (show(s.body) !== show([pr.body])) flag("언어", `[${label}/${s.theme}] 본문 word-break ${show(s.body)} (기대 ${pr.body})`);
+    }
+    // 첫 표의 열 폭(머리글 셀 폭)·표 넘침·마지막 열 셀 줄 수 — 세로 띠 압착 회귀(#68)의 근거 수치
+    const layout = await page.evaluate(() => {
+      const t = document.querySelector("body table");
+      const lines = (c) => {
+        const cs = getComputedStyle(c);
+        return Math.round((c.getBoundingClientRect().height - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)) /
+          parseFloat(cs.lineHeight));
+      };
+      return {
+        cols: [...t.querySelectorAll("thead th")].map((th) => Math.round(th.getBoundingClientRect().width)),
+        scrollWidth: t.scrollWidth, clientWidth: t.clientWidth,
+        lastColLines: [...t.querySelectorAll("tbody td:last-child")].map(lines),
+      };
+    });
+    const life = {};
+    if (pr.lifecycle) {
+      const pick = (id) => page.evaluate((t) => {
+        const q = (s) => document.querySelector(s);
+        if (q("#mts-panel").hidden) q("#mts-aa").click();
+        q(`#mts-root .mts-themes [data-mts-id="${t}"]`).click();
+      }, id);
+      const steps = [
+        ["테마 off", () => pick("off"), [null, null, false], 0],
+        ["테마 다시 켬", () => pick("gh"), want, 0],
+        // 본문 패치(편집)로 표를 걷어낸다 — 디바운스(400ms) 재판정을 기다린다
+        ["표 제거 패치", () => page.evaluate(() => {
+          const t = document.querySelector("body table");
+          const stub = Object.assign(document.createElement("p"), { textContent: "Configuration moved to the wiki." });
+          window.__mtsProbeSwap = [t, stub];
+          t.replaceWith(stub);
+        }), [null, null, false], LANG_SETTLE_MS],
+        ["표 복원 패치", () => page.evaluate(() => {
+          const [t, stub] = window.__mtsProbeSwap;
+          stub.replaceWith(t);
+          delete window.__mtsProbeSwap;
+        }), want, LANG_SETTLE_MS],
+      ];
+      for (const [name, act, w, wait] of steps) {
+        await act();
+        if (wait) await page.waitForTimeout(wait);
+        const got = await page.evaluate(LANG_ATTRS);
+        life[name] = got;
+        if (show(got) !== show(w)) flag("언어", `[${label}] 수명 — ${name}: 표식 ${show(got)} (기대 ${show(w)})`);
+      }
+    }
+    for (const e of errors) flag("언어", `[${label}] pageerror: ${e}`);
+    report[label] = { first, settled, styles, layout, life };
+    await page.close();
+  }
+}
+
 const browser = await chromium.launch();
 const report = {};
 let combos = 0;
@@ -600,12 +718,14 @@ for (const laf of APPEARANCES) {
         const { page, firstLang } = await openPage(browser, path.join(dir, fixture + ".html"), vp, servedJs);
         if (mode === "clean" && vp.width === WIDE) {
           const want = EXPECTED_LANG[fixture];
+          const wantHangul = EXPECTED_HANGUL[fixture];
           // 첫 판정(재부착 직후)과 정착 뒤(디바운스 재판정 포함)가 모두 기대값이어야 한다 — 흔들림을 대기로 덮지 않고
           // 실제 값을 남긴 채 실패시킨다
-          const settled = await page.evaluate(() => ["data-mts-lang", "lang"].map((a) => document.documentElement.getAttribute(a)));
-          for (const [when, [mark, lang]] of [["첫 패치 직후", firstLang], ["정착 뒤", settled]]) {
-            if (mark !== want || lang !== want) {
-              flag("언어", `[${laf}-laf/${fixture}] 언어 판정(${when}) data-mts-lang=${mark} lang=${lang} (기대 ${want})`);
+          const settled = await page.evaluate(LANG_ATTRS);
+          for (const [when, [mark, lang, hangul]] of [["첫 패치 직후", firstLang], ["정착 뒤", settled]]) {
+            if (mark !== want || lang !== want || hangul !== wantHangul) {
+              flag("언어", `[${laf}-laf/${fixture}] 언어 판정(${when}) data-mts-lang=${mark} lang=${lang} ` +
+                `data-mts-hangul=${hangul} (기대 ${want}/${want}/${wantHangul})`);
             }
           }
         }
@@ -647,6 +767,7 @@ for (const laf of APPEARANCES) {
   }
 }
 await auditBridge(browser);
+await auditLangProbes(browser);
 await browser.close();
 reportInvariant();
 

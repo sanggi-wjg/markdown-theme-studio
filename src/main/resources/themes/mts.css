@@ -518,11 +518,12 @@ html[data-mts-theme] body table {
 html[data-mts-theme] body table:where(:not([border]):not([frame]):not([style*="border" i])) { border-style: none; }
 html[data-mts-theme] body table:where(:not([style*="radius" i])) { border-radius: 0; }
 
-/* ---------- 한국어 문서 (mts.js가 본문으로 판정해 <html data-mts-lang="ko">를 단다) ----------
-   한국어는 띄어쓰기가 있어 어절 단위 줄바꿈이 관행이다 — 본문 전체 keep-all("가독/성"처럼 음절
-   중간에서 끊기지 않게). 긴 영문 식별자·URL은 overflow-wrap이 받는다. 영어 등 다른 언어 문서는
-   표식이 없어 기본 줄바꿈 그대로다. 키는 lang이 아니라 우리 표식 — 플랫폼이 lang을 달게 돼도
-   판정 결과로 조판한다 */
+/* ---------- 한국어 (mts.js가 본문으로 판정해 <html>에 표식을 단다) ----------
+   두 표식: data-mts-lang="ko" = 한국어가 주된 문서(본문 keep-all), data-mts-hangul = 한국어가 의미 있게
+   든 문서(표 셀 keep-all — 한국어 문서는 늘 함께 달린다). 한국어는 띄어쓰기가 있어 어절 단위 줄바꿈이
+   관행이다 — 본문 전체 keep-all("가독/성"처럼 음절 중간에서 끊기지 않게). 긴 영문 식별자·URL은
+   overflow-wrap이 받는다. 영어 등 다른 언어 문서는 표식이 없어 기본 줄바꿈 그대로다. 키는 lang이 아니라
+   우리 표식 — 플랫폼이 lang을 달게 돼도 판정 결과로 조판한다 */
 html[data-mts-lang="ko"][data-mts-theme] body {
   word-break: keep-all;
   overflow-wrap: break-word;
@@ -535,10 +536,14 @@ html[data-mts-lang="ko"][data-mts-theme] body svg {
 }
 /* 기본 스타일의 table { word-break: normal }이 body 상속을 끊어 셀은 따로 단다. 글자 단위
    줄바꿈이면 한글 열의 min-content가 1글자라, 폭이 부족할 때 auto 레이아웃이 그 열을 세로
-   띠로 압착한다 — 그래도 부족한 폭은 표 overflow-x 스크롤이 받는다. 한국어에만: 띄어쓰기
-   없는 문자 체계에 keep-all을 걸면 문장 전체가 한 덩어리가 돼 표가 넘친다 */
-html[data-mts-lang="ko"][data-mts-theme] body th,
-html[data-mts-lang="ko"][data-mts-theme] body td {
+   띠로 압착한다 — 그래도 부족한 폭은 표 overflow-x 스크롤이 받는다. 키는 문서 언어(ko)가 아니라
+   한글 표식이다: 영어 README 안의 한국어 설명 표도 같은 띠로 눌린다(#68 — 427px 실측 한국어 열 51px·
+   17~19줄 → 100px·7~8줄). 라틴 글자는 keep-all이 줄바꿈을 바꾸지 않아 영어 셀엔 영향이 없다.
+   한자·가나 위주(띄어쓰기 없는 문자 체계) 문서는 한글이 한자·가나보다 적어 표식이 없다 — keep-all을
+   걸면 문장 전체가 한 덩어리가 돼 표가 넘친다(#48). SVG 상속 차단(위)은 본문 keep-all 몫이다 — 셀 규칙은 mermaid가
+   라벨을 재는 자리(body 직속 임시 div)에도 그리는 자리(pre > code, normal)에도 닿지 않는다 */
+html[data-mts-hangul][data-mts-theme] body th,
+html[data-mts-hangul][data-mts-theme] body td {
   word-break: keep-all;
 }
 html[data-mts-theme] body th {
