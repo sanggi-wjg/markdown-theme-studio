@@ -30,8 +30,9 @@ SNAPSHOT_JS = r"""
   doc.querySelectorAll('#mts-root, #mts-switcher, #mts-handle, #mts-audit').forEach(function (n) { n.remove(); });
   doc.removeAttribute('data-mts-theme');
   doc.removeAttribute('style');
-  // 문서 언어는 mts.js가 판정해 다는 값 — 하네스가 서빙 JS로 다시 판정하므로 우리가 단 것만 걷어낸다
+  // 문서 언어·한글 표식은 mts.js가 판정해 다는 값 — 하네스가 서빙 JS로 다시 판정하므로 우리가 단 것만 걷어낸다
   if (doc.hasAttribute('data-mts-lang')) { doc.removeAttribute('lang'); doc.removeAttribute('data-mts-lang'); }
+  doc.removeAttribute('data-mts-hangul');
   doc.classList.remove('mts-dark', 'mts-laf-dark');
   var sheets = [];
   doc.querySelectorAll('link[rel="stylesheet"]').forEach(function (l) {
