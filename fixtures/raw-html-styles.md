@@ -73,9 +73,28 @@
 <tr><td bgcolor="#ffd6d6">bgcolor 속성 — 테마</td><td style="background-color:#fff">background-color만 — 테마</td></tr>
 </table>
 
+<p style="color:#333; background:rgba(0,0,0,.05)">반투명 배경(rgba .05) + 글자 — 바탕이 아니라 테마가 맡는다(다크에서도 읽힌다)</p>
+
+<p style="color:#333; background:#0000000d">#RRGGBBAA 알파 배경 + 글자 — IDE가 rgba()로 직렬화해 테마가 맡는다</p>
+
+<p style="color:#333; background:rgb(0 0 0 / 4%)">rgb(… / 4%) 알파 배경 + 글자 — 테마</p>
+
+<table>
+<tr><td style="color:#333; background:rgba(0,0,0,.05)">반투명 셀 배경 + 글자 — 테마</td><td style="color:#000; background:burlywood">burlywood 배경 + 글자 — 작성자</td></tr>
+</table>
+
+<p style="font-family:'Transparent Sans', sans-serif; color:#000; background:#fff3b0">글꼴 이름 "Transparent Sans" + 배경 + 글자 — 작성자</p>
+
 <div style="background:#272822; color:#f8f8f2; padding:8px 12px">
 <h3>어두운 작성자 블록</h3>
 <p>안의 <a href="#">링크</a>와 <code>코드</code>, <strong>굵게</strong> — 라이트 외관에서도 읽혀야 한다</p>
 </div>
 
 <pre style="background:#272822; color:#f8f8f2">작성자 pre — 배경과 글자를 둘 다 정했다</pre>
+
+<blockquote style="color:#000; background:#fff; padding:8px 12px">
+
+> [!NOTE]
+> 작성자 색 인용 안의 알림 — 본문·제목이 작성자 검정 글자를 물려받아 흰 바탕에서 읽혀야 한다(2026.2+ 알림 렌더)
+
+</blockquote>

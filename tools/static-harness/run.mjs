@@ -28,7 +28,10 @@
 //     사용자 값으로 바뀌는 누수, #54)
 //   - 작성자 스타일: 문서 raw HTML의 인라인 style·표현 속성 존중(#54, #63 단계적 존중 — checkAuthorStyles). 배치·조판 속성은
 //     작성자 값, 글자색·배경은 둘 다 정했을 때만 작성자 값(한쪽만이면 테마), 둘 다 정한 요소 안(작성자 색 영역)의 테마 글자색·칩은
-//     작성자 색에 맞춘다. elements@900의 테마 4 × 외관 2 × LaF 2에서 값(clean)과 프로브 글자 대비(clean·custom)를 본다
+//     작성자 색에 맞춘다. elements@900의 테마 4 × 외관 2 × LaF 2에서 값(clean)과 프로브 글자 대비(clean·custom)를, innerHTML
+//     그대로와 IDE처럼 CSSOM 직렬화한 style 두 형태로 본다
+//   - 체크박스: 빈 작업 목록 체크박스 테두리의 실제 픽셀이 계산값과 같은지(checkCheckboxPaint — 계산 스타일 비교로는 안 잡히는
+//     Chromium 그림 회귀)
 // 한계 — 회귀 조기 검출용이고 최종 판정은 CDP 하네스(verify-preview)다:
 //   - Linux headless Chromium + Playwright 기본 폰트다. macOS JCEF의 폰트 폴백에 좌우되는 문제(이모지
 //     글리프, 한글 폴백 폰트, 427px 패널의 실제 줄바꿈 폭)는 재현하지 않는다. JCEF와 Chromium 버전도 다르다
@@ -379,6 +382,20 @@ const PROBE_HTML = [
   '<p id="cb-none" style="color: rgb(0, 0, 0); background: none">none</p>',
   // Google Docs·Word 붙여넣기 HTML의 실제 형태 — 글자색 + 투명 배경
   '<p id="cb-gdocs" style="font-size:11pt;font-family:Arial;color:#000000;background-color:transparent;font-weight:400">gdocs</p>',
+  // 반투명·투명 알파 배경은 바탕이 아니다(#63 리뷰) — 다크 페이지 위 거의 투명한 칸에 작성자 어두운 글자가 남으면 대비 1.35~1.66.
+  // IDE는 알파 색을 rgba()로 직렬화한다. #RRGGBBAA·#RGBA는 직렬화 전엔 부분 문자열로 못 가려 cssom 단계에서만 본다
+  '<p id="cb-rgba" style="color: rgb(51, 51, 51); background: rgba(0, 0, 0, 0.05)">rgba</p>',
+  '<p id="cb-rgba0" style="color: rgb(51, 51, 51); background-color: rgba(255, 255, 255, 0)">rgba 0</p>',
+  '<p id="cb-slash" style="color: rgb(51, 51, 51); background: rgb(0 0 0 / 4%)">slash</p>',
+  '<p id="cb-hsl" style="color: rgb(51, 51, 51); background: hsl(0 0% 100% / 0)">hsl</p>',
+  '<p id="cb-hsla" style="color: rgb(51, 51, 51); background: hsla(0, 0%, 100%, 0.1)">hsla</p>',
+  '<p id="cb-hex8" data-ap-cssom style="color: #333; background: #0000000d">hex8</p>',
+  '<p id="cb-hex4" data-ap-cssom style="color: #333; background: #0001">hex4</p>',
+  '<table><tbody><tr><td id="cb-tdrgba" style="color: rgb(51, 51, 51); background: rgba(0, 0, 0, 0.05)">td rgba</td></tr></tbody></table>',
+  // 판정 부분 문자열의 오탐 — 글꼴 이름의 transparent, 색 이름의 url(burlywood)은 배경 판정을 막지 않는다. 탭 + 콜론 앞 공백
+  '<p id="cb-tsans" style="font-family: \'Transparent Sans\', sans-serif; color: rgb(0, 0, 0); background: rgb(255, 243, 176)">tsans</p>',
+  '<p id="cb-burly" style="color: rgb(0, 0, 0); background: burlywood">burly</p>',
+  '<p id="cb-tabsp" style="background: rgb(255, 243, 176);\tcolor : rgb(0, 0, 0)">tab</p>',
   '<h3 id="cb-h3" style="background-color: rgb(224, 240, 255)">h3 bg only</h3>',
   '<h3 id="cb-h3b" style="color: rgb(0, 0, 0); background-color: rgb(224, 240, 255)">h3 both</h3>',
   '<p><a id="cb-a" href="#" style="color: rgb(200, 0, 0)">a color</a> ',
@@ -408,6 +425,9 @@ const PROBE_HTML = [
   '<div id="ad-div" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)"><h3 id="ad-h3">영역 제목</h3><h6>작은 제목</h6>',
   '<blockquote id="ad-bq"><p>영역 인용</p></blockquote><ul><li><a href="#">목록 링크</a></li></ul>',
   '<pre id="ad-pre"><code>pre 쌍은 테마 그대로</code></pre></div>',
+  // 작성자 색 영역 안의 GitHub Alert — 닫지 않은 <blockquote style> 뒤 > [!NOTE]가 그 안에 렌더된다(알림 규칙은 특이도가 높다)
+  '<blockquote id="ad-alq" style="color: rgb(0, 0, 0); background: rgb(255, 255, 255)"><blockquote class="markdown-alert markdown-alert-note">',
+  '<p class="markdown-alert-title" id="ad-alt">Note</p><p id="ad-alb">영역 안 알림 본문</p></blockquote></blockquote>',
   '<div style="color: rgb(240, 240, 240); background: rgb(34, 34, 34)"><h3>어두운 영역</h3><p><a href="#">링크</a> <code>칩</code></p>',
   '<table><thead><tr><th>머리글</th></tr></thead><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></div>',
 ].join("");
@@ -465,6 +485,9 @@ const PROBE_EXPECT = [
   ["cb-color", "color", "=rf-p"], ["cb-bg", "background-color", "=rf-p"], ["cb-bgc", "background-color", "=rf-p"],
   ["cb-border", "background-color", "=rf-p"], ["cb-tdc", "background-color", "=rf-p"],
   ["cb-tr", "color", "=rf-p"], ["cb-none", "color", "=rf-p"], ["cb-gdocs", "color", "=rf-p"],
+  ...["cb-rgba", "cb-rgba0", "cb-slash", "cb-hsl", "cb-hsla", "cb-tdrgba"].map((id) => [id, "color", id === "cb-tdrgba" ? "=rf-td" : "=rf-p"]),
+  ["cb-hex8", "color", "=rf-p", "cssom"], ["cb-hex4", "color", "=rf-p", "cssom"],
+  ...["cb-tsans", "cb-burly", "cb-tabsp"].map((id) => [id, "color", AUTHOR_BLACK]),
   ["cb-h3", "background-color", "=rf-h3"], ["cb-h3b", "color", AUTHOR_BLACK], ["cb-h3b", "background-color", "rgb(224, 240, 255)"],
   ["cb-a", "color", "=rf-a"], ["cb-ab", "color", "rgb(0, 0, 255)"], ["cb-ab", "background-color", "rgb(255, 255, 255)"],
   ["cb-del", "color", "=rf-del"], ["cb-delbg", "background-color", "=rf-del"],
@@ -490,6 +513,7 @@ const PROBE_EXPECT = [
   ["ad-trow", "background-color", "rgb(255, 255, 204)"], ["ad-trtd", "color", AUTHOR_BLACK],
   ["ad-h3", "color", AUTHOR_BLACK], ["ad-bq", "color", AUTHOR_BLACK],
   ["ad-pre", "background-color", "=rf-pre-bg"],
+  ["ad-alt", "color", AUTHOR_BLACK], ["ad-alb", "color", AUTHOR_BLACK],
 ];
 
 /** checkAuthorStyles — 값 판정(values=true, clean 조합)과 프로브 글자 대비. 주입·측정·제거를 한 evaluate에서 끝낸다(mts.js
@@ -512,42 +536,96 @@ async function checkAuthorStyles(page, combo, values) {
       return getComputedStyle(el).getPropertyValue(prop);
     };
     const ref = (want, prop) => (want === "=rf-pre-bg" ? read("rf-pre", "background-color") : read(want.slice(1), prop));
-    const out = [];
-    if (wantValues) {
-      // 기본 preview 값은 같은 동기 구간에서 테마를 잠깐 떼고 잰다(clean 조합이라 사용자 CSS 없음). 측정이 헛돌면 기대값이
-      // 곧 테마 값이라 조용히 통과한다 — 정렬 없는 머리글(rf-th)이 테마 left ↔ UA 가운데로 갈리는지로 확인한다
-      const root = document.documentElement;
-      const theme = root.getAttribute("data-mts-theme");
-      const themedRef = read("rf-th", "text-align");
-      root.removeAttribute("data-mts-theme");
-      const offRef = read("rf-th", "text-align");
-      const offVals = ex.map(([id, prop, want]) => (want === null ? read(id, prop) : null));
-      root.setAttribute("data-mts-theme", theme);
-      ex.forEach(([id, prop, want], i) => {
-        if (prop === "centered") {
+    // 기본 preview 값(표현 속성)은 같은 동기 구간에서 테마를 잠깐 떼고 한 번 잰다(clean 조합이라 사용자 CSS 없음). 측정이 헛돌면
+    // 기대값이 곧 테마 값이라 조용히 통과한다 — 정렬 없는 머리글(rf-th)이 테마 left ↔ UA 가운데로 갈리는지로 확인한다
+    const root = document.documentElement;
+    const theme = root.getAttribute("data-mts-theme");
+    const themedRef = read("rf-th", "text-align");
+    root.removeAttribute("data-mts-theme");
+    const offRef = read("rf-th", "text-align");
+    const offVals = ex.map(([id, prop, want]) => (want === null ? read(id, prop) : null));
+    root.setAttribute("data-mts-theme", theme);
+    const scan = (0, eval)(scanSrc);
+    // 두 번 잰다 — raw: innerHTML 그대로(작성자가 쓴 형태), cssom: IDE preview가 갖는 형태. IDE는 raw HTML의 style을 CSSOM으로
+    // 직렬화해 단다(#333 → color: rgb(51, 51, 51);, 알파 색 → rgba(), 소문자·"; " 구분 — 2025.1·2026.2 실측) — 판정 셀렉터가
+    // 두 형태 모두에서 같아야 한다. 직렬화 전에는 부분 문자열로 가릴 수 없는 형태(#RRGGBBAA·#RGBA 알파)의 프로브(data-ap-cssom)는
+    // cssom 단계에서만 본다
+    const passes = {};
+    for (const pass of ["raw", "cssom"]) {
+      const cssomOnly = [...host.querySelectorAll("[data-ap-cssom]")];
+      if (pass === "raw") cssomOnly.forEach((e) => e.setAttribute("data-ap-faint", ""));
+      else {
+        cssomOnly.forEach((e) => e.removeAttribute("data-ap-faint"));
+        host.querySelectorAll("[style]").forEach((e) => { e.style.cssText = e.getAttribute("style"); });
+      }
+      const out = [];
+      if (wantValues) {
+        ex.forEach(([id, prop, want, only], i) => {
+          if (only === "cssom" && pass === "raw") return;
           const got = read(id, prop);
-          if (got !== "centered") out.push(`${id} 가운데 정렬 아님(${got}) — 표 align 표현 속성`);
-          return;
-        }
-        const got = read(id, prop);
-        const w = want === null ? offVals[i] : typeof want === "string" && want.startsWith("=") ? ref(want, prop) : want;
-        const kind = want === null ? "기본 preview" : typeof want === "string" && want.startsWith("=") ? `테마(${want.slice(1)})` : "작성자";
-        if (got !== w) out.push(`${id} ${prop}=${got} (${kind} 값 ${w})`);
-      });
-      if (offRef === themedRef) out.push(`기본 preview 측정 실패: rf-th text-align이 테마 off에서도 ${offRef}`);
+          if (prop === "centered") {
+            if (got !== "centered") out.push(`${id} 가운데 정렬 아님(${got}) — 표 align 표현 속성`);
+            return;
+          }
+          const w = want === null ? offVals[i] : typeof want === "string" && want.startsWith("=") ? ref(want, prop) : want;
+          const kind = want === null ? "기본 preview" : typeof want === "string" && want.startsWith("=") ? `테마(${want.slice(1)})` : "작성자";
+          if (got !== w) {
+            const st = document.getElementById(id)?.getAttribute("style");
+            out.push(`${id} ${prop}=${got} (${kind} 값 ${w})${pass === "cssom" ? ` [CSSOM style="${st}"]` : ""}`);
+          }
+        });
+        if (offRef === themedRef) out.push(`기본 preview 측정 실패: rf-th text-align이 테마 off에서도 ${offRef}`);
+      }
+      passes[pass] = { bad: out, ...JSON.parse(scan("probe")) };
     }
-    const scanned = JSON.parse((0, eval)(scanSrc)("probe"));
     host.remove();
-    return { bad: out, low: scanned.low, scanned: scanned.scanned, unparsed: scanned.unparsed };
+    return passes;
   }, [PROBE_HTML, PROBE_EXPECT, SCAN_JS, values]);
-  for (const b of res.bad) flag("작성자 스타일", `[${combo}] 작성자 style 판정 어긋남: ${b}`);
-  // 프로브 글자가 다 잡혔는지(주입 실패·스캔 대상 오류로 대비 판정이 조용히 비지 않게) — 프로브 글자 노드 약 100개
-  if (res.scanned < 90) flag("작성자 스타일", `[${combo}] 프로브 글자 노드 ${res.scanned}개 — 주입 실패?`);
-  // custom 조합은 안 보이는 글자(FAIL)만 — 작성자 값을 따르는 자리는 사용자 CSS의 !important가 인라인 style을 이겨 그 CSS가 고른
-  // 색 쌍(테마 off와 같다 — 적대적 CSS의 Typora 코드색 3.05·인용 4.29)이 나오는 게 정상이다
-  judgeLow("작성자 스타일", combo, values ? res.low : res.low.filter((x) => x.level === "FAIL"));
-  if (res.unparsed.length) flag("작성자 스타일", `[${combo}] 프로브 색 파싱 실패 ${res.unparsed.join(" | ")}`);
-  return res;
+  for (const [pass, r] of Object.entries(res)) {
+    const tag = `${combo}${pass === "cssom" ? " CSSOM" : ""}`;
+    for (const b of r.bad) flag("작성자 스타일", `[${tag}] 작성자 style 판정 어긋남: ${b}`);
+    // 프로브 글자가 다 잡혔는지(주입 실패·스캔 대상 오류로 대비 판정이 조용히 비지 않게) — 프로브 글자 노드 약 120개
+    if (r.scanned < 100) flag("작성자 스타일", `[${tag}] 프로브 글자 노드 ${r.scanned}개 — 주입 실패?`);
+    // custom 조합은 안 보이는 글자(FAIL)만 — 작성자 값을 따르는 자리는 사용자 CSS의 !important가 인라인 style을 이겨 그 CSS가 고른
+    // 색 쌍(테마 off와 같다 — 적대적 CSS의 Typora 코드색 3.05·인용 4.29)이 나오는 게 정상이다
+    judgeLow("작성자 스타일", tag, values ? r.low : r.low.filter((x) => x.level === "FAIL"));
+    if (r.unparsed.length) flag("작성자 스타일", `[${tag}] 프로브 색 파싱 실패 ${r.unparsed.join(" | ")}`);
+  }
+  return { low: [...res.raw.low, ...res.cssom.low], scanned: res.raw.scanned };
+}
+
+/** 작업 목록 빈 체크박스 테두리의 실제 그림 = 계산값인지. main의 [style*="color" i] 제외 규칙은 Chromium에서 계산값(테마
+ *  글자색)과 달리 사용자 CSS의 input 색(#333)으로 그리게 했다 — 다크에서 빈 칸이 사라진다(#63 리뷰, 계산 스타일 비교로는
+ *  안 잡힌다). 같은 체크박스를 인라인 style로 계산값 그대로 칠한 그림과 픽셀 단위로 견준다(인라인은 그 판정을 거치지 않는다).
+ *  색만 바꾸므로 배치가 같아 결정적이다 */
+async function checkCheckboxPaint(page, combo) {
+  // 요소 스크린샷(locator)은 안정화 대기로 조합마다 수 초가 걸려 뷰포트 clip으로 찍는다
+  const rects = await page.evaluate(() => [...document.querySelectorAll("body input[type=checkbox]:not(:checked)")]
+    .map((e, i) => { e.dataset.mtsCb = i; return e; })
+    .filter((e) => !e.closest("#mts-audit") && e.checkVisibility()).map((e) => e.dataset.mtsCb));
+  for (const i of rects) {
+    const clip = await page.evaluate((i) => {
+      const e = document.querySelector(`[data-mts-cb="${i}"]`);
+      e.scrollIntoView({ block: "center" });
+      const r = e.getBoundingClientRect();
+      return { x: Math.floor(r.left) - 1, y: Math.floor(r.top) - 1, width: Math.ceil(r.width) + 3, height: Math.ceil(r.height) + 3 };
+    }, i);
+    const painted = await page.screenshot({ clip });
+    const color = await page.evaluate((i) => {
+      const e = document.querySelector(`[data-mts-cb="${i}"]`);
+      const c = getComputedStyle(e).color;
+      e.setAttribute("style", `color: ${c} !important`);
+      return c;
+    }, i);
+    const reference = await page.screenshot({ clip });
+    await page.evaluate((i) => document.querySelector(`[data-mts-cb="${i}"]`).removeAttribute("style"), i);
+    if (!painted.equals(reference)) flag("체크박스", `[${combo}] 빈 체크박스 테두리가 계산값(${color})과 다르게 그려짐`);
+  }
+  await page.evaluate(() => {
+    document.querySelectorAll("[data-mts-cb]").forEach((e) => e.removeAttribute("data-mts-cb"));
+    window.scrollTo(0, 0);
+  });
+  if (!rects.length) flag("체크박스", `[${combo}] 스냅샷에 빈 체크박스 없음 — 그림 검사 불가`);
 }
 
 function reportInvariant() {
@@ -905,6 +983,7 @@ for (const laf of APPEARANCES) {
             // 작성자 style 프로브 — 테마 4 × 외관 2 × LaF 2, 값 판정은 clean만(custom은 대비만)
             const author = fixture === "elements" && vp.width === WIDE ? await checkAuthorStyles(page, combo, mode === "clean") : undefined;
             report[combo] = { ...data, _body: body, ...(author && { _author: { low: author.low, scanned: author.scanned } }) };
+            await checkCheckboxPaint(page, combo);
             combos++;
             // 클린은 전 조합, 커스텀(최악 조건)은 깨지기 쉬운 다크 외관만 남긴다
             if (vp.width === WIDE && (mode === "clean" || ap === "dark")) {

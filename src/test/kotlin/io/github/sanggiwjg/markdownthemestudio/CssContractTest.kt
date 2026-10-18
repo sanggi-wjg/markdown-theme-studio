@@ -175,10 +175,15 @@ class CssContractTest {
     // 작성자 인라인 style 판정 셀렉터 정본(#63) — 부분 문자열이 다른 속성에 걸리지 않는 형태. mts.css에 수십 번 반복되므로
     // 한 곳만 틀려도(오타·변형) 그 규칙만 조용히 다르게 판정한다. 의미(어떤 style 값이 걸리는지)는 정적 하네스 checkAuthorStyles가 본다
     private val authorColor = """[style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i], """ +
-        """[style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]"""
+        """[style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i], """ +
+        """[style*="\9 color :" i], [style*="\a color :" i]"""
     private val authorBackground = """[style*="background:" i], [style*="background :" i], [style*="background-color" i]"""
-    private val noBackground = """[style*="transparent" i], [style*="background:none" i], [style*="background: none" i], """ +
-        """[style*="url" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]"""
+    // 반투명(rgba·hsla·"/" 알파 — Chromium CSSOM이 알파 색을 rgba()로 직렬화)·투명·이미지·상속 키워드 배경은 글자 뒤 바탕이 아니다.
+    // url(은 CSS 이스케이프 url\28 — 리터럴 괄호는 CssTransformsTest 괄호 짝 검사를 깬다
+    private val noBackground = """[style*="background:transparent" i], [style*="background: transparent" i], """ +
+        """[style*="background-color:transparent" i], [style*="background-color: transparent" i], """ +
+        """[style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i], """ +
+        """[style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]"""
     private val canonical = listOf(
         authorColor,
         authorBackground,
@@ -192,14 +197,15 @@ class CssContractTest {
 
     /** 접두 충돌 형태 — color는 background-color·border-color, background는 background-position, width는 max-width·
      *  border-width, height는 line-height, font는 font-weight 하나로 글꼴·크기·줄 간격까지, border는 border-radius에도 걸린다 */
-    private val coarse = listOf("color", "background", "width", "height", "font", "border").map { """[style*="$it" i]""" }
+    // 따옴표 종류·i 플래그 유무·공백과 무관하게 잡는다
+    private val coarse = Regex("""\[\s*style\s*\*=\s*(["']?)(color|background|width|height|font|border)\1(\s+[is])?\s*]""", RegexOption.IGNORE_CASE)
 
     @Test
     fun `작성자 인라인 style 판정 셀렉터는 정본 형태다`() {
         val authorColors = ":is($authorColor):is($authorBackground):not($noBackground)"
         val problems = blocks.map { it.first }.flatMap { sel ->
             val found = mutableListOf<String>()
-            coarse.filter { it in sel }.forEach { found += "접두 충돌 판정 $it: ${sel.take(120)}" }
+            coarse.findAll(sel).forEach { found += "접두 충돌 판정 ${it.value}: ${sel.take(120)}" }
             for (canon in canonical) {
                 val head = canon.substringBefore(", ")
                 var at = sel.indexOf(head)

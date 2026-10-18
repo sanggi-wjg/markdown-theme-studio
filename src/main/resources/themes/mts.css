@@ -72,22 +72,29 @@ html[data-mts-theme] {
      흐려져도 글자는 읽히고, 흐림(opacity)은 외관과 무관하게 작성자가 쓸 때 본 대비 그대로다. 단축 속성 계열(margin·padding·
      border·font)은 계열 단위로 뺀다: 한 변만 정해도 그 계열의 나머지는 기본 preview(default.css·colors.css)나 커스텀 CSS 몫이다.
    - 글자색·배경: 둘 다 정한 요소에서만 뺀다. 한쪽만 정한 값은 라이트 배경을 전제해 다크에서 대비가 1.05~1.5까지 떨어진다 —
-     그대로 테마가 준다. 배경은 색(background·background-color)만 친다 — transparent·none·이미지(url — 못 불러오거나 투명할 수
-     있다)·inherit·initial·unset·revert가 들어 있으면 글자 뒤 바탕을 보장하지 못해 배경으로 치지 않는다. 둘 다 정한 요소 안(작성자 색 영역)의 테마
+     그대로 테마가 준다. 배경은 불투명한 색(background·background-color)만 친다 — 배경 값 transparent·none, 반투명 색(rgba·
+     hsla·"/" 알파 — Chromium CSSOM은 알파 색을 rgba()로 직렬화하고 IDE preview의 style 속성은 그 직렬화 형태다), 이미지
+     (url( — 못 불러오거나 투명할 수 있다), inherit·initial·unset·revert가 있으면 글자 뒤 바탕을 보장하지 못해 배경으로 치지
+     않는다. rgba·hsla·"/"·키워드는 어느 선언에 있든 걸리는 보수적 판정이다(글자색 rgba나 font 단축의 "/"도 테마로 돌아간다 —
+     읽힘 쪽으로 틀린다). 직렬화 전 #RRGGBBAA·#RGBA는 부분 문자열로 못 가리지만 IDE에서는 rgba()로 바뀌어 온다. 둘 다 정한 요소 안(작성자 색 영역)의 테마
      글자색·칩 배경은 파일 끝 규칙이 작성자 색에 맞춘다.
    - 표현 속성은 기본 preview(테마 off)가 따르는 것만 따른다: align(정렬·표 위치), table border·frame·rules, hr width.
      default.css가 덮어 기본 preview에서도 안 보이는 cellpadding·cellspacing·table width·셀 bgcolor는 테마도 덮는다.
    판정 셀렉터는 부분 문자열이 다른 속성에 걸리지 않는 형태로 쓴다(CssContractTest가 정본과 대조한다):
-     글자색 — 선언 머리(맨 앞·; ·공백·탭·줄바꿈 뒤)의 color: — [style*="color"]는 background-color·border-color에도 걸린다
-     배경   — background 단축·background-color(구분선만 background-image도 — 장식)
+     글자색 — 선언 머리(맨 앞·; ·공백·탭·줄바꿈 뒤)의 color:(콜론 앞 공백 포함) — [style*="color"]는 background-color·
+              border-color에도 걸린다
+     배경   — background 단축·background-color(구분선만 background-image도 — 장식). transparent·none은 배경 선언 값에
+              묶는다(font-family "Transparent Sans"에 걸리지 않게). url(은 CSS 이스케이프 url\28로 쓴다(괄호 짝 검사)
      폭·높이 — 선언 머리의 width·height — max-width·border-width·line-height에 걸리지 않게
      글꼴   — font-family·font-size·font-weight·line-height 각각 + font 단축(font:)
      테두리 — border 단축·변·width/style/color(논리 속성 포함). border-radius·border-collapse·border-spacing은 따로 */
 
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 700; }
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="line-height" i], [style*="font:" i], [style*="font :" i])) { line-height: 1.35; }
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="letter-spacing" i])) { letter-spacing: -0.01em; }
@@ -109,9 +116,11 @@ html[data-mts-theme] body h5:where(:not([style*="margin" i])) { margin: 1.4em 0 
 html[data-mts-theme] body h6:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
 html[data-mts-theme] body h6:where(:not([style*="margin" i])) { margin: 1.4em 0 0.5em; }
 html[data-mts-theme] body h6:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 
 /* 제목 글꼴은 body 상속(Reader h1~h4만 세리프, 뒤 테마 규칙) — 상속에만 기대면 사용자 CSS의
    h1 { font-family }가 이긴다 */
@@ -124,13 +133,17 @@ html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6):where(:not([style*="font-f
    사용자 CSS의 tbody { color } 하나로 다크 셀 대비가 1.3까지 떨어졌다 */
 html[data-mts-theme] body :is(p, ul, ol, dl, li, dd, dt, table, thead, tbody, tr, td, blockquote, strong, b, em, i, del, ins, u, sup, sub,
   small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))),
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
 }
 
@@ -164,27 +177,33 @@ html[data-mts-theme] body :is(thead, tbody):where(:not(table[rules] > *, [style*
    무방비였고(리셋·명시 어디에도 없음), 특히 mark의 UA 노랑 배경은 다크에서
    임의 커스텀 색과 조합되면 깨진다. 명시 선언으로 테마 도메인에 편입한다 */
 html[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: #f2df66;
   color: #24261f;
 }
 html[data-mts-theme] body mark:where(:not([style*="padding" i])) { padding: 0.05em 0.2em; }
 html[data-mts-theme] body mark:where(:not([style*="radius" i])) { border-radius: 3px; }
 html.mts-dark[data-mts-theme] body mark:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: #b89f34;
   color: #16170f;
 }
 html[data-mts-theme] body kbd:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
 html[data-mts-theme] body kbd:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.82em; }
 html[data-mts-theme] body kbd:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-fg);
 }
@@ -204,7 +223,8 @@ html[data-mts-theme] body input[type="checkbox"] {
 /* 2026.2+ 빈 칸 테두리는 currentColor다(default.css input { color: inherit }와 같은 값을 명시) — 사용자 CSS의
    input 색이 다크에서 빈 칸 테두리를 배경에 묻었다. 글자가 아니라 컨트롤 테두리 색이라(장식) 작성자 color만으로 뺀다 */
 html[data-mts-theme] body input[type="checkbox"]:where(:not([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i])) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i])) {
   color: inherit;
 }
 /* preview의 체크박스는 disabled라 accent-color가 먹지 않고 color-scheme을 따른다.
@@ -235,9 +255,11 @@ html[data-mts-theme] body input[type="checkbox"]:checked::after {
 /* 커스텀 CSS가 표 행/인용구에 밝은 배경을 깔면 다크 모드가 깨지므로
    배경을 투명으로 고정한다 — 테마별 지브라/헤더 채움은 뒤에서 다시 지정됨 */
 html[data-mts-theme] body :is(table, thead, tbody, tr, th, td, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 /* 글자색을 테마가 주는 요소는 배경도 테마가 준다 — 위 color: inherit 리셋 요소 전부와 색을 직접 주는 제목·a
@@ -245,17 +267,23 @@ html[data-mts-theme] body :is(table, thead, tbody, tr, th, td, blockquote):where
    글자가 된다 — 작성자 배경만 정한 요소(<p style="background:…">)도 같다(#63: 글자색과 둘 다 정했을 때만 작성자 몫).
    mermaid 간선 라벨은 p에 자체 배경을 깔므로 SVG 안 p는 뺀다 */
 html[data-mts-theme] body :is(h1, h2, h3, h4, h5, h6, a, ul, ol, dl, li, dd, dt, strong, b, em, i, del, ins, u, sup, sub, small):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))),
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body p:not(svg p):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))),
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))),
 html[data-mts-theme] body span.user-del:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 
@@ -293,9 +321,11 @@ html[data-mts-theme] body dd:where(:not([style*="padding" i])) { padding: 0 16px
 html[data-mts-theme] body strong:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 700; }
 
 html[data-mts-theme] body a:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-link); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-link); }
 html[data-mts-theme] body a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) { text-decoration: none; }
 /* Docs만 500을 준다(뒤 테마 규칙). 나머지 테마는 상속 그대로 */
 html[data-mts-theme] body a:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: inherit; }
@@ -327,9 +357,11 @@ html[data-mts-theme] body img:where(:not([style*="radius" i])) { border-radius: 
 html[data-mts-theme] body code:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
 html[data-mts-theme] body code:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.86em; }
 html[data-mts-theme] body code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-icode-bg);
   color: var(--mts-icode-fg);
 }
@@ -346,9 +378,11 @@ html[data-mts-theme] body code:where(:not([style*="radius" i])) { border-radius:
    기본 글자색은 토큰과 같은 도메인에 있어야 대비가 유지된다. 토큰 span의 인라인 color는
    테마가 겨냥하지 않는 요소라 판정과 무관하다 */
 html[data-mts-theme] body pre:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-code-bg);
   color: var(--mts-pre-fg);
 }
@@ -363,9 +397,11 @@ html[data-mts-theme] body pre:where(:not([style*="line-height" i], [style*="font
 html[data-mts-theme] body pre:where(:not([style*="font-family" i], [style*="font:" i], [style*="font :" i])) { font-family: var(--mts-mono); }
 html[data-mts-theme] body pre:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.845em; }
 html[data-mts-theme] body pre code:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: none;
   color: inherit;
 }
@@ -560,9 +596,11 @@ html[data-mts-hangul][data-mts-theme] body td:where(:not([style*="word-break" i]
 }
 html[data-mts-theme] body th:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 600; }
 html[data-mts-theme] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-fg); }
 html[data-mts-theme] body th:where(:not([style*="white-space" i])) { white-space: nowrap; }
 /* 머리글 정렬은 테마 기본이 왼쪽(UA 기본은 가운데)이고, 작성자가 정한 정렬은 따른다(#62). GFM 열 정렬 `:---:`·`---:`는
    셀의 align 표현 속성으로 렌더된다(`:---`는 속성이 없어 지정 없음과 같은 DOM — 2025.1·2026.2·2026.3 실측). 맨 th
@@ -648,14 +686,31 @@ html[data-mts-theme] body blockquote.markdown-alert-caution { --mts-alert: var(-
 /* 본문은 인용의 muted가 아니라 본문색 — 알림은 인용이 아니라 강조 블록이다(GitHub 동일) */
 html[data-mts-theme] body blockquote.markdown-alert {
   border-left-color: var(--mts-alert);
+}
+/* 글자색은 작성자 색 영역 안이면 뺀다(#63) — 알림 규칙은 특이도가 파일 끝 영역 규칙보다 높아(0,2,3·0,3,3), 글자색·배경을
+   둘 다 정한 raw HTML 인용(닫지 않은 <blockquote style> 뒤의 > [!NOTE]) 안에서 테마 다크 글자가 작성자 흰 배경 위에 남았다
+   (대비 1.18). 빼면 공용 리셋(blockquote·p color: inherit)과 영역 규칙으로 작성자 글자색을 물려받는다 */
+html[data-mts-theme] body blockquote.markdown-alert:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) {
   color: var(--mts-fg);
 }
 html[data-mts-theme] body blockquote.markdown-alert .markdown-alert-title {
   display: flex;
   align-items: center;
-  color: var(--mts-alert);
   font-weight: 600;
   margin: 0 0 0.45em;
+}
+html[data-mts-theme] body blockquote.markdown-alert .markdown-alert-title:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) {
+  color: var(--mts-alert);
 }
 html[data-mts-theme] body blockquote.markdown-alert .markdown-alert-icon {
   width: 1.15em;
@@ -745,25 +800,33 @@ html[data-mts-theme="gh"] body blockquote:where(:not([style*="border:" i], [styl
   [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 4px solid var(--mts-border); }
 html[data-mts-theme="gh"] body blockquote:where(:not([style*="padding" i])) { padding: 0 1em; }
 html[data-mts-theme="gh"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
   [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
   [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border: 1px solid var(--mts-border); }
 html[data-mts-theme="gh"] body :is(th, td):where(:not([style*="padding" i])) { padding: 6px 13px; }
 html[data-mts-theme="gh"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { background: var(--mts-th-bg); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { background: var(--mts-th-bg); }
 /* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
 html[data-mts-theme="gh"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 html[data-mts-theme="gh"] body blockquote.markdown-alert { padding: 0.5em 1em; }
 
@@ -827,9 +890,11 @@ html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="border:" i], [sty
 }
 html[data-mts-theme="nt"] body :is(th, td):where(:not([style*="padding" i])) { padding: 8px 14px; }
 html[data-mts-theme="nt"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="nt"] body th:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.92em; }
 html[data-mts-theme="nt"] body th:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
   [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
@@ -895,9 +960,11 @@ html[data-mts-theme="dc"] body pre:where(:not([style*="border:" i], [style*="bor
 html[data-mts-theme="dc"] body pre:where(:not([style*="radius" i])) { border-radius: 0 8px 8px 0; }
 html[data-mts-theme="dc"] body a:where(:not([style*="font-weight" i], [style*="font:" i], [style*="font :" i])) { font-weight: 500; }
 html[data-mts-theme="dc"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { background: var(--mts-quote-bg); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { background: var(--mts-quote-bg); }
 html[data-mts-theme="dc"] body blockquote:where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
   [style*="border-bottom" i], [style*="border-left" i], [style*="border-width" i], [style*="border-style" i],
   [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 4px solid var(--mts-quote-border); }
@@ -925,9 +992,11 @@ html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="border:" i], [sty
 }
 html[data-mts-theme="dc"] body :is(th, td):where(:not([style*="padding" i])) { padding: 7px 14px; }
 html[data-mts-theme="dc"] body th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: var(--mts-th-bg);
   color: var(--mts-link);
 }
@@ -939,12 +1008,16 @@ html[data-mts-theme="dc"] body tbody tr:last-child td:where(:not([style*="border
   [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-bottom: none; }
 /* 지브라는 작성자 색 영역 안에서 뺀다 — 파일 끝 영역 규칙보다 특이도가 높다 */
 html[data-mts-theme="dc"] body tbody tr:nth-child(even):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]), :is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]) *)) { background: var(--mts-zebra); }
 
 /* 알림: VitePress 커스텀 블록처럼 유형 색 틴트 배경 (color-mix 미지원 시 인용 배경).
    7%: 틴트 위 유형 색 제목이 라이트·다크 모두 4.6 이상 남는 상한 */
@@ -1015,9 +1088,11 @@ html[data-mts-theme="rd"] body blockquote:where(:not([style*="border:" i], [styl
   [style*="border-color" i], [style*="border-block" i], [style*="border-inline" i])) { border-left: 2px solid var(--mts-border); }
 html[data-mts-theme="rd"] body blockquote:where(:not([style*="padding" i])) { padding: 0 0 0 1.1em; }
 html[data-mts-theme="rd"] body blockquote:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) { color: var(--mts-muted); }
 html[data-mts-theme="rd"] body blockquote:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.96em; }
 html[data-mts-theme="rd"] body table:where(:not([style*="font-size" i], [style*="font:" i], [style*="font :" i])) { font-size: 0.8em; }
 html[data-mts-theme="rd"] body :is(th, td):where(:not([style*="border:" i], [style*="border :" i], [style*="border-top" i], [style*="border-right" i],
@@ -1040,38 +1115,52 @@ html[data-mts-theme="rd"] body pre:where(:not([style*="border:" i], [style*="bor
    공용·테마 규칙을 파일 뒤라서 이긴다(특이도가 더 높은 지브라는 그 규칙에서 영역을 뺀다). 판정은 위 공용 규칙의 글자색·배경
    판정과 같은 셀렉터다 */
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i])) :is(h1, h2, h3, h4, h5, h6, a, th, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) :is(h1, h2, h3, h4, h5, h6, a, th, blockquote):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i])) th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) th:where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   background: transparent;
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i])) :is(code, kbd):where(:not(pre code)):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i]))) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) :is(code, kbd):where(:not(pre code)):where(:not(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i]))) {
   color: inherit;
   background: transparent;
   background: color-mix(in srgb, currentColor 12%, transparent);
 }
 html[data-mts-theme] body :where(:is([style^="color:" i], [style^="color :" i], [style*=";color:" i], [style*=";color :" i],
-  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="transparent" i],
-  [style*="background:none" i], [style*="background: none" i], [style*="url" i], [style*="inherit" i], [style*="initial" i],
-  [style*="unset" i], [style*="revert" i])) a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
+  [style*=" color:" i], [style*=" color :" i], [style*="\9 color:" i], [style*="\a color:" i],
+  [style*="\9 color :" i], [style*="\a color :" i]):is([style*="background:" i], [style*="background :" i], [style*="background-color" i]):not([style*="background:transparent" i],
+  [style*="background: transparent" i], [style*="background-color:transparent" i], [style*="background-color: transparent" i],
+  [style*="background:none" i], [style*="background: none" i], [style*="rgba" i], [style*="hsla" i], [style*="/" i],
+  [style*="url\28" i], [style*="inherit" i], [style*="initial" i], [style*="unset" i], [style*="revert" i])) a:where(:not([style*="text-decoration" i], [style*="text-underline" i])) {
   text-decoration: underline;
 }
 
