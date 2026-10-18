@@ -53,6 +53,13 @@ for theme in ["gh", "nt", "dc", "rd"]:
         if run["chipText"] != "./gradlew build":
             violations.append(f"[{combo}] 실행 칩 텍스트 손상: {run['chipText']!r}")
 
+        # Mermaid 라벨 박스는 테마 off·클린과, 글자색은 mermaid 지정색과 같아야 한다(#59) — 동물원 라벨 3개 + 열린 문서
+        mm = data["_mermaid"]
+        if mm["zoo"] < 3:
+            violations.append(f"[{combo}] Mermaid 동물원 라벨 {mm['zoo']}개 (기대 3) — 렌더 실패?")
+        for d in mm["diffs"]:
+            violations.append(f"[{combo}] Mermaid 라벨: {d}")
+
         lay = data["_layout"]
         if lay["bodyHScroll"] > 2:
             violations.append(f"[{combo}] body 가로 오버플로 {lay['bodyHScroll']}px")
@@ -73,6 +80,8 @@ with open(os.path.join(HERE, "audit-full.json"), "w") as f:
 print(f"총 위반: {len(violations)}건")
 print(f"실행 링크: 문서 {report['gh-light']['_runIcons']['doc']}개 + 동물원 "
       f"{report['gh-light']['_runIcons']['total'] - report['gh-light']['_runIcons']['doc']}개 검사")
+print(f"Mermaid 라벨: 문서 {report['gh-light']['_mermaid']['doc']}개 + 동물원 "
+      f"{report['gh-light']['_mermaid']['zoo']}개 검사")
 for v in violations:
     print(" -", v)
 print("\n전체 데이터: audit-full.json")
