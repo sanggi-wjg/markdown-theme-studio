@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.sanggiwjg"
-version = "1.2.0"
+version = "1.3.0"
 
 repositories {
     mavenCentral()
@@ -126,18 +126,29 @@ intellijPlatform {
                 Switch themes from anywhere with Find Action → <b>Switch Markdown Theme</b>.</li>
                 <li><b>Works alongside your custom CSS</b> — themes stay consistent even when a project
                 already has its own Markdown stylesheet (for example snippets ported from Typora).</li>
+                <li><b>Respects inline HTML styles</b> — alignment, borders, spacing, fonts and sizes set inline
+                in the document's raw HTML are kept. Text and background colors are kept when both are set
+                together; on elements the theme styles, a color or background set alone falls back to the
+                theme so text stays readable in dark mode.</li>
                 <li><b>Styled end to end</b> — tables (including column alignment), code blocks, task lists and
                 math, plus GitHub alerts, front matter and Mermaid diagrams in IDE versions that render them.</li>
                 <li><b>Keyboard and screen-reader friendly</b> — open with Enter, move with the arrow keys,
                 close with Esc.</li>
-                <li><b>Korean line breaking</b> — Korean documents wrap at word boundaries; other languages
-                keep the default wrapping.</li>
+                <li><b>Korean line breaking</b> — Korean documents wrap at word boundaries, as do Korean tables
+                in mostly English documents; text in other languages keeps the default wrapping.</li>
             </ul>
             <p>Works with the Chromium (JCEF) Markdown preview in IntelliJ-based IDEs 2025.1 and newer.
             The experimental Compose preview renderer is not supported.</p>
         """.trimIndent()
 
         changeNotes = """
+            <h3>1.3.0</h3>
+            <ul>
+                <li>Raw HTML in Markdown keeps the author's layout: alignment (<code>align</code>, <code>text-align</code>), borders (including <code>&lt;table border&gt;</code>), spacing, fonts, font size, line height and similar inline styles and attributes are no longer overridden by the theme. A project's custom CSS that sets the same property with <code>!important</code> still takes precedence, as it does with Default. Documents that use only Markdown syntax are styled as before</li>
+                <li>Inline text and background colors are kept when an element sets both and the background is a solid, opaque color. On elements the theme styles (paragraphs, headings, lists, links, tables, quotes, code and so on), a color or background set on its own follows the theme so text stays readable in dark mode — previously a background set alone on paragraphs, headings or list items was kept and could hide the text in dark mode; it is now replaced in both light and dark</li>
+                <li>Inside an element whose colors are kept this way, headings, links, quotes, table headers and GitHub alert text (2026.2 and newer) take on its text color (links are underlined), inline code and keyboard keys get a matching tint, and table header fills and zebra stripes are removed, so they no longer turn hard to read on the author's background. Code blocks and highlighted text keep the theme colors</li>
+                <li>Korean tables in mostly English documents wrap at word boundaries again instead of collapsing into narrow vertical strips (regression in 1.2.0)</li>
+            </ul>
             <h3>1.2.0</h3>
             <ul>
                 <li>Settings now live in the IDE: theme, appearance, text size and width are shared by every preview and project window, survive restarts, and sync with Backup and Sync. Choices saved by earlier versions are imported the first time you open a preview after updating; if one doesn't come across, set it once more</li>
