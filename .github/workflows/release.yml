@@ -20,7 +20,7 @@ jobs:
           # 태그 커밋이 main 조상인지 검증하려면 전체 히스토리가 필요하다
           fetch-depth: 0
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
